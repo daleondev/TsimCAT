@@ -24,10 +24,10 @@ auto runApp(tlink::Context &ctx) -> tlink::Task<void>
 
     // 2. Perform a one-time Read
     std::println("App: P_GripperControl.stPneumaticGripperData.bOpen...");
-    auto readRes = co_await adsDriver.readRaw("P_GripperControl.stPneumaticGripperData.bOpen");
+    auto readRes = co_await adsDriver.read<bool>("P_GripperControl.stPneumaticGripperData.bOpen");
     if (readRes)
     {
-        std::println("Value: {}", readRes.value().size());
+        std::println("Value: {}", readRes.value());
     }
 
     // // 3. Start a Subscription (Asynchronous Stream)

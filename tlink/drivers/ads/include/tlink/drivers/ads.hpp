@@ -27,23 +27,11 @@ namespace tlink::drivers
         auto connect() -> Task<Result<void>> override;
         auto disconnect() -> Task<Result<void>> override;
 
-        template <typename T>
-        auto read(std::string_view path) -> Task<Result<T>>
-        {
-            AdsVariable<T> readVar{*m_route, std::string(path)};
-            co_return readVar;
-        }
+        auto readInto(std::string_view path, std::span<std::byte> dest) -> Task<Result<size_t>> override;
+        auto writeFrom(std::string_view path, std::span<const std::byte> src) -> Task<Result<void>> override;
 
-        template <typename T>
-        auto write(std::string_view path, const T &value) -> Task<Result<void>>
-        {
-            AdsVariable<T> writeVar{*m_route, std::string(path)};
-            writeVar = value;
-            co_return tlink::success();
-        }
-
-        auto readRaw(std::string_view path) -> Task<Result<std::vector<std::byte>>> override;
-        auto writeRaw(std::string_view path, const std::vector<std::byte> &data) -> Task<Result<void>> override;
+        // auto readRaw(std::string_view path) -> Task<Result<std::vector<std::byte>>> override;
+        // auto writeRaw(std::string_view path, const std::vector<std::byte> &data) -> Task<Result<void>> override;
 
         auto subscribe(std::string_view path) -> Task<Result<std::shared_ptr<DataStream>>> override;
 

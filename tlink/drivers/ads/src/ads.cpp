@@ -179,14 +179,14 @@ namespace tlink::drivers
             err = handleException(ex);
         }
 
-        co_return err == AdsError::None ? tlink::success() : std::unexpected(make_error_code(err));
+        co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
     }
 
     auto AdsDriver::disconnect() -> Task<Result<void>>
     {
         if (!m_route)
         {
-            co_return tlink::success();
+            co_return success();
         }
 
         auto err{AdsError::None};
@@ -200,20 +200,18 @@ namespace tlink::drivers
             err = handleException(ex);
         }
 
-        co_return err == AdsError::None ? tlink::success() : std::unexpected(make_error_code(err));
+        co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
     }
 
-    auto AdsDriver::readRaw(std::string_view path) -> Task<Result<std::vector<std::byte>>>
+    auto AdsDriver::readInto(std::string_view path, std::span<std::byte> dest) -> Task<Result<size_t>>
     {
         uint32_t bytesRead = 0;
-        std::vector<std::byte> data(1024);
-
         auto err{AdsError::None};
         try
         {
             auto handle{m_route->GetHandle(std::string(path))};
-            err = static_cast<AdsError>(m_route->ReadReqEx2(ADSIGRP_SYM_VALBYHND, *handle, data.size(),
-                                                            data.data(), &bytesRead));
+            err = static_cast<AdsError>(m_route->ReadReqEx2(ADSIGRP_SYM_VALBYHND, *handle, dest.size(),
+                                                            dest.data(), &bytesRead));
         }
         catch (const std::exception &ex)
         {
@@ -225,25 +223,66 @@ namespace tlink::drivers
             co_return std::unexpected(make_error_code(err));
         }
 
-        data.resize(bytesRead);
-        co_return data;
+        co_return bytesRead;
     }
 
-    auto AdsDriver::writeRaw(std::string_view path, const std::vector<std::byte> &data) -> Task<Result<void>>
+    auto AdsDriver::writeFrom(std::string_view path, std::span<const std::byte> src) -> Task<Result<void>>
     {
         auto err{AdsError::None};
         try
         {
             auto handle{m_route->GetHandle(std::string(path))};
-            err = static_cast<AdsError>(m_route->WriteReqEx(ADSIGRP_SYM_VALBYHND, *handle, data.size(), data.data()));
+            err = static_cast<AdsError>(m_route->WriteReqEx(ADSIGRP_SYM_VALBYHND, *handle, src.size(), src.data()));
         }
         catch (const std::exception &ex)
         {
             err = handleException(ex);
         }
 
-        co_return err == AdsError::None ? tlink::success() : std::unexpected(make_error_code(err));
+        co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
     }
+
+    // auto AdsDriver::readRaw(std::string_view path) -> Task<Result<std::vector<std::byte>>>
+    // {
+    //     uint32_t bytesRead = 0;
+    //     std::vector<std::byte> data(1024);
+
+    //     auto err{AdsError::None};
+    //     try
+    //     {
+    //         auto handle{m_route->GetHandle(std::string(path))};
+    //         err = static_cast<AdsError>(m_route->ReadReqEx2(ADSIGRP_SYM_VALBYHND, *handle, data.size(),
+    //                                                         data.data(), &bytesRead));
+    //     }
+    //     catch (const std::exception &ex)
+    //     {
+    //         err = handleException(ex);
+    //     }
+
+    //     if (err != AdsError::None)
+    //     {
+    //         co_return std::unexpected(make_error_code(err));
+    //     }
+
+    //     data.resize(bytesRead);
+    //     co_return data;
+    // }
+
+    // auto AdsDriver::writeRaw(std::string_view path, const std::vector<std::byte> &data) -> Task<Result<void>>
+    // {
+    //     auto err{AdsError::None};
+    //     try
+    //     {
+    //         auto handle{m_route->GetHandle(std::string(path))};
+    //         err = static_cast<AdsError>(m_route->WriteReqEx(ADSIGRP_SYM_VALBYHND, *handle, data.size(), data.data()));
+    //     }
+    //     catch (const std::exception &ex)
+    //     {
+    //         err = handleException(ex);
+    //     }
+
+    //     co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
+    // }
 
     auto AdsDriver::subscribe(std::string_view path) -> Task<Result<std::shared_ptr<DataStream>>>
     {
