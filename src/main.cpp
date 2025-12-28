@@ -6,15 +6,16 @@
  * TLink Usage Example: Demonstrating the ADS Driver Interface
  */
 
-auto runApp(tlink::Context& ctx) -> tlink::Task<void> {
+auto runApp(tlink::Context &ctx) -> tlink::Task<void>
+{
     // 1. Initialize the ADS Driver
-    // NetID: 127.0.0.1.1.1, IP: 127.0.0.1, Port: 851 (PLC1)
-    tlink::drivers::AdsDriver adsDriver("127.0.0.1.1.1", "127.0.0.1", 851);
+    tlink::drivers::AdsDriver adsDriver("192.168.56.1.1.1", "192.168.56.1", AMSPORT_R0_PLC_TC3, "192.168.56.1.1.20");
 
     std::println("App: Connecting to PLC via ADS...");
     auto connRes = co_await adsDriver.connect();
-    
-    if (!connRes) {
+
+    if (!connRes)
+    {
         std::println(stderr, "App: Failed to connect: {}", connRes.error().message());
         co_return;
     }
@@ -22,29 +23,32 @@ auto runApp(tlink::Context& ctx) -> tlink::Task<void> {
     std::println("App: Connected!");
 
     // 2. Perform a one-time Read
-    std::println("App: Reading MAIN.nCounter...");
-    auto readRes = co_await adsDriver.readRaw("MAIN.nCounter");
-    if (readRes) {
-        auto data = readRes.value();
-        std::println("App: Read Success! Data size: {} bytes", data.size());
+    std::println("App: P_GripperControl.stPneumaticGripperData.bOpen...");
+    auto readRes = co_await adsDriver.read<bool>("P_GripperControl.stPneumaticGripperData.bOpen");
+    if (readRes)
+    {
+        std::println("Value: {}", readRes.value());
     }
 
-    // 3. Start a Subscription (Asynchronous Stream)
-    std::println("App: Subscribing to MAIN.stStatus...");
-    auto subRes = co_await adsDriver.subscribe("MAIN.stStatus");
-    
-    if (subRes) {
-        auto stream = subRes.value();
-        std::println("App: Subscription active. Waiting for first 3 updates...");
+    // // 3. Start a Subscription (Asynchronous Stream)
+    // std::println("App: Subscribing to MAIN.stStatus...");
+    // auto subRes = co_await adsDriver.subscribe("P_GripperControl.stPneumaticGripperData.bOpen");
 
-        for (int i = 0; i < 3; ++i) {
-            // Suspends until the next update is pushed by the driver
-            auto update = co_await stream->next();
-            if (update) {
-                std::println("   [Update {:02}] Received {} bytes", i + 1, update.value().size());
-            }
-        }
-    }
+    // if (subRes)
+    // {
+    //     auto stream = subRes.value();
+    //     std::println("App: Subscription active. Waiting for first 3 updates...");
+
+    //     for (int i = 0; i < 3; ++i)
+    //     {
+    //         // Suspends until the next update is pushed by the driver
+    //         auto update = co_await stream->next();
+    //         if (update)
+    //         {
+    //             std::println("   [Update {:02}] Received {} bytes", i + 1, update.value().size());
+    //         }
+    //     }
+    // }
 
     // 4. Cleanup
     std::println("App: Disconnecting...");
@@ -58,7 +62,7 @@ auto main() -> int
     std::println("---------------------------");
 
     tlink::Context ctx;
-    
+
     // Spawn our app coroutine
     auto app = runApp(ctx);
     ctx.schedule(app.m_handle);
