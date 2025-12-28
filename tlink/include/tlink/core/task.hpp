@@ -18,20 +18,20 @@ struct Task {
         T result;
         std::coroutine_handle<> waiter;
 
-        Task get_return_object() { return Task{handle_type::from_promise(*this)}; }
-        std::suspend_always initial_suspend() { return {}; }
+        auto get_return_object() -> Task { return Task{handle_type::from_promise(*this)}; }
+        auto initial_suspend() -> std::suspend_always { return {}; }
         
         struct FinalAwaiter {
-            bool await_ready() noexcept { return false; }
-            std::coroutine_handle<> await_suspend(handle_type h) noexcept {
+            auto await_ready() noexcept -> bool { return false; }
+            auto await_suspend(handle_type h) noexcept -> std::coroutine_handle<> {
                 return h.promise().waiter ? h.promise().waiter : std::noop_coroutine();
             }
-            void await_resume() noexcept {}
+            auto await_resume() noexcept -> void {}
         };
-        FinalAwaiter final_suspend() noexcept { return {}; }
+        auto final_suspend() noexcept -> FinalAwaiter { return {}; }
 
-        void return_value(T value) { result = std::move(value); }
-        void unhandled_exception() { std::terminate(); }
+        auto return_value(T value) -> void { result = std::move(value); }
+        auto unhandled_exception() -> void { std::terminate(); }
     };
 
     handle_type handle;
@@ -52,14 +52,14 @@ struct Task {
     }
 
     // Awaiter interface
-    bool await_ready() const noexcept { return !handle || handle.done(); }
+    auto await_ready() const noexcept -> bool { return !handle || handle.done(); }
 
-    std::coroutine_handle<> await_suspend(std::coroutine_handle<> waiter) noexcept {
+    auto await_suspend(std::coroutine_handle<> waiter) noexcept -> std::coroutine_handle<> {
         handle.promise().waiter = waiter;
         return handle;
     }
 
-    T await_resume() { return std::move(handle.promise().result); }
+    auto await_resume() -> T { return std::move(handle.promise().result); }
 };
 
 /**
@@ -70,20 +70,20 @@ struct Task<void> {
     struct promise_type {
         std::coroutine_handle<> waiter;
 
-        Task get_return_object() { return Task{std::coroutine_handle<promise_type>::from_promise(*this)}; }
-        std::suspend_always initial_suspend() { return {}; }
+        auto get_return_object() -> Task { return Task{std::coroutine_handle<promise_type>::from_promise(*this)}; }
+        auto initial_suspend() -> std::suspend_always { return {}; }
         
         struct FinalAwaiter {
-            bool await_ready() noexcept { return false; }
-            std::coroutine_handle<> await_suspend(std::coroutine_handle<promise_type> h) noexcept {
+            auto await_ready() noexcept -> bool { return false; }
+            auto await_suspend(std::coroutine_handle<promise_type> h) noexcept -> std::coroutine_handle<> {
                 return h.promise().waiter ? h.promise().waiter : std::noop_coroutine();
             }
-            void await_resume() noexcept {}
+            auto await_resume() noexcept -> void {}
         };
-        FinalAwaiter final_suspend() noexcept { return {}; }
+        auto final_suspend() noexcept -> FinalAwaiter { return {}; }
 
-        void return_void() {}
-        void unhandled_exception() { std::terminate(); }
+        auto return_void() -> void {}
+        auto unhandled_exception() -> void { std::terminate(); }
     };
 
     std::coroutine_handle<promise_type> handle;
@@ -103,14 +103,14 @@ struct Task<void> {
         return *this;
     }
 
-    bool await_ready() const noexcept { return !handle || handle.done(); }
+    auto await_ready() const noexcept -> bool { return !handle || handle.done(); }
 
-    std::coroutine_handle<> await_suspend(std::coroutine_handle<> waiter) noexcept {
+    auto await_suspend(std::coroutine_handle<> waiter) noexcept -> std::coroutine_handle<> {
         handle.promise().waiter = waiter;
         return handle;
     }
 
-    void await_resume() {}
+    auto await_resume() -> void {}
 };
 
 } // namespace tlink

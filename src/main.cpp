@@ -8,37 +8,69 @@
 // A Mock Driver for testing the interface
 class MockDriver : public tlink::IDriver {
 public:
-    tlink::Task<tlink::Result<void>> connect() override {
+    auto connect() -> tlink::Task<tlink::Result<void>> override {
         std::println("MockDriver: Connecting...");
         co_return tlink::success();
     }
 
-    tlink::Task<tlink::Result<void>> disconnect() override {
+    auto disconnect() -> tlink::Task<tlink::Result<void>> override {
         std::println("MockDriver: Disconnecting...");
         co_return tlink::success();
     }
 
-    tlink::Task<tlink::Result<std::vector<std::byte>>> read_raw(std::string_view path) override {
+    auto read_raw(std::string_view path) -> tlink::Task<tlink::Result<std::vector<std::byte>>> override {
         std::println("MockDriver: Reading from {}...", path);
         std::vector<std::byte> data{std::byte{0x42}};
         co_return data;
     }
 
-    tlink::Task<tlink::Result<void>> write_raw(std::string_view path, const std::vector<std::byte>& data) override {
+    auto write_raw(std::string_view path, const std::vector<std::byte>& data) -> tlink::Task<tlink::Result<void>> override {
         std::println("MockDriver: Writing {} bytes to {}...", data.size(), path);
         co_return tlink::success();
     }
+
+    auto subscribe(std::string_view path) -> tlink::Task<tlink::Result<std::shared_ptr<tlink::DataStream>>> override {
+        std::println("MockDriver: Subscribing to {}...", path);
+        
+        auto stream = std::make_shared<tlink::DataStream>();
+        
+        // Simulate an immediate update pushed by the "Driver"
+        std::vector<std::byte> data{std::byte{0xAA}, std::byte{0xBB}};
+        stream->push(data);
+        
+        // Simulate another one
+        stream->push(data);
+
+        co_return stream;
+    }
 };
 
-tlink::Task<void> run_app(tlink::Context& ctx) {
+auto run_app(tlink::Context& ctx) -> tlink::Task<void> {
     MockDriver driver;
 
     auto res = co_await driver.connect();
     if (res) {
-        auto data = co_await driver.read_raw("test/path");
+        // Test Read
+        auto data = co_await driver.read_raw("test/read");
         if (data) {
             std::println("Read Success! First byte: {:02x}", (int)data.value()[0]);
         }
+
+        // Test Subscription (Pull-based!)
+        auto sub_res = co_await driver.subscribe("test/sub");
+        if (sub_res) {
+            auto stream = sub_res.value();
+            std::println("Subscription active. Waiting for updates...");
+
+            // Fetch first update
+            auto update1 = co_await stream->next();
+            if (update1) std::println("Update 1 received: {} bytes", update1.value().size());
+
+            // Fetch second update
+            auto update2 = co_await stream->next();
+            if (update2) std::println("Update 2 received: {} bytes", update2.value().size());
+        }
+
         co_await driver.disconnect();
     }
 }

@@ -2,10 +2,18 @@
 #include <string_view>
 #include <vector>
 #include <cstddef>
+#include <memory>
 #include "core/task.hpp"
 #include "core/result.hpp"
+#include "core/channel.hpp"
 
 namespace tlink {
+
+// Standard data packet for subscriptions
+using DataPacket = std::vector<std::byte>;
+
+// The stream type used by subscribers
+using DataStream = AsyncChannel<Result<DataPacket>>;
 
 /**
  * @brief Abstract interface for a protocol driver.
@@ -18,23 +26,32 @@ public:
     /**
      * @brief Establishes the connection to the remote device.
      */
-    virtual Task<Result<void>> connect() = 0;
+    virtual auto connect() -> Task<Result<void>> = 0;
 
     /**
      * @brief Closes the connection.
      */
-    virtual Task<Result<void>> disconnect() = 0;
+    virtual auto disconnect() -> Task<Result<void>> = 0;
 
     /**
      * @brief Low-level read operation.
-     * @param path Protocol-specific path (e.g., "Main.Var" for ADS, "ns=2;i=1" for OPCUA).
      */
-    virtual Task<Result<std::vector<std::byte>>> read_raw(std::string_view path) = 0;
+    virtual auto read_raw(std::string_view path) -> Task<Result<std::vector<std::byte>>> = 0;
 
     /**
      * @brief Low-level write operation.
      */
-    virtual Task<Result<void>> write_raw(std::string_view path, const std::vector<std::byte>& data) = 0;
+    virtual auto write_raw(std::string_view path, const std::vector<std::byte>& data) -> Task<Result<void>> = 0;
+
+    /**
+     * @brief Subscribe to value changes.
+     * Returns a channel that can be co_awaited to receive updates.
+     * The driver pushes updates into this channel.
+     * 
+     * @param path Protocol-specific path.
+     * @return A shared pointer to the data stream.
+     */
+    virtual auto subscribe(std::string_view path) -> Task<Result<std::shared_ptr<DataStream>>> = 0;
 };
 
 } // namespace tlink

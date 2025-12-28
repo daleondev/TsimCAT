@@ -13,7 +13,7 @@ namespace tlink {
  */
 class Context {
 public:
-    void run() {
+    auto run() -> void {
         while (!m_ready_queue.empty() || !m_timers.empty()) {
             // 1. Process all ready tasks
             while (!m_ready_queue.empty()) {
@@ -45,11 +45,11 @@ public:
         }
     }
 
-    void schedule(std::coroutine_handle<> handle) {
+    auto schedule(std::coroutine_handle<> handle) -> void {
         m_ready_queue.push_back(handle);
     }
 
-    void schedule_timer(std::chrono::steady_clock::time_point expiry, std::coroutine_handle<> handle) {
+    auto schedule_timer(std::chrono::steady_clock::time_point expiry, std::coroutine_handle<> handle) -> void {
         m_timers.push_back({expiry, handle});
     }
 
