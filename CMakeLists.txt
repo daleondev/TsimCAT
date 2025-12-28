@@ -18,6 +18,7 @@ add_subdirectory(external/elements)
 
 add_subdirectory(external/json)
 add_subdirectory(external/magic_enum)
+add_subdirectory(tlink)
 
 file(
     GLOB_RECURSE SOURCES
@@ -55,6 +56,7 @@ target_link_libraries(
     elements
     nlohmann_json::nlohmann_json
     magic_enum::magic_enum
+    tlink::tlink
 )
 
 target_compile_features(
