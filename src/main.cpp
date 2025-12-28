@@ -1,78 +1,55 @@
 #include <tlink/tlink.hpp>
+#include <tlink/drivers/ads.hpp>
 #include <print>
 
 /**
- * REPLACED PREVIOUS EXAMPLE WITH TLINK FOUNDATION TEST
+ * TLink Usage Example: Demonstrating the ADS Driver Interface
  */
 
-// A Mock Driver for testing the interface
-class MockDriver : public tlink::IDriver {
-public:
-    auto connect() -> tlink::Task<tlink::Result<void>> override {
-        std::println("MockDriver: Connecting...");
-        co_return tlink::success();
-    }
-
-    auto disconnect() -> tlink::Task<tlink::Result<void>> override {
-        std::println("MockDriver: Disconnecting...");
-        co_return tlink::success();
-    }
-
-    auto read_raw(std::string_view path) -> tlink::Task<tlink::Result<std::vector<std::byte>>> override {
-        std::println("MockDriver: Reading from {}...", path);
-        std::vector<std::byte> data{std::byte{0x42}};
-        co_return data;
-    }
-
-    auto write_raw(std::string_view path, const std::vector<std::byte>& data) -> tlink::Task<tlink::Result<void>> override {
-        std::println("MockDriver: Writing {} bytes to {}...", data.size(), path);
-        co_return tlink::success();
-    }
-
-    auto subscribe(std::string_view path) -> tlink::Task<tlink::Result<std::shared_ptr<tlink::DataStream>>> override {
-        std::println("MockDriver: Subscribing to {}...", path);
-        
-        auto stream = std::make_shared<tlink::DataStream>();
-        
-        // Simulate an immediate update pushed by the "Driver"
-        std::vector<std::byte> data{std::byte{0xAA}, std::byte{0xBB}};
-        stream->push(data);
-        
-        // Simulate another one
-        stream->push(data);
-
-        co_return stream;
-    }
-};
-
 auto run_app(tlink::Context& ctx) -> tlink::Task<void> {
-    MockDriver driver;
+    // 1. Initialize the ADS Driver
+    // NetID: 127.0.0.1.1.1, IP: 127.0.0.1, Port: 851 (PLC1)
+    tlink::drivers::AdsDriver ads_driver("127.0.0.1.1.1", "127.0.0.1", 851);
 
-    auto res = co_await driver.connect();
-    if (res) {
-        // Test Read
-        auto data = co_await driver.read_raw("test/read");
-        if (data) {
-            std::println("Read Success! First byte: {:02x}", (int)data.value()[0]);
-        }
-
-        // Test Subscription (Pull-based!)
-        auto sub_res = co_await driver.subscribe("test/sub");
-        if (sub_res) {
-            auto stream = sub_res.value();
-            std::println("Subscription active. Waiting for updates...");
-
-            // Fetch first update
-            auto update1 = co_await stream->next();
-            if (update1) std::println("Update 1 received: {} bytes", update1.value().size());
-
-            // Fetch second update
-            auto update2 = co_await stream->next();
-            if (update2) std::println("Update 2 received: {} bytes", update2.value().size());
-        }
-
-        co_await driver.disconnect();
+    std::println("App: Connecting to PLC via ADS...");
+    auto conn_res = co_await ads_driver.connect();
+    
+    if (!conn_res) {
+        std::println(stderr, "App: Failed to connect: {}", conn_res.error().message());
+        co_return;
     }
+
+    std::println("App: Connected!");
+
+    // 2. Perform a one-time Read
+    std::println("App: Reading MAIN.nCounter...");
+    auto read_res = co_await ads_driver.read_raw("MAIN.nCounter");
+    if (read_res) {
+        auto data = read_res.value();
+        std::println("App: Read Success! Data size: {} bytes", data.size());
+    }
+
+    // 3. Start a Subscription (Asynchronous Stream)
+    std::println("App: Subscribing to MAIN.stStatus...");
+    auto sub_res = co_await ads_driver.subscribe("MAIN.stStatus");
+    
+    if (sub_res) {
+        auto stream = sub_res.value();
+        std::println("App: Subscription active. Waiting for first 3 updates...");
+
+        for (int i = 0; i < 3; ++i) {
+            // Suspends until the next update is pushed by the driver
+            auto update = co_await stream->next();
+            if (update) {
+                std::println("   [Update {:02}] Received {} bytes", i + 1, update.value().size());
+            }
+        }
+    }
+
+    // 4. Cleanup
+    std::println("App: Disconnecting...");
+    co_await ads_driver.disconnect();
+    std::println("App: Shutdown complete.");
 }
 
 auto main() -> int
@@ -82,11 +59,12 @@ auto main() -> int
 
     tlink::Context ctx;
     
-    // Spawn our test app
+    // Spawn our app coroutine
     auto app = run_app(ctx);
     ctx.schedule(app.handle);
 
-    // Run the event loop
+    // Start the scheduler loop
+    // In a real app, this might be integrated with a UI loop or ASIO context
     ctx.run();
 
     std::println("---------------------------");

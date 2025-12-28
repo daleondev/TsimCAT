@@ -57,6 +57,7 @@ target_link_libraries(
     nlohmann_json::nlohmann_json
     magic_enum::magic_enum
     tlink::tlink
+    tlink::ads
 )
 
 target_compile_features(

@@ -12,6 +12,15 @@ target_include_directories(
     $<INSTALL_INTERFACE:include>
 )
 
+target_sources(tlink INTERFACE
+    include/tlink/tlink.hpp
+    include/tlink/driver.hpp
+    include/tlink/core/result.hpp
+    include/tlink/core/task.hpp
+    include/tlink/core/context.hpp
+    include/tlink/core/channel.hpp
+)
+
 target_compile_features(tlink INTERFACE cxx_std_23)
 
 # --- Driver Submodules ---
