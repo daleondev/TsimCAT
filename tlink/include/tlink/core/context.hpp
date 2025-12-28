@@ -14,11 +14,11 @@ namespace tlink {
 class Context {
 public:
     auto run() -> void {
-        while (!m_ready_queue.empty() || !m_timers.empty()) {
+        while (!m_readyQueue.empty() || !m_timers.empty()) {
             // 1. Process all ready tasks
-            while (!m_ready_queue.empty()) {
-                auto handle = m_ready_queue.front();
-                m_ready_queue.pop_front();
+            while (!m_readyQueue.empty()) {
+                auto handle = m_readyQueue.front();
+                m_readyQueue.pop_front();
                 if (handle && !handle.done()) {
                     handle.resume();
                 }
@@ -29,15 +29,15 @@ public:
                 auto now = std::chrono::steady_clock::now();
                 auto it = m_timers.begin();
                 while (it != m_timers.end()) {
-                    if (now >= it->expiry) {
-                        m_ready_queue.push_back(it->handle);
+                    if (now >= it->m_expiry) {
+                        m_readyQueue.push_back(it->m_handle);
                         it = m_timers.erase(it);
                     } else {
                         ++it;
                     }
                 }
 
-                if (m_ready_queue.empty() && !m_timers.empty()) {
+                if (m_readyQueue.empty() && !m_timers.empty()) {
                     // Small sleep to prevent busy looping if only waiting for timers
                     std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 }
@@ -46,20 +46,20 @@ public:
     }
 
     auto schedule(std::coroutine_handle<> handle) -> void {
-        m_ready_queue.push_back(handle);
+        m_readyQueue.push_back(handle);
     }
 
-    auto schedule_timer(std::chrono::steady_clock::time_point expiry, std::coroutine_handle<> handle) -> void {
+    auto scheduleTimer(std::chrono::steady_clock::time_point expiry, std::coroutine_handle<> handle) -> void {
         m_timers.push_back({expiry, handle});
     }
 
 private:
     struct TimerEntry {
-        std::chrono::steady_clock::time_point expiry;
-        std::coroutine_handle<> handle;
+        std::chrono::steady_clock::time_point m_expiry;
+        std::coroutine_handle<> m_handle;
     };
 
-    std::deque<std::coroutine_handle<>> m_ready_queue;
+    std::deque<std::coroutine_handle<>> m_readyQueue;
     std::vector<TimerEntry> m_timers;
 };
 

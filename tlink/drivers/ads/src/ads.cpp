@@ -4,12 +4,12 @@
 
 namespace tlink::drivers {
 
-AdsDriver::AdsDriver(std::string remote_net_id, std::string ip_address, uint16_t port)
-    : m_remote_net_id_str(std::move(remote_net_id))
-    , m_ip_address(std::move(ip_address))
+AdsDriver::AdsDriver(std::string remoteNetId, std::string ipAddress, uint16_t port)
+    : m_remoteNetIdStr(std::move(remoteNetId))
+    , m_ipAddress(std::move(ipAddress))
     , m_port(port)
 {
-    // TODO: Parse m_remote_net_id_str into m_net_id
+    // TODO: Parse m_remoteNetIdStr into m_netId
 }
 
 AdsDriver::~AdsDriver() {
@@ -18,8 +18,8 @@ AdsDriver::~AdsDriver() {
 
 auto AdsDriver::connect() -> Task<Result<void>> {
     // TODO: Implement ADS connection logic
-    // 1. AdsAddRoute(m_net_id, m_ip_address.c_str());
-    // 2. m_ads_port = AdsPortOpenEx();
+    // 1. AdsAddRoute(m_netId, m_ipAddress.c_str());
+    // 2. m_adsPort = AdsPortOpenEx();
     
     co_return tlink::success();
 }
@@ -29,7 +29,7 @@ auto AdsDriver::disconnect() -> Task<Result<void>> {
     co_return tlink::success();
 }
 
-auto AdsDriver::read_raw(std::string_view path) -> Task<Result<std::vector<std::byte>>> {
+auto AdsDriver::readRaw(std::string_view path) -> Task<Result<std::vector<std::byte>>> {
     // TODO: 
     // 1. Get handle for 'path' (AdsSyncReadWriteReqEx2 with ADSIGRP_SYM_HNDBYNAME)
     // 2. Read data size or data (AdsSyncReadReqEx2)
@@ -39,7 +39,7 @@ auto AdsDriver::read_raw(std::string_view path) -> Task<Result<std::vector<std::
     co_return dummy;
 }
 
-auto AdsDriver::write_raw(std::string_view path, const std::vector<std::byte>& data) -> Task<Result<void>> {
+auto AdsDriver::writeRaw(std::string_view path, const std::vector<std::byte>& data) -> Task<Result<void>> {
     // TODO: Implement Write
     co_return tlink::success();
 }

@@ -28,9 +28,9 @@ public:
         std::unique_lock lock(m_mutex);
         m_queue.push_back(std::move(value));
 
-        if (m_waiting_coroutine) {
-            auto handle = m_waiting_coroutine;
-            m_waiting_coroutine = nullptr;
+        if (m_waitingCoroutine) {
+            auto handle = m_waitingCoroutine;
+            m_waitingCoroutine = nullptr;
             lock.unlock(); // Unlock before resuming to avoid deadlock
             handle.resume();
         }
@@ -40,24 +40,24 @@ public:
      * @brief Awaitable object for fetching the next value.
      */
     struct NextAwaiter {
-        AsyncChannel* channel;
-        T result;
+        AsyncChannel* m_channel;
+        T m_result;
 
         bool await_ready() {
-            std::lock_guard lock(channel->m_mutex);
-            return !channel->m_queue.empty();
+            std::lock_guard lock(m_channel->m_mutex);
+            return !m_channel->m_queue.empty();
         }
 
         void await_suspend(std::coroutine_handle<> h) {
-            std::lock_guard lock(channel->m_mutex);
+            std::lock_guard lock(m_channel->m_mutex);
             // In a robust impl, check if queue became non-empty again or if another waiter exists
-            channel->m_waiting_coroutine = h;
+            m_channel->m_waitingCoroutine = h;
         }
 
         T await_resume() {
-            std::lock_guard lock(channel->m_mutex);
-            T val = std::move(channel->m_queue.front());
-            channel->m_queue.pop_front();
+            std::lock_guard lock(m_channel->m_mutex);
+            T val = std::move(m_channel->m_queue.front());
+            m_channel->m_queue.pop_front();
             return val;
         }
     };
@@ -72,7 +72,7 @@ public:
 private:
     std::mutex m_mutex;
     std::deque<T> m_queue;
-    std::coroutine_handle<> m_waiting_coroutine = nullptr;
+    std::coroutine_handle<> m_waitingCoroutine = nullptr;
 };
 
 } // namespace tlink

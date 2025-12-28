@@ -36,12 +36,12 @@ public:
     /**
      * @brief Low-level read operation.
      */
-    virtual auto read_raw(std::string_view path) -> Task<Result<std::vector<std::byte>>> = 0;
+    virtual auto readRaw(std::string_view path) -> Task<Result<std::vector<std::byte>>> = 0;
 
     /**
      * @brief Low-level write operation.
      */
-    virtual auto write_raw(std::string_view path, const std::vector<std::byte>& data) -> Task<Result<void>> = 0;
+    virtual auto writeRaw(std::string_view path, const std::vector<std::byte>& data) -> Task<Result<void>> = 0;
 
     /**
      * @brief Subscribe to value changes.

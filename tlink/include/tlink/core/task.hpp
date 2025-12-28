@@ -15,8 +15,8 @@ struct Task {
     using handle_type = std::coroutine_handle<promise_type>;
 
     struct promise_type {
-        T result;
-        std::coroutine_handle<> waiter;
+        T m_result;
+        std::coroutine_handle<> m_waiter;
 
         auto get_return_object() -> Task { return Task{handle_type::from_promise(*this)}; }
         auto initial_suspend() -> std::suspend_always { return {}; }
@@ -24,42 +24,42 @@ struct Task {
         struct FinalAwaiter {
             auto await_ready() noexcept -> bool { return false; }
             auto await_suspend(handle_type h) noexcept -> std::coroutine_handle<> {
-                return h.promise().waiter ? h.promise().waiter : std::noop_coroutine();
+                return h.promise().m_waiter ? h.promise().m_waiter : std::noop_coroutine();
             }
             auto await_resume() noexcept -> void {}
         };
         auto final_suspend() noexcept -> FinalAwaiter { return {}; }
 
-        auto return_value(T value) -> void { result = std::move(value); }
+        auto return_value(T value) -> void { m_result = std::move(value); }
         auto unhandled_exception() -> void { std::terminate(); }
     };
 
-    handle_type handle;
+    handle_type m_handle;
 
-    explicit Task(handle_type h) : handle(h) {}
-    ~Task() { if (handle) handle.destroy(); }
+    explicit Task(handle_type h) : m_handle(h) {}
+    ~Task() { if (m_handle) m_handle.destroy(); }
 
     Task(const Task&) = delete;
     Task& operator=(const Task&) = delete;
 
-    Task(Task&& other) noexcept : handle(std::exchange(other.handle, nullptr)) {}
+    Task(Task&& other) noexcept : m_handle(std::exchange(other.m_handle, nullptr)) {}
     Task& operator=(Task&& other) noexcept {
         if (this != &other) {
-            if (handle) handle.destroy();
-            handle = std::exchange(other.handle, nullptr);
+            if (m_handle) m_handle.destroy();
+            m_handle = std::exchange(other.m_handle, nullptr);
         }
         return *this;
     }
 
     // Awaiter interface
-    auto await_ready() const noexcept -> bool { return !handle || handle.done(); }
+    auto await_ready() const noexcept -> bool { return !m_handle || m_handle.done(); }
 
     auto await_suspend(std::coroutine_handle<> waiter) noexcept -> std::coroutine_handle<> {
-        handle.promise().waiter = waiter;
-        return handle;
+        m_handle.promise().m_waiter = waiter;
+        return m_handle;
     }
 
-    auto await_resume() -> T { return std::move(handle.promise().result); }
+    auto await_resume() -> T { return std::move(m_handle.promise().m_result); }
 };
 
 /**
@@ -68,7 +68,7 @@ struct Task {
 template<>
 struct Task<void> {
     struct promise_type {
-        std::coroutine_handle<> waiter;
+        std::coroutine_handle<> m_waiter;
 
         auto get_return_object() -> Task { return Task{std::coroutine_handle<promise_type>::from_promise(*this)}; }
         auto initial_suspend() -> std::suspend_always { return {}; }
@@ -76,7 +76,7 @@ struct Task<void> {
         struct FinalAwaiter {
             auto await_ready() noexcept -> bool { return false; }
             auto await_suspend(std::coroutine_handle<promise_type> h) noexcept -> std::coroutine_handle<> {
-                return h.promise().waiter ? h.promise().waiter : std::noop_coroutine();
+                return h.promise().m_waiter ? h.promise().m_waiter : std::noop_coroutine();
             }
             auto await_resume() noexcept -> void {}
         };
@@ -86,28 +86,28 @@ struct Task<void> {
         auto unhandled_exception() -> void { std::terminate(); }
     };
 
-    std::coroutine_handle<promise_type> handle;
+    std::coroutine_handle<promise_type> m_handle;
 
-    explicit Task(std::coroutine_handle<promise_type> h) : handle(h) {}
-    ~Task() { if (handle) handle.destroy(); }
+    explicit Task(std::coroutine_handle<promise_type> h) : m_handle(h) {}
+    ~Task() { if (m_handle) m_handle.destroy(); }
 
     Task(const Task&) = delete;
     Task& operator=(const Task&) = delete;
 
-    Task(Task&& other) noexcept : handle(std::exchange(other.handle, nullptr)) {}
+    Task(Task&& other) noexcept : m_handle(std::exchange(other.m_handle, nullptr)) {}
     Task& operator=(Task&& other) noexcept {
         if (this != &other) {
-            if (handle) handle.destroy();
-            handle = std::exchange(other.handle, nullptr);
+            if (m_handle) m_handle.destroy();
+            m_handle = std::exchange(other.m_handle, nullptr);
         }
         return *this;
     }
 
-    auto await_ready() const noexcept -> bool { return !handle || handle.done(); }
+    auto await_ready() const noexcept -> bool { return !m_handle || m_handle.done(); }
 
     auto await_suspend(std::coroutine_handle<> waiter) noexcept -> std::coroutine_handle<> {
-        handle.promise().waiter = waiter;
-        return handle;
+        m_handle.promise().m_waiter = waiter;
+        return m_handle;
     }
 
     auto await_resume() -> void {}

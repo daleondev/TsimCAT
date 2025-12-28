@@ -20,18 +20,18 @@ public:
     auto connect() -> Task<Result<void>> override;
     auto disconnect() -> Task<Result<void>> override;
     
-    auto read_raw(std::string_view path) -> Task<Result<std::vector<std::byte>>> override;
-    auto write_raw(std::string_view path, const std::vector<std::byte>& data) -> Task<Result<void>> override;
+    auto readRaw(std::string_view path) -> Task<Result<std::vector<std::byte>>> override;
+    auto writeRaw(std::string_view path, const std::vector<std::byte>& data) -> Task<Result<void>> override;
     
     auto subscribe(std::string_view path) -> Task<Result<std::shared_ptr<DataStream>>> override;
 
 private:
-    std::string m_remote_net_id_str;
-    std::string m_ip_address;
+    std::string m_remoteNetIdStr;
+    std::string m_ipAddress;
     uint16_t m_port;
     
-    AmsNetId m_net_id;
-    long m_ads_port = 0; // The local port handle returned by AdsPortOpenEx
+    AmsNetId m_netId;
+    long m_adsPort = 0; // The local port handle returned by AdsPortOpenEx
 };
 
 } // namespace tlink::drivers
