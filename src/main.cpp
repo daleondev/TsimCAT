@@ -1,69 +1,63 @@
-#include "AdsLib.h"
-#include "AdsNotificationOOI.h"
-#include "AdsVariable.h"
-
+#include <generator>
+#include <exception>
 #include <print>
-#include <atomic>
+#include <string_view>
+#include <thread>
 #include <chrono>
-#include <iostream>
+#include <vector>
+#include <random>
 
-static std::atomic_bool s_running{false};
+// -----------------------------------------------------------------------------
+// Example Coroutine Logic using C++23 std::generator
+// -----------------------------------------------------------------------------
+
+struct SensorData
+{
+    int id;
+    double value;
+    std::string_view status;
+};
+
+// Simulates a stream of sensor data
+std::generator<SensorData> simulate_sensor_stream(int sensor_id, int count)
+{
+    std::mt19937 gen(std::random_device{}());
+    std::normal_distribution<> d(25.0, 2.0); // Mean 25.0, stddev 2.0
+
+    for (int i = 0; i < count; ++i)
+    {
+        double reading = d(gen);
+        std::string_view status = (reading > 28.0) ? "HIGH" : (reading < 22.0 ? "LOW" : "OK");
+
+        // Emulate some processing time
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+        co_yield SensorData{sensor_id, reading, status};
+    }
+}
 
 auto main() -> int
 {
-    std::println("Starting Example");
+    std::println("Starting C++23 Coroutine Example: Sensor Stream Simulation");
+    std::println("---------------------------------------------------------");
 
     try
     {
-        bhf::ads::SetLocalAddress({192, 168, 56, 1, 1, 20});
-        auto device{AdsDevice(
-            "192.168.56.1",
-            AmsNetId{192, 168, 56, 1, 1, 1},
-            AMSPORT_R0_PLC_TC3)};
-
-        auto state = device.GetState();
-        std::cout << "Connected! State: " << state.ads << std::endl;
-
-        // AdsNotificationAttrib attrib{
-        //     .cbLength = sizeof(bool),
-        //     .nTransMode = ADSTRANS_SERVERCYCLE,
-        //     .nMaxDelay = 0,
-        //     .nCycleTime = 4000000};
-
-        // auto notification{AdsNotification(
-        //     device,
-        //     "P_GripperControl.stPneumaticGripperData.bOpen",
-        //     attrib,
-        //     [](const AmsAddr *pAddr,
-        //        const AdsNotificationHeader *pNotification,
-        //        uint32_t hUser) -> void
-        //     {
-        //         std::println("Notified : {}", pNotification->cbSampleSize);
-        //     },
-        //     0x01)};
-
-        // using namespace std::chrono_literals;
-        // s_running = true;
-        // while (s_running)
-        // {
-        // }
-        std::cin.get();
-        return 0;
+        // Range-based for loop support via begin()/end() iterators
+        int idx = 1;
+        for (const auto &data : simulate_sensor_stream(101, 10))
+        {
+            std::println("Reading #{:02}: Sensor={} Value={:.2f} Status={}",
+                         idx++, data.id, data.value, data.status);
+        }
     }
-    catch (const AdsException &ex)
+    catch (const std::exception &ex)
     {
-        std::println("Error: {}", ex.errorCode);
-        std::println("AdsException message: {}", ex.what());
+        std::println(stderr, "Exception caught: {}", ex.what());
         return 1;
     }
-    catch (const std::runtime_error &ex)
-    {
-        std::println("Error: {}", ex.what());
-        return 1;
-    }
-    catch (...)
-    {
-        std::println("Unknown exception!");
-        return 1;
-    }
+
+    std::println("---------------------------------------------------------");
+    std::println("Simulation Complete.");
+    return 0;
 }

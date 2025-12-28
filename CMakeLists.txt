@@ -6,14 +6,17 @@ project(
     LANGUAGES CXX
 )
 
+find_package(Threads REQUIRED)
+
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-add_subdirectory(external/ADS)
+add_subdirectory(external/ADS/AdsLib)
+set_target_properties(ads PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/external/ADS")
+target_compile_definitions(ads PRIVATE CONFIG_DEFAULT_LOGLEVEL=1)
 
 set(ELEMENTS_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(external/elements)
 
 add_subdirectory(external/json)
-
 add_subdirectory(external/magic_enum)
 
 file(
