@@ -56,6 +56,8 @@ namespace tlink
          */
         virtual auto subscribe(std::string_view path) -> Task<Result<std::shared_ptr<DataStream>>> = 0;
 
+        virtual auto unsubscribe(std::string_view path) -> Task<Result<void>> = 0;
+
         /**
          * @brief Low-level read operation.
          */

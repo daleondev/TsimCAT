@@ -30,25 +30,25 @@ auto runApp(tlink::Context &ctx) -> tlink::Task<void>
         std::println("Value: {}", readRes.value());
     }
 
-    // // 3. Start a Subscription (Asynchronous Stream)
-    // std::println("App: Subscribing to MAIN.stStatus...");
-    // auto subRes = co_await adsDriver.subscribe("P_GripperControl.stPneumaticGripperData.bOpen");
+    // 3. Start a Subscription (Asynchronous Stream)
+    std::println("App: Subscribing to MAIN.stStatus...");
+    auto subRes = co_await adsDriver.subscribe("P_GripperControl.stPneumaticGripperData.bOpen");
 
-    // if (subRes)
-    // {
-    //     auto stream = subRes.value();
-    //     std::println("App: Subscription active. Waiting for first 3 updates...");
+    if (subRes)
+    {
+        auto stream = subRes.value();
+        std::println("App: Subscription active. Waiting for first 3 updates...");
 
-    //     for (int i = 0; i < 3; ++i)
-    //     {
-    //         // Suspends until the next update is pushed by the driver
-    //         auto update = co_await stream->next();
-    //         if (update)
-    //         {
-    //             std::println("   [Update {:02}] Received {} bytes", i + 1, update.value().size());
-    //         }
-    //     }
-    // }
+        for (int i = 0; i < 3; ++i)
+        {
+            // Suspends until the next update is pushed by the driver
+            auto update = co_await stream->next();
+            if (update)
+            {
+                std::println("   [Update {:02}] Received {} bytes", i + 1, update.value().size());
+            }
+        }
+    }
 
     // 4. Cleanup
     std::println("App: Disconnecting...");

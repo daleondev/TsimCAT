@@ -256,4 +256,9 @@ namespace tlink::drivers
         co_return stream;
     }
 
+    auto AdsDriver::unsubscribe(std::string_view path) -> Task<Result<void>>
+    {
+        co_return success();
+    }
+
 } // namespace tlink::drivers

@@ -31,6 +31,7 @@ namespace tlink::drivers
         auto writeFrom(std::string_view path, std::span<const std::byte> src) -> Task<Result<void>> override;
 
         auto subscribe(std::string_view path) -> Task<Result<std::shared_ptr<DataStream>>> override;
+        auto unsubscribe(std::string_view path) -> Task<Result<void>> override;
 
     private:
         AmsNetId m_remoteNetId;
