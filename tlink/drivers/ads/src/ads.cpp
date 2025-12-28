@@ -19,6 +19,7 @@ namespace
         {
             assert(i < 6 && "Invalid NetId string");
             std::from_chars(part.data(), part.data() + part.size(), netId.b[i]);
+            ++i;
         }
         return netId;
     }
@@ -154,7 +155,10 @@ namespace tlink::drivers
     AdsDriver::AdsDriver(std::string_view remoteNetId, std::string ipAddress, uint16_t port, std::string_view localNetId)
         : m_remoteNetId{strToNetId(remoteNetId)}, m_ipAddress(std::move(ipAddress)), m_port{port}, m_route{nullptr}, m_localNetId{strToNetId(localNetId)}
     {
-        bhf::ads::SetLocalAddress(m_localNetId);
+        if (!localNetId.empty())
+        {
+            bhf::ads::SetLocalAddress(m_localNetId);
+        }
     }
 
     AdsDriver::~AdsDriver()
@@ -168,6 +172,7 @@ namespace tlink::drivers
         try
         {
             m_route = std::make_unique<AdsDevice>(m_ipAddress, m_remoteNetId, m_port);
+            (void)m_route->GetDeviceInfo();
         }
         catch (const std::exception &ex)
         {
@@ -200,12 +205,20 @@ namespace tlink::drivers
 
     auto AdsDriver::readRaw(std::string_view path) -> Task<Result<std::vector<std::byte>>>
     {
-        auto handle{m_route->GetHandle(std::string(path))};
-
         uint32_t bytesRead = 0;
         std::vector<std::byte> data(1024);
-        auto err{static_cast<AdsError>(m_route->ReadReqEx2(ADSIGRP_SYM_VALBYHND, *handle, data.size(),
-                                                           data.data(), &bytesRead))};
+
+        auto err{AdsError::None};
+        try
+        {
+            auto handle{m_route->GetHandle(std::string(path))};
+            err = static_cast<AdsError>(m_route->ReadReqEx2(ADSIGRP_SYM_VALBYHND, *handle, data.size(),
+                                                            data.data(), &bytesRead));
+        }
+        catch (const std::exception &ex)
+        {
+            err = handleException(ex);
+        }
 
         if (err != AdsError::None)
         {
@@ -218,8 +231,17 @@ namespace tlink::drivers
 
     auto AdsDriver::writeRaw(std::string_view path, const std::vector<std::byte> &data) -> Task<Result<void>>
     {
-        auto handle{m_route->GetHandle(std::string(path))};
-        auto err{static_cast<AdsError>(m_route->WriteReqEx(ADSIGRP_SYM_VALBYHND, *handle, data.size(), data.data()))};
+        auto err{AdsError::None};
+        try
+        {
+            auto handle{m_route->GetHandle(std::string(path))};
+            err = static_cast<AdsError>(m_route->WriteReqEx(ADSIGRP_SYM_VALBYHND, *handle, data.size(), data.data()));
+        }
+        catch (const std::exception &ex)
+        {
+            err = handleException(ex);
+        }
+
         co_return err == AdsError::None ? tlink::success() : std::unexpected(make_error_code(err));
     }
 
