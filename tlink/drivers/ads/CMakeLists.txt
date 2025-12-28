@@ -23,6 +23,7 @@ target_link_libraries(
     PUBLIC
     tlink::tlink
     ads::ads
+    magic_enum::magic_enum
 )
 
 target_compile_features(tlink_ads PUBLIC cxx_std_23)

@@ -2,9 +2,9 @@
 
 #include "tlink/driver.hpp"
 
-#include "AdsLib/AdsLib.h"
-#include "AdsLib/AdsNotificationOOI.h"
-#include "AdsLib/AdsVariable.h"
+#include <AdsLib/AdsLib.h>
+#include <AdsLib/AdsNotificationOOI.h>
+#include <AdsLib/AdsVariable.h>
 
 #include <string>
 
@@ -20,7 +20,7 @@ namespace tlink::drivers
          * @param ipAddress The IP address of the target (e.g. "127.0.0.1").
          * @param port The ADS port (default 851 for PLC1).
          */
-        AdsDriver(std::string_view remoteNetId, std::string ipAddress, uint16_t port = AMSPORT_R0_PLC_TC3, std::string_view localNetId = "0.0.0.0.0.0");
+        AdsDriver(std::string_view remoteNetId, std::string ipAddress, uint16_t port = AMSPORT_R0_PLC_TC3, std::string_view localNetId = "");
         ~AdsDriver() override;
 
         // IDriver Interface Implementation
@@ -29,9 +29,6 @@ namespace tlink::drivers
 
         auto readInto(std::string_view path, std::span<std::byte> dest) -> Task<Result<size_t>> override;
         auto writeFrom(std::string_view path, std::span<const std::byte> src) -> Task<Result<void>> override;
-
-        // auto readRaw(std::string_view path) -> Task<Result<std::vector<std::byte>>> override;
-        // auto writeRaw(std::string_view path, const std::vector<std::byte> &data) -> Task<Result<void>> override;
 
         auto subscribe(std::string_view path) -> Task<Result<std::shared_ptr<DataStream>>> override;
 

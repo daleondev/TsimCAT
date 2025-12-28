@@ -1,5 +1,7 @@
 #include "tlink/drivers/ads.hpp"
 
+#include <magic_enum/magic_enum.hpp>
+
 #include <print>
 #include <atomic>
 #include <ranges>
@@ -110,8 +112,7 @@ namespace
 
         std::string message(int ev) const override
         {
-            (void)static_cast<AdsError>(ev);
-            return "todo with magic_enum";
+            return std::string(magic_enum::enum_name(static_cast<AdsError>(ev)));
         }
     };
 
@@ -241,48 +242,6 @@ namespace tlink::drivers
 
         co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
     }
-
-    // auto AdsDriver::readRaw(std::string_view path) -> Task<Result<std::vector<std::byte>>>
-    // {
-    //     uint32_t bytesRead = 0;
-    //     std::vector<std::byte> data(1024);
-
-    //     auto err{AdsError::None};
-    //     try
-    //     {
-    //         auto handle{m_route->GetHandle(std::string(path))};
-    //         err = static_cast<AdsError>(m_route->ReadReqEx2(ADSIGRP_SYM_VALBYHND, *handle, data.size(),
-    //                                                         data.data(), &bytesRead));
-    //     }
-    //     catch (const std::exception &ex)
-    //     {
-    //         err = handleException(ex);
-    //     }
-
-    //     if (err != AdsError::None)
-    //     {
-    //         co_return std::unexpected(make_error_code(err));
-    //     }
-
-    //     data.resize(bytesRead);
-    //     co_return data;
-    // }
-
-    // auto AdsDriver::writeRaw(std::string_view path, const std::vector<std::byte> &data) -> Task<Result<void>>
-    // {
-    //     auto err{AdsError::None};
-    //     try
-    //     {
-    //         auto handle{m_route->GetHandle(std::string(path))};
-    //         err = static_cast<AdsError>(m_route->WriteReqEx(ADSIGRP_SYM_VALBYHND, *handle, data.size(), data.data()));
-    //     }
-    //     catch (const std::exception &ex)
-    //     {
-    //         err = handleException(ex);
-    //     }
-
-    //     co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
-    // }
 
     auto AdsDriver::subscribe(std::string_view path) -> Task<Result<std::shared_ptr<DataStream>>>
     {
