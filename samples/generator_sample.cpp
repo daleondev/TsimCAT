@@ -24,8 +24,22 @@ public:
     Generator(const Generator &) = delete;
     Generator &operator=(const Generator &) = delete;
 
-    Generator(Generator &&) noexcept = default;
-    Generator &operator=(Generator &&) noexcept = default;
+    Generator(Generator &&other) noexcept : m_handle(other.m_handle)
+    {
+        other.m_handle = nullptr;
+    }
+
+    Generator &operator=(Generator &&other) noexcept
+    {
+        if (this != &other)
+        {
+            if (m_handle)
+                m_handle.destroy();
+            m_handle = other.m_handle;
+            other.m_handle = nullptr;
+        }
+        return *this;
+    }
 
     explicit operator bool()
     {
@@ -75,7 +89,7 @@ struct GeneratorPromise
 
     Generator<T> get_return_object()
     {
-        return Generator(Generator<T>::handle_type::from_promise(*this));
+        return Generator<T>::handle_type::from_promise(*this);
     }
     std::suspend_always initial_suspend()
     {
