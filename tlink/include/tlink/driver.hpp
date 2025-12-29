@@ -5,6 +5,7 @@
 #include <memory>
 #include <span>
 #include <any>
+#include <chrono>
 #include "core/task.hpp"
 #include "core/result.hpp"
 #include "core/channel.hpp"
@@ -17,6 +18,12 @@ namespace tlink
 
     // The stream type used by subscribers
     using RawDataStream = AsyncChannel<Result<RawDataPacket>>;
+
+    enum class SubscriptionType
+    {
+        OnChange, // Trigger only when value changes
+        Cyclic    // Trigger at fixed intervals
+    };
 
     struct RawSubscription
     {
@@ -60,9 +67,11 @@ namespace tlink
          * The driver pushes updates into this channel.
          *
          * @param path Protocol-specific path.
+         * @param type The trigger type (OnChange or Cyclic).
+         * @param interval The cycle or sampling interval (usage depends on driver).
          * @return A shared pointer to the data stream.
          */
-        virtual auto subscribe(std::string_view path) -> Task<Result<std::shared_ptr<RawSubscription>>> = 0;
+        virtual auto subscribe(std::string_view path, SubscriptionType type = SubscriptionType::OnChange, std::chrono::milliseconds interval = std::chrono::milliseconds(0)) -> Task<Result<std::shared_ptr<RawSubscription>>> = 0;
 
         virtual auto unsubscribe(std::shared_ptr<RawSubscription> subscription) -> Task<Result<void>> = 0;
 

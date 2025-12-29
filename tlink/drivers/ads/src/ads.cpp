@@ -340,10 +340,19 @@ namespace tlink::drivers
         }
     }
 
-    auto AdsDriver::subscribe(std::string_view path) -> Task<Result<std::shared_ptr<RawSubscription>>>
+    auto AdsDriver::subscribe(std::string_view path, SubscriptionType type, std::chrono::milliseconds interval) -> Task<Result<std::shared_ptr<RawSubscription>>>
     {
+        uint32_t nTransMode = (type == SubscriptionType::OnChange) ? ADSTRANS_SERVERONCHA : ADSTRANS_SERVERCYCLE;
+        
+        // ADS expects 100ns units. 1ms = 10,000 units.
+        uint32_t nCycleTime = static_cast<uint32_t>(interval.count() * 10000);
+
         const AdsNotificationAttrib attrib = {
-            1024, ADSTRANS_SERVERCYCLE, 0, {4000000}};
+            1024, 
+            nTransMode,
+            0, 
+            {nCycleTime}
+        };
 
         auto err{AdsError::None};
         try

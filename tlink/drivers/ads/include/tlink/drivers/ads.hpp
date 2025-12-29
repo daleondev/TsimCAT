@@ -36,7 +36,7 @@ namespace tlink::drivers
         auto readInto(std::string_view path, std::span<std::byte> dest) -> Task<Result<size_t>> override;
         auto writeFrom(std::string_view path, std::span<const std::byte> src) -> Task<Result<void>> override;
 
-        auto subscribe(std::string_view path) -> Task<Result<std::shared_ptr<RawSubscription>>> override;
+        auto subscribe(std::string_view path, SubscriptionType type = SubscriptionType::OnChange, std::chrono::milliseconds interval = std::chrono::milliseconds(0)) -> Task<Result<std::shared_ptr<RawSubscription>>> override;
         auto unsubscribe(std::shared_ptr<RawSubscription> subscription) -> Task<Result<void>> override;
 
     private:
