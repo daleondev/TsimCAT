@@ -15,7 +15,7 @@ The core philosophy is to abstract the underlying driver mechanics (callbacks, t
 *   **`src/`**: Application source code.
     *   `main.cpp`: Currently contains a `MockDriver` and a demonstration of the TLink framework.
 
-## Current Status (2025-12-28)
+## Current Status (2025-12-29)
 
 ### Implemented
 1.  **TLink Core Architecture:**
@@ -25,20 +25,24 @@ The core philosophy is to abstract the underlying driver mechanics (callbacks, t
     *   `tlink::AsyncChannel<T>`: A thread-safe, awaitable queue for subscriptions.
 2.  **Abstract Driver Interface (`IDriver`):**
     *   `connect()` / `disconnect()`
-    *   `read_raw()` / `write_raw()` (Request/Response)
-    *   `subscribe()` (Returns a `DataStream` for pull-based updates)
-3.  **Build System:**
+    *   `readInto()` / `writeFrom()` (Raw span-based access)
+    *   `read<T>()` / `write<T>()`: Basic typed access using `std::span`.
+    *   `subscribe()`: Interface for pull-based data streams.
+3.  **ADS Driver (Partial):**
+    *   Basic connection management and handle-based Read/Write.
+    *   Integration with `AdsLib` (Beckhoff Open Source).
+4.  **Build System:**
     *   CMake project structure is modularized.
     *   `tlink` is an `INTERFACE` library.
-    *   Fixed `ADS` library build issues (name collision with `semaphore.h`) by isolating include paths.
 
 ### Missing / To-Do
-1.  **Real Drivers:**
-    *   **ADS Driver:** Implement `IDriver` using `AdsLib`. Needs to bridge C-callbacks to `tlink::Task`.
-    *   **TCP/UDP Driver:** Implement `IDriver` using `asio`.
-2.  **Type System:** Currently `read_raw` returns `std::vector<std::byte>`. We need a serialization layer to read/write actual types (`int`, `float`, structs).
-3.  **Endpoint Resolution:** The `IDriver` takes a `string_view path`. We need logic to resolve these paths to handles (e.g., ADS handles).
-4.  **Application Logic:** The `main.cpp` is just a mock test. No actual simulation logic exists yet.
+1.  **ADS Driver Completion:**
+    *   Finish `subscribe()` / `unsubscribe()` logic.
+    *   Optimize handle management (caching handles instead of re-fetching).
+    *   Properly bridge ADS callbacks to `tlink::AsyncChannel`.
+2.  **TCP/UDP Driver:** Implement `IDriver` using `asio`.
+3.  **Advanced Type System:** Beyond simple PODs, we need a way to handle PLC-specific strings and complex structs automatically.
+4.  **Application Logic:** Move beyond `main.cpp` demos to a proper simulation runner.
 
 ## Next Steps
 1.  Implement the **ADS Driver** (`AdsDriver : public tlink::IDriver`).
