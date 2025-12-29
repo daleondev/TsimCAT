@@ -8,6 +8,8 @@
 #include <cassert>
 #include <iostream>
 #include <unordered_set>
+#include <unordered_map>
+#include <mutex>
 
 namespace
 {
@@ -141,6 +143,11 @@ namespace
         std::println(std::cerr, "Unknown Exception: {}", ex.what());
         return AdsError::Unknown;
     }
+
+    // Registry for safe 64-bit -> 32-bit callback handling
+    static std::mutex s_registryMutex;
+    static std::unordered_map<uint32_t, tlink::drivers::AdsDriver *> s_registry;
+    static std::atomic<uint32_t> s_nextDriverId{1};
 }
 
 namespace std
@@ -155,16 +162,23 @@ namespace tlink::drivers
 {
 
     AdsDriver::AdsDriver(std::string_view remoteNetId, std::string ipAddress, uint16_t port, std::string_view localNetId)
-        : m_remoteNetId{strToNetId(remoteNetId)}, m_ipAddress(std::move(ipAddress)), m_port{port}, m_route{nullptr}, m_localNetId{strToNetId(localNetId)}
+        : m_remoteNetId{strToNetId(remoteNetId)}, m_ipAddress(std::move(ipAddress)), m_port{port}, m_route{nullptr}, m_localNetId{strToNetId(localNetId)}, m_driverId{s_nextDriverId++}
     {
         if (!localNetId.empty())
         {
             bhf::ads::SetLocalAddress(m_localNetId);
         }
+
+        std::lock_guard lock(s_registryMutex);
+        s_registry[m_driverId] = this;
     }
 
     AdsDriver::~AdsDriver()
     {
+        {
+            std::lock_guard lock(s_registryMutex);
+            s_registry.erase(m_driverId);
+        }
         (void)disconnect();
     }
 
@@ -194,10 +208,8 @@ namespace tlink::drivers
         auto err{AdsError::None};
         try
         {
-            std::unordered_set<uint32_t> fastLookup(m_subscriptions.begin(), m_subscriptions.end());
-            std::erase_if(s_subscriptions, [&fastLookup](const auto &entry)
-                          { return fastLookup.contains(entry.first->id); });
-            m_subscriptions.clear();
+            std::lock_guard lock(m_mutex);
+            m_subscriptionContexts.clear();
             m_route.reset();
         }
         catch (const std::exception &ex)
@@ -247,58 +259,70 @@ namespace tlink::drivers
         co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
     }
 
+    void AdsDriver::NotificationCallback(const AmsAddr *pAddr, const AdsNotificationHeader *pNotification, uint32_t hUser)
+    {
+        if (hUser)
+        {
+            std::lock_guard lock(s_registryMutex);
+            if (auto it = s_registry.find(hUser); it != s_registry.end())
+            {
+                it->second->OnNotification(pNotification);
+            }
+        }
+    }
+
+    void AdsDriver::OnNotification(const AdsNotificationHeader *pNotification)
+    {
+        std::lock_guard lock(m_mutex);
+        if (auto it = m_subscriptionContexts.find(pNotification->hNotification); it != m_subscriptionContexts.end())
+        {
+            const auto *dataPtr = reinterpret_cast<const std::byte *>(pNotification + 1);
+            std::vector<std::byte> data(dataPtr, dataPtr + pNotification->cbSampleSize);
+            it->second->stream->stream.push(std::move(data));
+        }
+    }
+
     auto AdsDriver::subscribe(std::string_view path) -> Task<Result<std::shared_ptr<RawSubscription>>>
     {
         const AdsNotificationAttrib attrib = {
             1024, ADSTRANS_SERVERCYCLE, 0, {4000000}};
 
-        std::shared_ptr<RawSubscription> result{nullptr};
         auto err{AdsError::None};
         try
         {
-            std::lock_guard lock(s_mutex);
-            auto handle{m_route->GetHandle(ADSIGRP_SYM_VALBYHND, *m_route->GetHandle(std::string(path)), attrib, [](const AmsAddr *pAddr, const AdsNotificationHeader *pNotification, uint32_t hUser)
-                                           {
-                                            std::lock_guard lock(s_mutex);
-                                               auto subscription{std::ranges::find_if(s_subscriptions, [&](const auto &entry)
-                                                                                      { return entry.first->id == pNotification->hNotification; })};
-                                                if (subscription != s_subscriptions.end())
-                                                {
-                                                    subscription->first->stream.push({});
-                                                } }, 0)};
+            auto symbolHandle = m_route->GetHandle(std::string(path));
+            auto notificationHandle = m_route->GetHandle(ADSIGRP_SYM_VALBYHND, *symbolHandle, attrib, &AdsDriver::NotificationCallback, m_driverId);
 
-            auto subscription{s_subscriptions.emplace(std::make_shared<RawSubscription>((uint64_t)*handle), std::move(handle))};
-            m_subscriptions.push_back(subscription.first->first->id);
-            result = subscription.first->first;
+            auto context = std::make_shared<SubscriptionContext>();
+            context->symbolHandle.reset(symbolHandle.release());
+            context->notificationHandle.reset(notificationHandle.release());
+            context->stream = std::make_shared<RawSubscription>(static_cast<uint64_t>(*context->notificationHandle));
+
+            std::lock_guard lock(m_mutex);
+            m_subscriptionContexts.emplace(*context->notificationHandle, context);
+
+            co_return context->stream;
         }
         catch (const std::exception &ex)
         {
             err = handleException(ex);
         }
 
-        if (err != AdsError::None)
-        {
-            co_return std::unexpected(make_error_code(err));
-        }
-        if (!result)
-        {
-            co_return std::unexpected(make_error_code(AdsError::Unknown));
-        }
-
-        co_return result;
+        co_return std::unexpected(make_error_code(err));
     }
 
     auto AdsDriver::unsubscribe(std::shared_ptr<RawSubscription> subscription) -> Task<Result<void>>
     {
+        if (!subscription)
+        {
+            co_return success();
+        }
+
         auto err{AdsError::None};
         try
         {
-            std::lock_guard lock(s_mutex);
-            if (!s_subscriptions.erase(subscription))
-            {
-                err = AdsError::Unknown;
-            }
-            subscription.reset();
+            std::lock_guard lock(m_mutex);
+            m_subscriptionContexts.erase(static_cast<uint32_t>(subscription->id));
         }
         catch (const std::exception &ex)
         {

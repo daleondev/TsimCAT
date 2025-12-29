@@ -5,9 +5,11 @@
 #include <AdsLib/AdsLib.h>
 #include <AdsLib/AdsNotificationOOI.h>
 #include <AdsLib/AdsVariable.h>
+#include <AdsLib/AdsDevice.h>
 
 #include <string>
 #include <mutex>
+#include <unordered_map>
 
 namespace tlink::drivers
 {
@@ -35,16 +37,29 @@ namespace tlink::drivers
         auto unsubscribe(std::shared_ptr<RawSubscription> subscription) -> Task<Result<void>> override;
 
     private:
+        struct SubscriptionContext
+        {
+            AdsHandle symbolHandle;
+            AdsHandle notificationHandle;
+            std::shared_ptr<RawSubscription> stream;
+
+            SubscriptionContext() : symbolHandle(nullptr, {[](uint32_t){return 0;}}), notificationHandle(nullptr, {[](uint32_t){return 0;}}) {}
+        };
+
+        static void NotificationCallback(const AmsAddr* pAddr, const AdsNotificationHeader* pNotification, uint32_t hUser);
+        void OnNotification(const AdsNotificationHeader* pNotification);
+
         AmsNetId m_remoteNetId;
         std::string m_ipAddress;
         uint16_t m_port;
         AmsNetId m_localNetId;
 
         std::unique_ptr<AdsDevice> m_route;
-        std::vector<uint32_t> m_subscriptions;
 
-        inline static std::mutex s_mutex{};
-        inline static std::unordered_map<std::shared_ptr<RawSubscription>, AdsHandle> s_subscriptions{};
+        std::mutex m_mutex;
+        uint32_t m_driverId;
+        // Map notification handle ID -> Context
+        std::unordered_map<uint32_t, std::shared_ptr<SubscriptionContext>> m_subscriptionContexts;
     };
 
 } // namespace tlink::drivers
