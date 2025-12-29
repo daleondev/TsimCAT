@@ -8,15 +8,17 @@
 
 auto runApp(tlink::Context &ctx) -> tlink::Task<void>
 {
+    using namespace std::chrono_literals;
     // 1. Initialize the ADS Driver
     tlink::drivers::AdsDriver adsDriver(ctx, "192.168.56.1.1.1", "192.168.56.1", AMSPORT_R0_PLC_TC3, "192.168.56.1.1.20");
 
     std::println("App: Connecting to PLC via ADS...");
-    auto connRes = co_await adsDriver.connect();
+    auto connRes = co_await adsDriver.connect(100ms);
 
     if (!connRes)
     {
         std::println(stderr, "App: Failed to connect: {}", connRes.error().message());
+        ctx.stop();
         co_return;
     }
 
@@ -31,8 +33,8 @@ auto runApp(tlink::Context &ctx) -> tlink::Task<void>
     }
 
     // 3. Start a Subscription (Asynchronous Stream)
-    std::println("App: Subscribing to MAIN.stStatus...");
-    auto subRes = co_await adsDriver.subscribe("P_GripperControl.stPneumaticGripperData.bOpen");
+    std::println("App: Subscribing to P_GripperControl.stPneumaticGripperData.bOpen...");
+    auto subRes = co_await adsDriver.subscribe("P_GripperControl.stPneumaticGripperData.bOpen", tlink::SubscriptionType::Cyclic, 100ms);
 
     if (subRes)
     {
@@ -54,7 +56,7 @@ auto runApp(tlink::Context &ctx) -> tlink::Task<void>
     std::println("App: Disconnecting...");
     co_await adsDriver.disconnect();
     std::println("App: Shutdown complete.");
-    
+
     // Stop the event loop
     ctx.stop();
 }

@@ -11,7 +11,10 @@
 #include <mutex>
 #include <unordered_map>
 
-namespace tlink { class Context; }
+namespace tlink
+{
+    class Context;
+}
 
 namespace tlink::drivers
 {
@@ -30,27 +33,33 @@ namespace tlink::drivers
         ~AdsDriver() override;
 
         // IDriver Interface Implementation
-        auto connect() -> Task<Result<void>> override;
-        auto disconnect() -> Task<Result<void>> override;
+        auto connect(std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) -> Task<Result<void>> override;
+        auto disconnect(std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) -> Task<Result<void>> override;
 
-        auto readInto(std::string_view path, std::span<std::byte> dest) -> Task<Result<size_t>> override;
-        auto writeFrom(std::string_view path, std::span<const std::byte> src) -> Task<Result<void>> override;
+        auto readInto(std::string_view path, std::span<std::byte> dest, std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) -> Task<Result<size_t>> override;
+        auto writeFrom(std::string_view path, std::span<const std::byte> src, std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) -> Task<Result<void>> override;
 
         auto subscribe(std::string_view path, SubscriptionType type = SubscriptionType::OnChange, std::chrono::milliseconds interval = std::chrono::milliseconds(0)) -> Task<Result<std::shared_ptr<RawSubscription>>> override;
         auto unsubscribe(std::shared_ptr<RawSubscription> subscription) -> Task<Result<void>> override;
 
     private:
+        auto getTimeout() -> std::chrono::milliseconds;
+        auto setTimeout(std::chrono::milliseconds timeout) -> void;
+
         struct SubscriptionContext
         {
             AdsHandle symbolHandle;
             AdsHandle notificationHandle;
             std::shared_ptr<RawSubscription> stream;
 
-            SubscriptionContext() : symbolHandle(nullptr, {[](uint32_t){return 0;}}), notificationHandle(nullptr, {[](uint32_t){return 0;}}) {}
+            SubscriptionContext() : symbolHandle(nullptr, {[](uint32_t)
+                                                           { return 0; }}),
+                                    notificationHandle(nullptr, {[](uint32_t)
+                                                                 { return 0; }}) {}
         };
 
-        static void NotificationCallback(const AmsAddr* pAddr, const AdsNotificationHeader* pNotification, uint32_t hUser);
-        void OnNotification(const AdsNotificationHeader* pNotification);
+        static void NotificationCallback(const AmsAddr *pAddr, const AdsNotificationHeader *pNotification, uint32_t hUser);
+        void OnNotification(const AdsNotificationHeader *pNotification);
 
         tlink::Context &m_ctx;
         AmsNetId m_remoteNetId;
@@ -59,6 +68,7 @@ namespace tlink::drivers
         AmsNetId m_localNetId;
 
         std::unique_ptr<AdsDevice> m_route;
+        std::chrono::milliseconds m_defaultTimeout;
 
         std::mutex m_mutex;
         uint32_t m_driverId;

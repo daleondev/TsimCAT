@@ -164,32 +164,33 @@ namespace tlink::drivers
 {
 
     AdsDriver::AdsDriver(tlink::Context &ctx, std::string_view remoteNetId, std::string ipAddress, uint16_t port, std::string_view localNetId)
-        : m_ctx(ctx), m_remoteNetId{strToNetId(remoteNetId)}, m_ipAddress(std::move(ipAddress)), m_port{port}, m_route{nullptr}, m_localNetId{strToNetId(localNetId)}, m_driverId{s_nextDriverId++}
+        : m_ctx(ctx), m_remoteNetId{strToNetId(remoteNetId)}, m_ipAddress(std::move(ipAddress)), m_port{port},
+          m_route{nullptr}, m_localNetId{strToNetId(localNetId)}, m_defaultTimeout{}, m_driverId{s_nextDriverId++}
     {
         if (!localNetId.empty())
         {
             bhf::ads::SetLocalAddress(m_localNetId);
         }
-
-        std::lock_guard lock(s_registryMutex);
-        s_registry[m_driverId] = this;
     }
 
     AdsDriver::~AdsDriver()
     {
-        {
-            std::lock_guard lock(s_registryMutex);
-            s_registry.erase(m_driverId);
-        }
-        (void)disconnect();
+        (void)disconnect(std::chrono::milliseconds(0));
     }
 
-    auto AdsDriver::connect() -> Task<Result<void>>
+    auto AdsDriver::connect(std::chrono::milliseconds timeout) -> Task<Result<void>>
     {
+        {
+            std::lock_guard lock(s_registryMutex);
+            s_registry[m_driverId] = this;
+        }
+
         auto err{AdsError::None};
         try
         {
             m_route = std::make_unique<AdsDevice>(m_ipAddress, m_remoteNetId, m_port);
+            m_defaultTimeout = getTimeout();
+            setTimeout(timeout);
             (void)m_route->GetDeviceInfo();
         }
         catch (const std::exception &ex)
@@ -200,7 +201,7 @@ namespace tlink::drivers
         co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
     }
 
-    auto AdsDriver::disconnect() -> Task<Result<void>>
+    auto AdsDriver::disconnect(std::chrono::milliseconds timeout) -> Task<Result<void>>
     {
         // 1. Stop receiving new callbacks immediately
         {
@@ -219,26 +220,31 @@ namespace tlink::drivers
         auto err{AdsError::None};
         try
         {
+            setTimeout(timeout);
+
             std::unordered_map<uint32_t, std::shared_ptr<SubscriptionContext>> subscriptions;
             {
                 std::lock_guard lock(m_mutex);
                 subscriptions = std::move(m_subscriptionContexts);
                 m_subscriptionContexts.clear();
             }
-            
-            if (!subscriptions.empty()) {
+
+            if (!subscriptions.empty())
+            {
                 // IMPORTANT: Avoid synchronous AdsSyncDelDeviceNotificationReqEx calls
                 // which often hang during shutdown. Closing the port implicitly cleans them up.
-                for (auto& [id, context] : subscriptions) {
-                    if (context) {
+                for (auto &[id, context] : subscriptions)
+                {
+                    if (context)
+                    {
                         context->notificationHandle.release();
                         context->symbolHandle.release();
                     }
                 }
                 subscriptions.clear();
             }
-            
-            m_route.reset(); 
+
+            m_route.reset();
         }
         catch (const std::exception &ex)
         {
@@ -248,12 +254,14 @@ namespace tlink::drivers
         co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
     }
 
-    auto AdsDriver::readInto(std::string_view path, std::span<std::byte> dest) -> Task<Result<size_t>>
+    auto AdsDriver::readInto(std::string_view path, std::span<std::byte> dest, std::chrono::milliseconds timeout) -> Task<Result<size_t>>
     {
         uint32_t bytesRead = 0;
         auto err{AdsError::None};
         try
         {
+            setTimeout(timeout);
+
             auto handle{m_route->GetHandle(std::string(path))};
             err = static_cast<AdsError>(m_route->ReadReqEx2(ADSIGRP_SYM_VALBYHND, *handle, dest.size(),
                                                             dest.data(), &bytesRead));
@@ -271,11 +279,13 @@ namespace tlink::drivers
         co_return bytesRead;
     }
 
-    auto AdsDriver::writeFrom(std::string_view path, std::span<const std::byte> src) -> Task<Result<void>>
+    auto AdsDriver::writeFrom(std::string_view path, std::span<const std::byte> src, std::chrono::milliseconds timeout) -> Task<Result<void>>
     {
         auto err{AdsError::None};
         try
         {
+            setTimeout(timeout);
+
             auto handle{m_route->GetHandle(std::string(path))};
             err = static_cast<AdsError>(m_route->WriteReqEx(ADSIGRP_SYM_VALBYHND, *handle, src.size(), src.data()));
         }
@@ -289,12 +299,14 @@ namespace tlink::drivers
 
     void AdsDriver::NotificationCallback(const AmsAddr *pAddr, const AdsNotificationHeader *pNotification, uint32_t hUser)
     {
-        if (!hUser) return;
+        if (!hUser)
+            return;
 
         AdsDriver *driver = nullptr;
         {
             std::unique_lock lock(s_registryMutex, std::try_to_lock);
-            if (!lock.owns_lock()) return;
+            if (!lock.owns_lock())
+                return;
 
             if (auto it = s_registry.find(hUser); it != s_registry.end())
             {
@@ -315,7 +327,8 @@ namespace tlink::drivers
 
         {
             std::unique_lock lock(m_mutex, std::try_to_lock);
-            if (!lock.owns_lock()) return;
+            if (!lock.owns_lock())
+                return;
 
             if (auto it = m_subscriptionContexts.find(pNotification->hNotification); it != m_subscriptionContexts.end())
             {
@@ -329,7 +342,7 @@ namespace tlink::drivers
         {
             // Push data without resuming immediately
             context->stream->stream.push_silent(std::move(data));
-            
+
             // Extract the waiter and schedule it on the main context thread.
             // This prevents the ADS callback thread from executing coroutine logic
             // (like disconnect()) which causes deadlocks.
@@ -343,16 +356,15 @@ namespace tlink::drivers
     auto AdsDriver::subscribe(std::string_view path, SubscriptionType type, std::chrono::milliseconds interval) -> Task<Result<std::shared_ptr<RawSubscription>>>
     {
         uint32_t nTransMode = (type == SubscriptionType::OnChange) ? ADSTRANS_SERVERONCHA : ADSTRANS_SERVERCYCLE;
-        
+
         // ADS expects 100ns units. 1ms = 10,000 units.
         uint32_t nCycleTime = static_cast<uint32_t>(interval.count() * 10000);
 
         const AdsNotificationAttrib attrib = {
-            1024, 
+            1024,
             nTransMode,
-            0, 
-            {nCycleTime}
-        };
+            0,
+            {nCycleTime}};
 
         auto err{AdsError::None};
         try
@@ -397,6 +409,17 @@ namespace tlink::drivers
         }
 
         co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
+    }
+
+    auto AdsDriver::getTimeout() -> std::chrono::milliseconds
+    {
+        return std::chrono::milliseconds(m_route->GetTimeout());
+    }
+
+    auto AdsDriver::setTimeout(std::chrono::milliseconds timeout) -> void
+    {
+        auto ms{timeout.count()};
+        m_route->SetTimeout(ms ? ms : m_defaultTimeout.count());
     }
 
 } // namespace tlink::drivers

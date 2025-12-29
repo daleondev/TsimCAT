@@ -43,23 +43,24 @@ namespace tlink
 
         /**
          * @brief Establishes the connection to the remote device.
+         * @param timeout Connection timeout. 0 means infinite.
          */
-        virtual auto connect() -> Task<Result<void>> = 0;
+        virtual auto connect(std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) -> Task<Result<void>> = 0;
 
         /**
          * @brief Closes the connection.
          */
-        virtual auto disconnect() -> Task<Result<void>> = 0;
+        virtual auto disconnect(std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) -> Task<Result<void>> = 0;
 
         /**
          * @brief Read into a generic buffer.
          */
-        virtual auto readInto(std::string_view path, std::span<std::byte> dest) -> Task<Result<size_t>> = 0;
+        virtual auto readInto(std::string_view path, std::span<std::byte> dest, std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) -> Task<Result<size_t>> = 0;
 
         /**
          * @brief Low-level write operation.
          */
-        virtual auto writeFrom(std::string_view path, std::span<const std::byte> src) -> Task<Result<void>> = 0;
+        virtual auto writeFrom(std::string_view path, std::span<const std::byte> src, std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) -> Task<Result<void>> = 0;
 
         /**
          * @brief Subscribe to value changes.
@@ -78,10 +79,10 @@ namespace tlink
         /**
          * @brief Low-level read operation.
          */
-        auto readRaw(std::string_view path, size_t maxSize = 1024) -> Task<Result<std::vector<std::byte>>>
+        auto readRaw(std::string_view path, size_t maxSize = 1024, std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) -> Task<Result<std::vector<std::byte>>>
         {
             std::vector<std::byte> data(maxSize);
-            auto result = co_await readInto(path, data);
+            auto result = co_await readInto(path, data, timeout);
             if (!result)
             {
                 co_return std::unexpected(result.error());
@@ -93,16 +94,16 @@ namespace tlink
         /**
          * @brief Low-level write operation.
          */
-        auto writeRaw(std::string_view path, const std::vector<std::byte> &data) -> Task<Result<void>>
+        auto writeRaw(std::string_view path, const std::vector<std::byte> &data, std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) -> Task<Result<void>>
         {
-            co_return co_await writeFrom(path, data);
+            co_return co_await writeFrom(path, data, timeout);
         }
 
         template <typename T>
-        auto read(std::string_view path) -> Task<Result<T>>
+        auto read(std::string_view path, std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) -> Task<Result<T>>
         {
             T value{};
-            auto result = co_await readInto(path, std::as_writable_bytes(std::span{&value, 1}));
+            auto result = co_await readInto(path, std::as_writable_bytes(std::span{&value, 1}), timeout);
             if (!result)
             {
                 co_return std::unexpected(result.error());
@@ -110,9 +111,9 @@ namespace tlink
             co_return value;
         }
 
-        auto write(std::string_view path, const auto &value) -> Task<Result<void>>
+        auto write(std::string_view path, const auto &value, std::chrono::milliseconds timeout = std::chrono::milliseconds(0)) -> Task<Result<void>>
         {
-            co_return co_await writeFrom(path, std::as_bytes(std::span{&value, 1}));
+            co_return co_await writeFrom(path, std::as_bytes(std::span{&value, 1}), timeout);
         }
     };
 
