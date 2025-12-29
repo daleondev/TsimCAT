@@ -7,6 +7,7 @@
 #include <ranges>
 #include <cassert>
 #include <iostream>
+#include <unordered_set>
 
 namespace
 {
@@ -193,7 +194,10 @@ namespace tlink::drivers
         auto err{AdsError::None};
         try
         {
-            m_handles.clear();
+            std::unordered_set<uint32_t> fastLookup(m_subscriptions.begin(), m_subscriptions.end());
+            std::erase_if(s_subscriptions, [&fastLookup](const auto &entry)
+                          { return fastLookup.contains(entry.first->id); });
+            m_subscriptions.clear();
             m_route.reset();
         }
         catch (const std::exception &ex)
@@ -243,22 +247,65 @@ namespace tlink::drivers
         co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
     }
 
-    auto AdsDriver::subscribe(std::string_view path) -> Task<Result<std::shared_ptr<DataStream>>>
+    auto AdsDriver::subscribe(std::string_view path) -> Task<Result<std::shared_ptr<RawSubscription>>>
     {
         const AdsNotificationAttrib attrib = {
             1024, ADSTRANS_SERVERCYCLE, 0, {4000000}};
 
-        auto stream = std::make_shared<DataStream>();
-        auto handle{m_route->GetHandle(ADSIGRP_SYM_VALBYHND, *m_route->GetHandle(std::string(path)), attrib, [](const AmsAddr *pAddr, const AdsNotificationHeader *pNotification, uint32_t hUser)
-                                       { auto* stream{reinterpret_cast<DataStream*>(static_cast<uintptr_t>(hUser))};
-                                       stream->push({}); }, reinterpret_cast<uintptr_t>(stream.get()))};
-        m_handles.emplace(*handle, std::move(handle));
-        co_return stream;
+        std::shared_ptr<RawSubscription> result{nullptr};
+        auto err{AdsError::None};
+        try
+        {
+            std::lock_guard lock(s_mutex);
+            auto handle{m_route->GetHandle(ADSIGRP_SYM_VALBYHND, *m_route->GetHandle(std::string(path)), attrib, [](const AmsAddr *pAddr, const AdsNotificationHeader *pNotification, uint32_t hUser)
+                                           {
+                                            std::lock_guard lock(s_mutex);
+                                               auto subscription{std::ranges::find_if(s_subscriptions, [&](const auto &entry)
+                                                                                      { return entry.first->id == pNotification->hNotification; })};
+                                                if (subscription != s_subscriptions.end())
+                                                {
+                                                    subscription->first->stream.push({});
+                                                } }, 0)};
+
+            auto subscription{s_subscriptions.emplace(std::make_shared<RawSubscription>((uint64_t)*handle), std::move(handle))};
+            m_subscriptions.push_back(subscription.first->first->id);
+            result = subscription.first->first;
+        }
+        catch (const std::exception &ex)
+        {
+            err = handleException(ex);
+        }
+
+        if (err != AdsError::None)
+        {
+            co_return std::unexpected(make_error_code(err));
+        }
+        if (!result)
+        {
+            co_return std::unexpected(make_error_code(AdsError::Unknown));
+        }
+
+        co_return result;
     }
 
-    auto AdsDriver::unsubscribe(std::string_view path) -> Task<Result<void>>
+    auto AdsDriver::unsubscribe(std::shared_ptr<RawSubscription> subscription) -> Task<Result<void>>
     {
-        co_return success();
+        auto err{AdsError::None};
+        try
+        {
+            std::lock_guard lock(s_mutex);
+            if (!s_subscriptions.erase(subscription))
+            {
+                err = AdsError::Unknown;
+            }
+            subscription.reset();
+        }
+        catch (const std::exception &ex)
+        {
+            err = handleException(ex);
+        }
+
+        co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
     }
 
 } // namespace tlink::drivers

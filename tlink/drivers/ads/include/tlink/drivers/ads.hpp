@@ -7,6 +7,7 @@
 #include <AdsLib/AdsVariable.h>
 
 #include <string>
+#include <mutex>
 
 namespace tlink::drivers
 {
@@ -30,8 +31,8 @@ namespace tlink::drivers
         auto readInto(std::string_view path, std::span<std::byte> dest) -> Task<Result<size_t>> override;
         auto writeFrom(std::string_view path, std::span<const std::byte> src) -> Task<Result<void>> override;
 
-        auto subscribe(std::string_view path) -> Task<Result<std::shared_ptr<DataStream>>> override;
-        auto unsubscribe(std::string_view path) -> Task<Result<void>> override;
+        auto subscribe(std::string_view path) -> Task<Result<std::shared_ptr<RawSubscription>>> override;
+        auto unsubscribe(std::shared_ptr<RawSubscription> subscription) -> Task<Result<void>> override;
 
     private:
         AmsNetId m_remoteNetId;
@@ -39,10 +40,11 @@ namespace tlink::drivers
         uint16_t m_port;
         AmsNetId m_localNetId;
 
-        std::unique_ptr<AdsDevice>
-            m_route;
+        std::unique_ptr<AdsDevice> m_route;
+        std::vector<uint32_t> m_subscriptions;
 
-        std::unordered_map<uint32_t, AdsHandle> m_handles;
+        inline static std::mutex s_mutex{};
+        inline static std::unordered_map<std::shared_ptr<RawSubscription>, AdsHandle> s_subscriptions{};
     };
 
 } // namespace tlink::drivers

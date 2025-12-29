@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <memory>
 #include <span>
+#include <any>
 #include "core/task.hpp"
 #include "core/result.hpp"
 #include "core/channel.hpp"
@@ -12,10 +13,17 @@ namespace tlink
 {
 
     // Standard data packet for subscriptions
-    using DataPacket = std::vector<std::byte>;
+    using RawDataPacket = std::vector<std::byte>;
 
     // The stream type used by subscribers
-    using DataStream = AsyncChannel<Result<DataPacket>>;
+    using RawDataStream = AsyncChannel<Result<RawDataPacket>>;
+
+    struct RawSubscription
+    {
+        uint64_t id;
+        RawDataStream stream;
+        RawSubscription(uint64_t i) : id{i}, stream{} {}
+    };
 
     /**
      * @brief Abstract interface for a protocol driver.
@@ -54,9 +62,9 @@ namespace tlink
          * @param path Protocol-specific path.
          * @return A shared pointer to the data stream.
          */
-        virtual auto subscribe(std::string_view path) -> Task<Result<std::shared_ptr<DataStream>>> = 0;
+        virtual auto subscribe(std::string_view path) -> Task<Result<std::shared_ptr<RawSubscription>>> = 0;
 
-        virtual auto unsubscribe(std::string_view path) -> Task<Result<void>> = 0;
+        virtual auto unsubscribe(std::shared_ptr<RawSubscription> subscription) -> Task<Result<void>> = 0;
 
         /**
          * @brief Low-level read operation.

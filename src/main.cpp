@@ -36,13 +36,13 @@ auto runApp(tlink::Context &ctx) -> tlink::Task<void>
 
     if (subRes)
     {
-        auto stream = subRes.value();
+        auto sub = subRes.value();
         std::println("App: Subscription active. Waiting for first 3 updates...");
 
         for (int i = 0; i < 3; ++i)
         {
             // Suspends until the next update is pushed by the driver
-            auto update = co_await stream->next();
+            auto update = co_await sub->stream.next();
             if (update)
             {
                 std::println("   [Update {:02}] Received {} bytes", i + 1, update.value().size());
