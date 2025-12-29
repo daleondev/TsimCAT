@@ -81,3 +81,5 @@ source_group(
     PREFIX "Header Files"
     FILES ${HEADERS}
 )
+
+add_subdirectory(samples)
