@@ -93,7 +93,7 @@ namespace tlink
             co_return value;
         }
 
-        auto read(std::string_view path, const auto &value) -> Task<Result<void>>
+        auto write(std::string_view path, const auto &value) -> Task<Result<void>>
         {
             co_return co_await writeFrom(path, std::as_bytes(std::span{&value, 1}));
         }
