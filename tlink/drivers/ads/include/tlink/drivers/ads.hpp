@@ -11,6 +11,8 @@
 #include <mutex>
 #include <unordered_map>
 
+namespace tlink { class Context; }
+
 namespace tlink::drivers
 {
 
@@ -19,11 +21,12 @@ namespace tlink::drivers
     public:
         /**
          * @brief Construct a new Ads Driver.
+         * @param ctx The TLink execution context for scheduling.
          * @param remoteNetId The NetID of the target PLC (e.g. "127.0.0.1.1.1").
          * @param ipAddress The IP address of the target (e.g. "127.0.0.1").
          * @param port The ADS port (default 851 for PLC1).
          */
-        AdsDriver(std::string_view remoteNetId, std::string ipAddress, uint16_t port = AMSPORT_R0_PLC_TC3, std::string_view localNetId = "");
+        AdsDriver(tlink::Context &ctx, std::string_view remoteNetId, std::string ipAddress, uint16_t port = AMSPORT_R0_PLC_TC3, std::string_view localNetId = "");
         ~AdsDriver() override;
 
         // IDriver Interface Implementation
@@ -49,6 +52,7 @@ namespace tlink::drivers
         static void NotificationCallback(const AmsAddr* pAddr, const AdsNotificationHeader* pNotification, uint32_t hUser);
         void OnNotification(const AdsNotificationHeader* pNotification);
 
+        tlink::Context &m_ctx;
         AmsNetId m_remoteNetId;
         std::string m_ipAddress;
         uint16_t m_port;

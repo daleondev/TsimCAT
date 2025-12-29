@@ -9,7 +9,7 @@
 auto runApp(tlink::Context &ctx) -> tlink::Task<void>
 {
     // 1. Initialize the ADS Driver
-    tlink::drivers::AdsDriver adsDriver("192.168.56.1.1.1", "192.168.56.1", AMSPORT_R0_PLC_TC3, "192.168.56.1.1.20");
+    tlink::drivers::AdsDriver adsDriver(ctx, "192.168.56.1.1.1", "192.168.56.1", AMSPORT_R0_PLC_TC3, "192.168.56.1.1.20");
 
     std::println("App: Connecting to PLC via ADS...");
     auto connRes = co_await adsDriver.connect();
@@ -54,6 +54,9 @@ auto runApp(tlink::Context &ctx) -> tlink::Task<void>
     std::println("App: Disconnecting...");
     co_await adsDriver.disconnect();
     std::println("App: Shutdown complete.");
+    
+    // Stop the event loop
+    ctx.stop();
 }
 
 auto main() -> int

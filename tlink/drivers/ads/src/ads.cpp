@@ -1,4 +1,5 @@
 #include "tlink/drivers/ads.hpp"
+#include "tlink/core/context.hpp"
 
 #include <magic_enum/magic_enum.hpp>
 
@@ -10,6 +11,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <mutex>
+#include <thread>
 
 namespace
 {
@@ -161,8 +163,8 @@ namespace std
 namespace tlink::drivers
 {
 
-    AdsDriver::AdsDriver(std::string_view remoteNetId, std::string ipAddress, uint16_t port, std::string_view localNetId)
-        : m_remoteNetId{strToNetId(remoteNetId)}, m_ipAddress(std::move(ipAddress)), m_port{port}, m_route{nullptr}, m_localNetId{strToNetId(localNetId)}, m_driverId{s_nextDriverId++}
+    AdsDriver::AdsDriver(tlink::Context &ctx, std::string_view remoteNetId, std::string ipAddress, uint16_t port, std::string_view localNetId)
+        : m_ctx(ctx), m_remoteNetId{strToNetId(remoteNetId)}, m_ipAddress(std::move(ipAddress)), m_port{port}, m_route{nullptr}, m_localNetId{strToNetId(localNetId)}, m_driverId{s_nextDriverId++}
     {
         if (!localNetId.empty())
         {
@@ -200,17 +202,43 @@ namespace tlink::drivers
 
     auto AdsDriver::disconnect() -> Task<Result<void>>
     {
+        // 1. Stop receiving new callbacks immediately
+        {
+            std::lock_guard lock(s_registryMutex);
+            s_registry.erase(m_driverId);
+        }
+
         if (!m_route)
         {
             co_return success();
         }
 
+        // Brief sleep to allow dispatcher to settle
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
         auto err{AdsError::None};
         try
         {
-            std::lock_guard lock(m_mutex);
-            m_subscriptionContexts.clear();
-            m_route.reset();
+            std::unordered_map<uint32_t, std::shared_ptr<SubscriptionContext>> subscriptions;
+            {
+                std::lock_guard lock(m_mutex);
+                subscriptions = std::move(m_subscriptionContexts);
+                m_subscriptionContexts.clear();
+            }
+            
+            if (!subscriptions.empty()) {
+                // IMPORTANT: Avoid synchronous AdsSyncDelDeviceNotificationReqEx calls
+                // which often hang during shutdown. Closing the port implicitly cleans them up.
+                for (auto& [id, context] : subscriptions) {
+                    if (context) {
+                        context->notificationHandle.release();
+                        context->symbolHandle.release();
+                    }
+                }
+                subscriptions.clear();
+            }
+            
+            m_route.reset(); 
         }
         catch (const std::exception &ex)
         {
@@ -261,24 +289,54 @@ namespace tlink::drivers
 
     void AdsDriver::NotificationCallback(const AmsAddr *pAddr, const AdsNotificationHeader *pNotification, uint32_t hUser)
     {
-        if (hUser)
+        if (!hUser) return;
+
+        AdsDriver *driver = nullptr;
         {
-            std::lock_guard lock(s_registryMutex);
+            std::unique_lock lock(s_registryMutex, std::try_to_lock);
+            if (!lock.owns_lock()) return;
+
             if (auto it = s_registry.find(hUser); it != s_registry.end())
             {
-                it->second->OnNotification(pNotification);
+                driver = it->second;
             }
+        }
+
+        if (driver)
+        {
+            driver->OnNotification(pNotification);
         }
     }
 
     void AdsDriver::OnNotification(const AdsNotificationHeader *pNotification)
     {
-        std::lock_guard lock(m_mutex);
-        if (auto it = m_subscriptionContexts.find(pNotification->hNotification); it != m_subscriptionContexts.end())
+        std::shared_ptr<SubscriptionContext> context = nullptr;
+        std::vector<std::byte> data;
+
         {
-            const auto *dataPtr = reinterpret_cast<const std::byte *>(pNotification + 1);
-            std::vector<std::byte> data(dataPtr, dataPtr + pNotification->cbSampleSize);
-            it->second->stream->stream.push(std::move(data));
+            std::unique_lock lock(m_mutex, std::try_to_lock);
+            if (!lock.owns_lock()) return;
+
+            if (auto it = m_subscriptionContexts.find(pNotification->hNotification); it != m_subscriptionContexts.end())
+            {
+                context = it->second;
+                const auto *dataPtr = reinterpret_cast<const std::byte *>(pNotification + 1);
+                data.assign(dataPtr, dataPtr + pNotification->cbSampleSize);
+            }
+        }
+
+        if (context && context->stream)
+        {
+            // Push data without resuming immediately
+            context->stream->stream.push_silent(std::move(data));
+            
+            // Extract the waiter and schedule it on the main context thread.
+            // This prevents the ADS callback thread from executing coroutine logic
+            // (like disconnect()) which causes deadlocks.
+            if (auto waiter = context->stream->stream.take_waiter())
+            {
+                m_ctx.schedule(waiter);
+            }
         }
     }
 

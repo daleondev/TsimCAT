@@ -37,6 +37,25 @@ public:
     }
 
     /**
+     * @brief Pushes a value into the channel WITHOUT resuming the waiter.
+     * Use with take_waiter() to manually schedule resumption on a specific context.
+     */
+    void push_silent(T value) {
+        std::lock_guard lock(m_mutex);
+        m_queue.push_back(std::move(value));
+    }
+
+    /**
+     * @brief Extracts the waiting coroutine handle if one exists.
+     */
+    auto take_waiter() -> std::coroutine_handle<> {
+        std::lock_guard lock(m_mutex);
+        auto h = m_waitingCoroutine;
+        m_waitingCoroutine = nullptr;
+        return h;
+    }
+
+    /**
      * @brief Awaitable object for fetching the next value.
      */
     struct NextAwaiter {
