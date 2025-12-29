@@ -51,11 +51,6 @@ namespace tlink::drivers
             AdsHandle symbolHandle;
             AdsHandle notificationHandle;
             std::shared_ptr<RawSubscription> stream;
-
-            SubscriptionContext() : symbolHandle(nullptr, {[](uint32_t)
-                                                           { return 0; }}),
-                                    notificationHandle(nullptr, {[](uint32_t)
-                                                                 { return 0; }}) {}
         };
 
         static void NotificationCallback(const AmsAddr *pAddr, const AdsNotificationHeader *pNotification, uint32_t hUser);
@@ -73,7 +68,7 @@ namespace tlink::drivers
         std::mutex m_mutex;
         uint32_t m_driverId;
         // Map notification handle ID -> Context
-        std::unordered_map<uint32_t, std::shared_ptr<SubscriptionContext>> m_subscriptionContexts;
+        std::unordered_map<uint32_t, SubscriptionContext> m_subscriptionContexts;
     };
 
 } // namespace tlink::drivers

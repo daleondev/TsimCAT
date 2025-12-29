@@ -50,6 +50,13 @@ auto runApp(tlink::Context &ctx) -> tlink::Task<void>
                 std::println("   [Update {:02}] Received {} bytes", i + 1, update.value().size());
             }
         }
+
+        std::println("App: Unsubscribing to P_GripperControl.stPneumaticGripperData.bOpen...");
+        auto unsubRes = co_await adsDriver.unsubscribe(sub);
+        if (unsubRes)
+        {
+            std::println("App: Unsubscribed!");
+        }
     }
 
     // 4. Cleanup

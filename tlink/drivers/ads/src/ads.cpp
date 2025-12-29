@@ -171,26 +171,34 @@ namespace tlink::drivers
         {
             bhf::ads::SetLocalAddress(m_localNetId);
         }
+
+        {
+            std::lock_guard lock(s_registryMutex);
+            s_registry[m_driverId] = this;
+        }
     }
 
     AdsDriver::~AdsDriver()
     {
         (void)disconnect(std::chrono::milliseconds(0));
+
+        {
+            std::lock_guard lock(s_registryMutex);
+            s_registry.erase(m_driverId);
+        }
     }
 
     auto AdsDriver::connect(std::chrono::milliseconds timeout) -> Task<Result<void>>
     {
-        {
-            std::lock_guard lock(s_registryMutex);
-            s_registry[m_driverId] = this;
-        }
 
         auto err{AdsError::None};
         try
         {
             m_route = std::make_unique<AdsDevice>(m_ipAddress, m_remoteNetId, m_port);
+
             m_defaultTimeout = getTimeout();
             setTimeout(timeout);
+
             (void)m_route->GetDeviceInfo();
         }
         catch (const std::exception &ex)
@@ -203,45 +211,19 @@ namespace tlink::drivers
 
     auto AdsDriver::disconnect(std::chrono::milliseconds timeout) -> Task<Result<void>>
     {
-        // 1. Stop receiving new callbacks immediately
-        {
-            std::lock_guard lock(s_registryMutex);
-            s_registry.erase(m_driverId);
-        }
-
         if (!m_route)
         {
             co_return success();
         }
-
-        // Brief sleep to allow dispatcher to settle
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
         auto err{AdsError::None};
         try
         {
             setTimeout(timeout);
 
-            std::unordered_map<uint32_t, std::shared_ptr<SubscriptionContext>> subscriptions;
             {
                 std::lock_guard lock(m_mutex);
-                subscriptions = std::move(m_subscriptionContexts);
                 m_subscriptionContexts.clear();
-            }
-
-            if (!subscriptions.empty())
-            {
-                // IMPORTANT: Avoid synchronous AdsSyncDelDeviceNotificationReqEx calls
-                // which often hang during shutdown. Closing the port implicitly cleans them up.
-                for (auto &[id, context] : subscriptions)
-                {
-                    if (context)
-                    {
-                        context->notificationHandle.release();
-                        context->symbolHandle.release();
-                    }
-                }
-                subscriptions.clear();
             }
 
             m_route.reset();
@@ -322,7 +304,7 @@ namespace tlink::drivers
 
     void AdsDriver::OnNotification(const AdsNotificationHeader *pNotification)
     {
-        std::shared_ptr<SubscriptionContext> context = nullptr;
+        SubscriptionContext *context;
         std::vector<std::byte> data;
 
         {
@@ -332,7 +314,7 @@ namespace tlink::drivers
 
             if (auto it = m_subscriptionContexts.find(pNotification->hNotification); it != m_subscriptionContexts.end())
             {
-                context = it->second;
+                context = &it->second;
                 const auto *dataPtr = reinterpret_cast<const std::byte *>(pNotification + 1);
                 data.assign(dataPtr, dataPtr + pNotification->cbSampleSize);
             }
@@ -355,32 +337,31 @@ namespace tlink::drivers
 
     auto AdsDriver::subscribe(std::string_view path, SubscriptionType type, std::chrono::milliseconds interval) -> Task<Result<std::shared_ptr<RawSubscription>>>
     {
-        uint32_t nTransMode = (type == SubscriptionType::OnChange) ? ADSTRANS_SERVERONCHA : ADSTRANS_SERVERCYCLE;
+        uint32_t transMode{(type == SubscriptionType::OnChange) ? ADSTRANS_SERVERONCHA : ADSTRANS_SERVERCYCLE};
+        uint32_t cycleTime{static_cast<uint32_t>(interval.count() * 10000)};
 
-        // ADS expects 100ns units. 1ms = 10,000 units.
-        uint32_t nCycleTime = static_cast<uint32_t>(interval.count() * 10000);
-
-        const AdsNotificationAttrib attrib = {
-            1024,
-            nTransMode,
-            0,
-            {nCycleTime}};
+        AdsNotificationAttrib attrib{
+            .cbLength = 1024,
+            .nTransMode = transMode,
+            .nMaxDelay = 0,
+            .nCycleTime = cycleTime};
 
         auto err{AdsError::None};
         try
         {
-            auto symbolHandle = m_route->GetHandle(std::string(path));
-            auto notificationHandle = m_route->GetHandle(ADSIGRP_SYM_VALBYHND, *symbolHandle, attrib, &AdsDriver::NotificationCallback, m_driverId);
-
-            auto context = std::make_shared<SubscriptionContext>();
-            context->symbolHandle.reset(symbolHandle.release());
-            context->notificationHandle.reset(notificationHandle.release());
-            context->stream = std::make_shared<RawSubscription>(static_cast<uint64_t>(*context->notificationHandle));
+            auto symbolHandle{m_route->GetHandle(std::string(path))};
+            auto notificationHandle{m_route->GetHandle(ADSIGRP_SYM_VALBYHND, *symbolHandle, attrib, &AdsDriver::NotificationCallback, m_driverId)};
+            auto id{*notificationHandle};
 
             std::lock_guard lock(m_mutex);
-            m_subscriptionContexts.emplace(*context->notificationHandle, context);
+            auto subscription{
+                m_subscriptionContexts.emplace(
+                    id,
+                    SubscriptionContext{.symbolHandle = std::move(symbolHandle),
+                                        .notificationHandle = std::move(notificationHandle),
+                                        .stream = std::make_shared<RawSubscription>(id)})};
 
-            co_return context->stream;
+            co_return subscription.first->second.stream;
         }
         catch (const std::exception &ex)
         {
