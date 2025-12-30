@@ -78,6 +78,10 @@ namespace tlink::coro
         }
         auto await_resume() -> T
         {
+            if (m_handle.promise().exception) {
+                std::rethrow_exception(m_handle.promise().exception);
+            }
+
             if constexpr (!std::is_void_v<T>) {
                 return std::move(*m_handle.promise().value);
             }
@@ -102,7 +106,7 @@ namespace tlink::coro
                 return DetachedTask{ DetachedTask::handle_type::from_promise(*this) };
             }
             auto initial_suspend() -> std::suspend_always { return {}; }
-            auto final_suspend() noexcept -> std::suspend_always { return {}; /*destroys handle here*/ }
+            auto final_suspend() noexcept -> std::suspend_never { return {}; }
             auto unhandled_exception() -> void { std::abort(); }
             auto return_void() -> void {}
         };
