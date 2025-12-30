@@ -88,6 +88,9 @@ namespace tlink::coro
             }
 
             if constexpr (!std::is_void_v<T>) {
+                if (!m_handle.promise().value) {
+                     throw std::runtime_error("Broken Promise: Task completed without returning a value.");
+                }
                 return std::move(*m_handle.promise().value);
             }
             else {

@@ -2,6 +2,7 @@
 #include "tlink/tlink.hpp"
 
 #include <chrono>
+#include <cstring>
 #include <print>
 #include <thread>
 #include <vector>
@@ -119,7 +120,7 @@ void testLifetimeSafety()
 {
     std::println("------------------------------------");
     std::println("Test: Lifetime Safety (Liveness Token)");
-    
+
     // 1. Channel lives OUTSIDE the context
     tlink::coro::RawAsyncChannel rawChannel;
     tlink::coro::AsyncChannel<int> channel(rawChannel);
@@ -134,13 +135,15 @@ void testLifetimeSafety()
             // This will register the task with the channel.
             // It captures the Context's WeakPtr token.
             auto val = co_await channel.next();
-            
+
             // IF the safety fix works, this line should NEVER run because
             // the channel won't schedule us if the context is dead.
             if (val) {
-                std::println(stderr, "  [Task] CRITICAL ERROR: Resumed after Context destruction! Value: {}", *val);
+                std::println(
+                  stderr, "  [Task] CRITICAL ERROR: Resumed after Context destruction! Value: {}", *val);
                 std::terminate();
-            } else {
+            }
+            else {
                 std::println("  [Task] Channel closed (expected path if closed explicitly).");
             }
         });
@@ -151,20 +154,20 @@ void testLifetimeSafety()
             std::this_thread::sleep_for(10ms); // Let task suspend at co_await
             ctx.stop();
         } // runner joins here
-        
+
         std::println("  [Scope] Context stopped.");
-        
+
     } // ctx is destroyed here. The "Life Token" expires.
 
     std::println("  [Scope] Context Destroyed.");
 
     // 3. Trigger the bug
     std::println("  [Test] Pushing data to channel (orphan waiter)...");
-    
+
     int payload = 42;
     tlink::coro::RawAsyncChannel::Bytes bytes(sizeof(int));
     std::memcpy(bytes.data(), &payload, sizeof(int));
-    
+
     // If the fix is MISSING, this will crash (access violation on dead executor).
     // If the fix is PRESENT, this will detect expired token and skip scheduling.
     rawChannel.push(std::move(bytes));
@@ -197,7 +200,8 @@ void testCancellationSafety()
         task.getHandle().resume();
 
         std::println("  [Scope] Task is now suspended on channel. Destroying task...");
-    } // task destructor calls m_handle.destroy() -> frame destroyed -> RawAsyncAwaiter destroyed -> removed from channel
+    } // task destructor calls m_handle.destroy() -> frame destroyed -> RawAsyncAwaiter destroyed -> removed
+      // from channel
 
     std::println("  [Scope] Task destroyed.");
 

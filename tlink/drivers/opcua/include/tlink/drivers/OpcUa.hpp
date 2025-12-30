@@ -29,6 +29,7 @@ namespace tlink::drivers
                        std::chrono::milliseconds timeout = NO_TIMEOUT) -> coro::Task<Result<void>> override;
 
         auto subscribeRaw(std::string_view path,
+                       std::size_t size,
                        SubscriptionType type = SubscriptionType::OnChange,
                        std::chrono::milliseconds interval = NO_TIMEOUT) -> coro::Task<Result<std::shared_ptr<RawSubscription>>> override;
         auto unsubscribeRaw(std::shared_ptr<RawSubscription> subscription) -> coro::Task<Result<void>> override;

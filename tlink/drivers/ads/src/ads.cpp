@@ -313,6 +313,7 @@ namespace tlink::drivers
     }
 
     auto AdsDriver::subscribeRaw(std::string_view path,
+                                 std::size_t size,
                                  SubscriptionType type,
                                  std::chrono::milliseconds interval)
       -> coro::Task<Result<std::shared_ptr<RawSubscription>>>
@@ -322,7 +323,7 @@ namespace tlink::drivers
         uint32_t cycleTime{ static_cast<uint32_t>(interval.count() * 10000) };
 
         AdsNotificationAttrib attrib{
-            .cbLength = 1024, .nTransMode = transMode, .nMaxDelay = 0, .nCycleTime = cycleTime
+            .cbLength = static_cast<uint32_t>(size), .nTransMode = transMode, .nMaxDelay = 0, .nCycleTime = cycleTime
         };
 
         auto err{ AdsError::None };

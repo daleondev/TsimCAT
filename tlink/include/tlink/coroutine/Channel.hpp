@@ -3,7 +3,7 @@
 #include "Context.hpp"
 #include "Task.hpp"
 
-#include <cstring>
+#include <algorithm>
 #include <deque>
 #include <list>
 #include <memory>
@@ -100,7 +100,7 @@ namespace tlink::coro
         {
             RawAsyncChannel handle;
             handle.m_state = m_state;
-            
+
             std::optional<RawAsyncChannel::Bytes> result;
             auto awaiter = handle.next(result);
             co_await awaiter;
@@ -108,8 +108,16 @@ namespace tlink::coro
             if (!result) {
                 co_return std::nullopt;
             }
+
+            auto x = result->size();
+            if (result->size() != sizeof(T)) {
+                co_return std::nullopt;
+            }
+
             T val{};
-            std::memcpy(&val, result->data(), sizeof(T));
+            auto destBytes{ std::as_writable_bytes(std::span{ &val, 1 }) };
+            std::ranges::copy(*result, destBytes.begin());
+
             co_return val;
         }
 
@@ -129,25 +137,23 @@ namespace tlink::coro
             {
                 if (m_iterator) {
                     std::lock_guard lock(state->mutex);
-                    // Re-check under lock (though single-threaded destruction usually implies safety, 
+                    // Re-check under lock (though single-threaded destruction usually implies safety,
                     // race could happen if 'push' is concurrent with cancellation)
-                    if (m_iterator) { 
-                       state->waiters.erase(*m_iterator);
+                    if (m_iterator) {
+                        state->waiters.erase(*m_iterator);
                     }
                 }
             }
 
             // Called by Channel to signal completion/detachment
-            void unlink() 
-            {
-                m_iterator = std::nullopt;
-            }
+            void unlink() { m_iterator = std::nullopt; }
 
             auto await_ready() -> bool
             {
                 std::lock_guard lock(state->mutex);
-                if (state->closed) return true;
-                
+                if (state->closed)
+                    return true;
+
                 // If there's something in the queue (from buffered push), take it
                 if (!state->queue.empty()) {
                     dest = std::move(state->queue.front());
@@ -177,7 +183,8 @@ namespace tlink::coro
                     }
                 }
 
-                m_iterator = state->waiters.insert(state->waiters.end(), { handle, executor, &dest, std::move(lifeToken), this });
+                m_iterator = state->waiters.insert(state->waiters.end(),
+                                                   { handle, executor, &dest, std::move(lifeToken), this });
                 return true;
             }
 
@@ -189,9 +196,9 @@ namespace tlink::coro
         };
     }
 
-    inline auto RawAsyncChannel::next(std::optional<Bytes>& dest) -> detail::RawAsyncAwaiter 
-    { 
-        return { m_state, dest }; 
+    inline auto RawAsyncChannel::next(std::optional<Bytes>& dest) -> detail::RawAsyncAwaiter
+    {
+        return { m_state, dest };
     }
 
     inline auto RawAsyncChannel::push(Bytes raw) -> void
@@ -209,7 +216,7 @@ namespace tlink::coro
         if (m_state->mode == ChannelMode::LoadBalancer) {
             auto waiter = m_state->waiters.front();
             m_state->waiters.pop_front();
-            
+
             // Detach from awaiter so it doesn't try to erase itself on destruction
             if (waiter.awaiterPtr) {
                 waiter.awaiterPtr->unlink();
@@ -224,7 +231,8 @@ namespace tlink::coro
                 if (auto token = waiter.lifeToken.lock()) {
                     waiter.executor->schedule(waiter.handle);
                 }
-            } else {
+            }
+            else {
                 waiter.handle.resume();
             }
         }
@@ -232,8 +240,8 @@ namespace tlink::coro
             // Broadcast: Every current waiter gets a copy
             auto toResume = std::move(m_state->waiters);
             // List moved-from state is valid but unspecified, clear it to be sure
-            m_state->waiters.clear(); 
-            
+            m_state->waiters.clear();
+
             for (auto& waiter : toResume) {
                 // Detach from awaiter so it doesn't try to erase itself on destruction
                 if (waiter.awaiterPtr) {
@@ -251,7 +259,8 @@ namespace tlink::coro
                     if (auto token = waiter.lifeToken.lock()) {
                         waiter.executor->schedule(waiter.handle);
                     }
-                } else {
+                }
+                else {
                     waiter.handle.resume();
                 }
             }
@@ -274,7 +283,7 @@ namespace tlink::coro
             if (waiter.awaiterPtr) {
                 waiter.awaiterPtr->unlink();
             }
-            
+
             if (waiter.executor) {
                 if (auto token = waiter.lifeToken.lock()) {
                     waiter.executor->schedule(waiter.handle);

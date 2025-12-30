@@ -58,6 +58,7 @@ namespace tlink::drivers
     }
 
     auto UaDriver::subscribeRaw(std::string_view path,
+                                std::size_t size,
                                 SubscriptionType type,
                                 std::chrono::milliseconds interval)
       -> coro::Task<Result<std::shared_ptr<RawSubscription>>>
