@@ -270,111 +270,103 @@ namespace tlink::drivers
         co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
     }
 
-    // void AdsDriver::NotificationCallback(const AmsAddr* pAddr,
-    //                                      const AdsNotificationHeader* pNotification,
-    //                                      uint32_t hUser)
-    // {
-    //     if (!hUser)
-    //         return;
+    void AdsDriver::NotificationCallback(const AmsAddr* pAddr,
+                                         const AdsNotificationHeader* pNotification,
+                                         uint32_t hUser)
+    {
+        if (!hUser)
+            return;
 
-    //     AdsDriver* driver = nullptr;
-    //     {
-    //         std::unique_lock lock(s_registryMutex, std::try_to_lock);
-    //         if (!lock.owns_lock())
-    //             return;
+        AdsDriver* driver = nullptr;
+        {
+            std::unique_lock lock(s_registryMutex, std::try_to_lock);
+            if (!lock.owns_lock())
+                return;
 
-    //         if (auto it = s_registry.find(hUser); it != s_registry.end()) {
-    //             driver = it->second;
-    //         }
-    //     }
+            if (auto it = s_registry.find(hUser); it != s_registry.end()) {
+                driver = it->second;
+            }
+        }
 
-    //     if (driver) {
-    //         driver->OnNotification(pNotification);
-    //     }
-    // }
+        if (driver) {
+            driver->OnNotification(pNotification);
+        }
+    }
 
-    // void AdsDriver::OnNotification(const AdsNotificationHeader* pNotification)
-    // {
-    //     SubscriptionContext* context;
-    //     std::vector<std::byte> data;
+    void AdsDriver::OnNotification(const AdsNotificationHeader* pNotification)
+    {
+        SubscriptionContext* context;
+        std::vector<std::byte> data;
 
-    //     {
-    //         std::unique_lock lock(m_mutex, std::try_to_lock);
-    //         if (!lock.owns_lock())
-    //             return;
+        {
+            std::unique_lock lock(m_mutex, std::try_to_lock);
+            if (!lock.owns_lock())
+                return;
 
-    //         if (auto it = m_subscriptionContexts.find(pNotification->hNotification);
-    //             it != m_subscriptionContexts.end()) {
-    //             context = &it->second;
-    //             const auto* dataPtr = reinterpret_cast<const std::byte*>(pNotification + 1);
-    //             data.assign(dataPtr, dataPtr + pNotification->cbSampleSize);
-    //         }
-    //     }
+            if (auto it = m_subscriptionContexts.find(pNotification->hNotification);
+                it != m_subscriptionContexts.end()) {
+                context = &it->second;
+                const auto* dataPtr = reinterpret_cast<const std::byte*>(pNotification + 1);
+                data.assign(dataPtr, dataPtr + pNotification->cbSampleSize);
+            }
+        }
 
-    //     if (context && context->stream) {
-    //         // Push data without resuming immediately
-    //         context->stream->stream.push_silent(std::move(data));
+        if (context && context->stream) {
+            context->stream->stream.push(std::move(data));
+        }
+    }
 
-    //         // Extract the waiter and schedule it on the main context thread.
-    //         // This prevents the ADS callback thread from executing coroutine logic
-    //         // (like disconnect()) which causes deadlocks.
-    //         if (auto waiter = context->stream->stream.take_waiter()) {
-    //             m_ctx.schedule(waiter);
-    //         }
-    //     }
-    // }
+    auto AdsDriver::subscribeRaw(std::string_view path,
+                                 SubscriptionType type,
+                                 std::chrono::milliseconds interval)
+      -> coro::Task<Result<std::shared_ptr<RawSubscription>>>
+    {
+        uint32_t transMode{ (type == SubscriptionType::OnChange) ? ADSTRANS_SERVERONCHA
+                                                                 : ADSTRANS_SERVERCYCLE };
+        uint32_t cycleTime{ static_cast<uint32_t>(interval.count() * 10000) };
 
-    // auto AdsDriver::subscribe(std::string_view path,
-    //                           SubscriptionType type,
-    //                           std::chrono::milliseconds interval)
-    //   -> coro::Task<Result<std::shared_ptr<RawSubscription>>>
-    // {
-    //     uint32_t transMode{ (type == SubscriptionType::OnChange) ? ADSTRANS_SERVERONCHA
-    //                                                              : ADSTRANS_SERVERCYCLE };
-    //     uint32_t cycleTime{ static_cast<uint32_t>(interval.count() * 10000) };
+        AdsNotificationAttrib attrib{
+            .cbLength = 1024, .nTransMode = transMode, .nMaxDelay = 0, .nCycleTime = cycleTime
+        };
 
-    //     AdsNotificationAttrib attrib{
-    //         .cbLength = 1024, .nTransMode = transMode, .nMaxDelay = 0, .nCycleTime = cycleTime
-    //     };
+        auto err{ AdsError::None };
+        try {
+            auto symbolHandle{ m_route->GetHandle(std::string(path)) };
+            auto notificationHandle{ m_route->GetHandle(
+              ADSIGRP_SYM_VALBYHND, *symbolHandle, attrib, &AdsDriver::NotificationCallback, m_driverId) };
+            auto id{ *notificationHandle };
 
-    //     auto err{ AdsError::None };
-    //     try {
-    //         auto symbolHandle{ m_route->GetHandle(std::string(path)) };
-    //         auto notificationHandle{ m_route->GetHandle(
-    //           ADSIGRP_SYM_VALBYHND, *symbolHandle, attrib, &AdsDriver::NotificationCallback, m_driverId) };
-    //         auto id{ *notificationHandle };
+            std::lock_guard lock(m_mutex);
+            auto subscription{ m_subscriptionContexts.emplace(
+              id,
+              SubscriptionContext{ .symbolHandle = std::move(symbolHandle),
+                                   .notificationHandle = std::move(notificationHandle),
+                                   .stream = std::make_shared<RawSubscription>(id) }) };
 
-    //         std::lock_guard lock(m_mutex);
-    //         auto subscription{ m_subscriptionContexts.emplace(
-    //           id,
-    //           SubscriptionContext{ .symbolHandle = std::move(symbolHandle),
-    //                                .notificationHandle = std::move(notificationHandle),
-    //                                .stream = std::make_shared<RawSubscription>(id) }) };
+            co_return subscription.first->second.stream;
+        } catch (const std::exception& ex) {
+            err = handleException(ex);
+        }
 
-    //         co_return subscription.first->second.stream;
-    //     } catch (const std::exception& ex) {
-    //         err = handleException(ex);
-    //     }
+        co_return std::unexpected(make_error_code(err));
+    }
 
-    //     co_return std::unexpected(make_error_code(err));
-    // }
+    auto AdsDriver::unsubscribe(std::shared_ptr<RawSubscription> subscription) -> coro::Task<Result<void>>
+    {
+        if (!subscription) {
+            co_return success();
+        }
 
-    // auto AdsDriver::unsubscribe(std::shared_ptr<RawSubscription> subscription) -> coro::Task<Result<void>>
-    // {
-    //     if (!subscription) {
-    //         co_return success();
-    //     }
+        auto err{ AdsError::None };
+        try {
+            std::lock_guard lock(m_mutex);
+            m_subscriptionContexts.erase(static_cast<uint32_t>(subscription->id));
+        } catch (const std::exception& ex) {
+            err = handleException(ex);
+        }
 
-    //     auto err{ AdsError::None };
-    //     try {
-    //         std::lock_guard lock(m_mutex);
-    //         m_subscriptionContexts.erase(static_cast<uint32_t>(subscription->id));
-    //     } catch (const std::exception& ex) {
-    //         err = handleException(ex);
-    //     }
-
-    //     co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
-    // }
+        co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
+    }
 
     auto AdsDriver::getTimeout() -> std::chrono::milliseconds
     {

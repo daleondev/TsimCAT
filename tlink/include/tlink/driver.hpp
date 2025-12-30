@@ -15,6 +15,25 @@ namespace tlink
 {
     static constexpr std::chrono::milliseconds NO_TIMEOUT{ std::chrono::milliseconds(0) };
 
+    struct RawSubscription
+    {
+        const uint64_t id;
+        coro::RawAsyncChannel stream{};
+    };
+
+    // template<typename T>
+    // struct Subscription
+    // {
+    //     const uint64_t id;
+    //     coro::AsyncChannel<T> stream{};
+    // };
+
+    enum class SubscriptionType
+    {
+        OnChange,
+        Cyclic
+    };
+
     // // Standard data packet for subscriptions
     // using RawDataPacket = std::vector<std::byte>;
 
@@ -55,11 +74,9 @@ namespace tlink
                                std::span<const std::byte> src,
                                std::chrono::milliseconds timeout = NO_TIMEOUT) -> coro::Task<Result<void>> = 0;
 
-        // virtual auto subscribeInto(std::string_view path,
-        //                        SubscriptionType type = SubscriptionType::OnChange,
-        //                        std::chrono::milliseconds interval = NO_TIMEOUT) -> coro::Task<Result<std::shared_ptr<RawSubscription>>> = 0;
-
-        // virtual auto unsubscribe(std::shared_ptr<RawSubscription> subscription) -> coro::Task<Result<void>> = 0;
+        virtual auto subscribeRaw(std::string_view path, SubscriptionType type = SubscriptionType::OnChange,
+                               std::chrono::milliseconds interval = NO_TIMEOUT) -> coro::Task<Result<std::shared_ptr<RawSubscription>>> = 0;
+        virtual auto unsubscribe(std::shared_ptr<RawSubscription> subscription) -> coro::Task<Result<void>> = 0;
         // clang-format on
 
         template<typename T>
@@ -79,6 +96,16 @@ namespace tlink
         {
             co_return co_await writeFrom(path, std::as_bytes(std::span{ &value, 1 }), timeout);
         }
+
+        // auto subscribe(std::string_view path,
+        //                SubscriptionType type = SubscriptionType::OnChange,
+        //                std::chrono::milliseconds interval = NO_TIMEOUT)
+        //   -> coro::Task<Result<std::shared_ptr<Subscription<int>>>>
+        // {
+        //     auto sub = co_await subscribeRaw(path, type, interval);
+
+        //     co_return;
+        // };
     };
 
 } // namespace tlink

@@ -33,29 +33,27 @@ namespace tlink::drivers
                        std::span<const std::byte> src,
                        std::chrono::milliseconds timeout = NO_TIMEOUT) -> coro::Task<Result<void>> override;
 
-        // auto subscribe(std::string_view path,
-        //                SubscriptionType type = SubscriptionType::OnChange,
-        //                std::chrono::milliseconds interval = std::chrono::milliseconds(0))
-        //   -> coro::Task<Result<std::shared_ptr<RawSubscription>>> override;
-        // auto unsubscribe(std::shared_ptr<RawSubscription> subscription) -> coro::Task<Result<void>>
-        // override;
+        auto subscribeRaw(std::string_view path,
+                       SubscriptionType type = SubscriptionType::OnChange,
+                       std::chrono::milliseconds interval = NO_TIMEOUT) -> coro::Task<Result<std::shared_ptr<RawSubscription>>> override;
+        auto unsubscribe(std::shared_ptr<RawSubscription> subscription) -> coro::Task<Result<void>> override;
         // clang-format on
 
       private:
         auto getTimeout() -> std::chrono::milliseconds;
         auto setTimeout(std::chrono::milliseconds timeout) -> void;
 
-        // struct SubscriptionContext
-        // {
-        //     AdsHandle symbolHandle;
-        //     AdsHandle notificationHandle;
-        //     std::shared_ptr<RawSubscription> stream;
-        // };
+        struct SubscriptionContext
+        {
+            AdsHandle symbolHandle;
+            AdsHandle notificationHandle;
+            std::shared_ptr<RawSubscription> stream;
+        };
 
-        // static void NotificationCallback(const AmsAddr* pAddr,
-        //                                  const AdsNotificationHeader* pNotification,
-        //                                  uint32_t hUser);
-        // void OnNotification(const AdsNotificationHeader* pNotification);
+        static void NotificationCallback(const AmsAddr* pAddr,
+                                         const AdsNotificationHeader* pNotification,
+                                         uint32_t hUser);
+        void OnNotification(const AdsNotificationHeader* pNotification);
 
         coro::IExecutor& m_ex;
         AmsNetId m_remoteNetId;
@@ -67,7 +65,7 @@ namespace tlink::drivers
 
         std::mutex m_mutex;
         uint32_t m_driverId;
-        // std::unordered_map<uint32_t, SubscriptionContext> m_subscriptionContexts;
+        std::unordered_map<uint32_t, SubscriptionContext> m_subscriptionContexts;
     };
 
 } // namespace tlink::drivers

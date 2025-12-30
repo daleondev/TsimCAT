@@ -28,29 +28,29 @@ auto runApp(tlink::coro::IExecutor& ex) -> tlink::coro::Task<void>
         std::println("Value: {}", readRes.value());
     }
 
-    // // 3. Start a Subscription (Asynchronous Stream)
-    // std::println("App: Subscribing to P_GripperControl.stPneumaticGripperData.bOpen...");
-    // auto subRes = co_await adsDriver.subscribe(
-    //   "P_GripperControl.stPneumaticGripperData.bOpen", tlink::SubscriptionType::Cyclic, 100ms);
+    // 3. Start a Subscription (Asynchronous Stream)
+    std::println("App: Subscribing to P_GripperControl.stPneumaticGripperData.bOpen...");
+    auto subRes = co_await adsDriver.subscribeRaw(
+      "P_GripperControl.stPneumaticGripperData.bOpen", tlink::SubscriptionType::Cyclic, 100ms);
 
-    // if (subRes) {
-    //     auto sub = subRes.value();
-    //     std::println("App: Subscription active. Waiting for first 3 updates...");
+    if (subRes) {
+        auto sub = subRes.value();
+        std::println("App: Subscription active. Waiting for first 3 updates...");
 
-    //     for (int i = 0; i < 3; ++i) {
-    //         // Suspends until the next update is pushed by the driver
-    //         auto update = co_await sub->stream.next();
-    //         if (update) {
-    //             std::println("   [Update {:02}] Received {} bytes", i + 1, update.value().size());
-    //         }
-    //     }
+        for (int i = 0; i < 3; ++i) {
+            // Suspends until the next update is pushed by the driver
+            auto update = co_await sub->stream.next();
+            // if (update) {
+            std::println("   [Update {:02}] Received {} bytes", i + 1, update.size());
+            // }
+        }
 
-    //     std::println("App: Unsubscribing to P_GripperControl.stPneumaticGripperData.bOpen...");
-    //     auto unsubRes = co_await adsDriver.unsubscribe(sub);
-    //     if (unsubRes) {
-    //         std::println("App: Unsubscribed!");
-    //     }
-    // }
+        std::println("App: Unsubscribing to P_GripperControl.stPneumaticGripperData.bOpen...");
+        auto unsubRes = co_await adsDriver.unsubscribe(sub);
+        if (unsubRes) {
+            std::println("App: Unsubscribed!");
+        }
+    }
 
     std::println("App: Disconnecting...");
     co_await adsDriver.disconnect();
