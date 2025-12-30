@@ -31,7 +31,7 @@ auto runApp(tlink::coro::IExecutor& ex) -> tlink::coro::Task<void>
     // 3. Start a Subscription (Asynchronous Stream)
     std::println("App: Subscribing to P_GripperControl.stPneumaticGripperData.bOpen...");
     auto subRes = co_await adsDriver.subscribeRaw(
-      "P_GripperControl.stPneumaticGripperData.bOpen", tlink::SubscriptionType::Cyclic, 100ms);
+      "P_GripperControl.stPneumaticGripperData.bOpen", tlink::SubscriptionType::Cyclic, 1000ms);
 
     if (subRes) {
         auto sub = subRes.value();

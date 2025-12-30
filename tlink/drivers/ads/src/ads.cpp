@@ -142,7 +142,7 @@ namespace
     // Registry for safe 64-bit -> 32-bit callback handling
     static std::mutex s_registryMutex;
     static std::unordered_map<uint32_t, tlink::drivers::AdsDriver*> s_registry;
-    static std::atomic<uint32_t> s_nextDriverId{ 0 };
+    static std::atomic<uint32_t> s_nextDriverId{ 1 };
 }
 
 namespace std
@@ -218,7 +218,7 @@ namespace tlink::drivers
 
             {
                 std::lock_guard lock(m_mutex);
-                // m_subscriptionContexts.clear();
+                m_subscriptionContexts.clear();
             }
 
             m_route.reset();
@@ -279,10 +279,7 @@ namespace tlink::drivers
 
         AdsDriver* driver = nullptr;
         {
-            std::unique_lock lock(s_registryMutex, std::try_to_lock);
-            if (!lock.owns_lock())
-                return;
-
+            std::lock_guard lock(s_registryMutex);
             if (auto it = s_registry.find(hUser); it != s_registry.end()) {
                 driver = it->second;
             }
@@ -295,24 +292,21 @@ namespace tlink::drivers
 
     void AdsDriver::OnNotification(const AdsNotificationHeader* pNotification)
     {
-        SubscriptionContext* context;
+        std::shared_ptr<RawSubscription> stream;
         std::vector<std::byte> data;
 
         {
-            std::unique_lock lock(m_mutex, std::try_to_lock);
-            if (!lock.owns_lock())
-                return;
-
+            std::lock_guard lock(m_mutex);
             if (auto it = m_subscriptionContexts.find(pNotification->hNotification);
                 it != m_subscriptionContexts.end()) {
-                context = &it->second;
+                stream = it->second.stream;
                 const auto* dataPtr = reinterpret_cast<const std::byte*>(pNotification + 1);
                 data.assign(dataPtr, dataPtr + pNotification->cbSampleSize);
             }
         }
 
-        if (context && context->stream) {
-            context->stream->stream.push(std::move(data));
+        if (stream) {
+            stream->stream.push(std::move(data));
         }
     }
 
