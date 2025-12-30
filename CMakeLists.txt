@@ -20,6 +20,14 @@ add_subdirectory(external/json)
 add_subdirectory(external/magic_enum)
 add_subdirectory(tlink)
 
+add_library(asio INTERFACE)
+add_library(asio::asio ALIAS asio)
+target_include_directories(
+    asio
+    INTERFACE
+    external/asio/include
+)
+
 file(
     GLOB_RECURSE SOURCES
     CONFIGURE_DEPENDS
@@ -58,6 +66,7 @@ target_link_libraries(
     magic_enum::magic_enum
     tlink::tlink
     tlink::ads
+    asio::asio
 )
 
 target_compile_features(

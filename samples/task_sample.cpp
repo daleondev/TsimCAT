@@ -4,7 +4,33 @@
 #include <exception>
 #include <type_traits>
 #include <cstdint>
-#include <semaphore>
+#include <condition_variable>
+#include <atomic>
+#include <deque>
+#include <concepts>
+#include <functional>
+
+class DetachedTask
+{
+public:
+    struct promise_type;
+    using handle_type = std::coroutine_handle<promise_type>;
+
+    struct promise_type
+    {
+        DetachedTask get_return_object() { return DetachedTask{handle_type::from_promise(*this)}; }
+        std::suspend_always initial_suspend() { return {}; }
+        std::suspend_never final_suspend() noexcept { return {}; }
+        void unhandled_exception() { std::terminate(); }
+        void return_void() {}
+    };
+
+    explicit DetachedTask(handle_type handle) : m_handle(handle) {}
+    inline const handle_type &getHandle() const { return m_handle; }
+
+private:
+    handle_type m_handle;
+};
 
 template <typename T>
 struct TaskPromise;
@@ -42,7 +68,7 @@ public:
         return *this;
     }
 
-    auto await_ready() const noexcept -> bool
+    bool await_ready() const noexcept
     {
         return !m_handle || m_handle.done();
     }
@@ -116,49 +142,92 @@ struct TaskPromise<void> : public TaskPromiseBase<void>
     void return_void() {}
 };
 
-Task<int> test()
+class CoroContext
+{
+public:
+    CoroContext() = default;
+    ~CoroContext() = default;
+    CoroContext(const CoroContext &) = delete;
+    CoroContext &operator=(const CoroContext &) = delete;
+    CoroContext(CoroContext &&) = delete;
+    CoroContext &operator=(CoroContext &&) = delete;
+
+    void run()
+    {
+        while (m_running)
+        {
+            std::unique_lock lock(m_mutex);
+
+            while (!m_queue.empty())
+            {
+                auto handle = std::move(m_queue.front());
+                m_queue.pop_front();
+
+                lock.unlock();
+                if (handle && !handle.done())
+                {
+                    handle.resume();
+                }
+                lock.lock();
+            }
+
+            m_cv.wait(lock, [this]
+                      { return !m_queue.empty() || !m_running; });
+        }
+    }
+
+    void stop()
+    {
+        m_running = false;
+        m_cv.notify_all();
+    }
+
+    void schedule(std::coroutine_handle<> handle)
+    {
+        {
+            std::lock_guard lock(m_mutex);
+            m_queue.push_back(handle);
+        }
+        m_cv.notify_one();
+    }
+
+private:
+    std::atomic<bool> m_running{true};
+    std::mutex m_mutex;
+    std::condition_variable m_cv;
+    std::deque<std::coroutine_handle<>> m_queue;
+};
+
+template <typename T>
+concept Context = requires(T t, std::coroutine_handle<> h) {
+    { t.run() };
+    { t.stop() };
+    { t.schedule(h) };
+};
+
+template <Context T, std::invocable<T &> C>
+void co_spawn(T &ctx, C &&coro)
+{
+    auto detached = [&ctx, c = std::forward<C>(coro)]() mutable -> DetachedTask
+    {
+        co_await std::invoke(std::move(c), ctx);
+    }();
+    ctx.schedule(detached.getHandle());
+}
+
+Task<int> coro()
 {
     co_return 5;
 }
 
-Task<void> run()
-{
-    int i = co_await test();
-    std::cout << "Result: " << i << std::endl;
-    co_return;
-}
-
-struct SyncWaitTask
-{
-    struct promise_type
-    {
-        std::binary_semaphore sem{0};
-
-        SyncWaitTask get_return_object() { return {this}; }
-        std::suspend_always initial_suspend() { return {}; }
-        std::suspend_always final_suspend() noexcept { return {}; }
-        void unhandled_exception() { std::terminate(); }
-        void return_void()
-        {
-            sem.release();
-        }
-    };
-    promise_type *promise;
-};
-
-void sync_wait(Task<void> &&task)
-{
-    auto wrapper = [&](Task<void> t) -> SyncWaitTask
-    {
-        co_await t;
-    }(std::move(task));
-    wrapper.promise->get_return_object();
-    std::coroutine_handle<SyncWaitTask::promise_type>::from_promise(*wrapper.promise).resume();
-    wrapper.promise->sem.acquire();
-}
-
 int main()
 {
-    sync_wait(run());
+    CoroContext ctx;
+    co_spawn(ctx, [](CoroContext &ctx) -> Task<void>
+             {
+        auto i = co_await coro();
+        std::println("{}", i);
+        ctx.stop(); });
+    ctx.run();
     return 0;
 }
