@@ -218,6 +218,11 @@ namespace tlink::drivers
 
             {
                 std::lock_guard lock(m_mutex);
+                for (auto& [id, context] : m_subscriptionContexts) {
+                    if (context.stream) {
+                        context.stream->stream.close();
+                    }
+                }
                 m_subscriptionContexts.clear();
             }
 
@@ -354,6 +359,7 @@ namespace tlink::drivers
         auto err{ AdsError::None };
         try {
             std::lock_guard lock(m_mutex);
+            subscription->stream.close();
             m_subscriptionContexts.erase(static_cast<uint32_t>(subscription->id));
         } catch (const std::exception& ex) {
             err = handleException(ex);

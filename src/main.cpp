@@ -39,7 +39,12 @@ auto runApp(tlink::coro::IExecutor& ex) -> tlink::coro::Task<void>
 
         for (int i = 0; i < 3; ++i) {
             auto update = co_await sub.stream.next();
-            std::println("   [Update {:02}] Received {} bytes", i + 1, update);
+            if (update) {
+                std::println("   [Update {:02}] Value: {}", i + 1, *update);
+            } else {
+                std::println("   [Update {:02}] Stream closed", i + 1);
+                break;
+            }
         }
 
         std::println("App: Unsubscribing to P_GripperControl.stPneumaticGripperData.bOpen...");
