@@ -3,6 +3,8 @@
 
 #include <chrono>
 #include <print>
+#include <thread>
+#include <vector>
 
 using namespace std::chrono_literals;
 
@@ -62,10 +64,18 @@ auto runApp(tlink::coro::IExecutor& ex) -> tlink::coro::Task<void>
             // To enable Load Balancer behavior, you would uncomment the following:
             // sub.stream.setMode(tlink::coro::ChannelMode::LoadBalancer);
 
-            std::println("[{}] App: Spawning 3 concurrent waiters on the same stream...", getTimestamp());
-            co_spawn(ex, [sub](auto&) mutable { return waiterTask(1, sub); });
-            co_spawn(ex, [sub](auto&) mutable { return waiterTask(2, sub); });
-            co_spawn(ex, [sub](auto&) mutable { return waiterTask(3, sub); });
+            std::println("[{}] App: Spawning 3 concurrent waiters on separate threads...", getTimestamp());
+            std::vector<std::jthread> threads;
+            for (int i = 1; i <= 3; ++i) {
+                threads.emplace_back([sub, i] {
+                    tlink::coro::Context ctx;
+                    co_spawn(ctx, [sub, i, &ctx](auto&) mutable -> tlink::coro::Task<void> {
+                        co_await waiterTask(i, sub);
+                        ctx.stop();
+                    });
+                    ctx.run();
+                });
+            }
 
             std::println("[{}] App: Main task also joining the stream for 5 updates...", getTimestamp());
             for (int i = 0; i < 5; ++i) {
