@@ -43,6 +43,7 @@ namespace tlink
       public:
         virtual ~IDriver() = default;
 
+        // clang-format off
         virtual auto connect(std::chrono::milliseconds timeout = NO_TIMEOUT) -> coro::Task<Result<void>> = 0;
         virtual auto disconnect(std::chrono::milliseconds timeout = NO_TIMEOUT) -> coro::Task<Result<void>> = 0;
 
@@ -56,16 +57,14 @@ namespace tlink
 
         virtual auto subscribeRaw(std::string_view path,
                                   SubscriptionType type = SubscriptionType::OnChange,
-                                  std::chrono::milliseconds interval = NO_TIMEOUT)
-          -> coro::Task<Result<std::shared_ptr<RawSubscription>>> = 0;
-
+                                  std::chrono::milliseconds interval = NO_TIMEOUT) -> coro::Task<Result<std::shared_ptr<RawSubscription>>> = 0;
         virtual auto unsubscribeRaw(std::shared_ptr<RawSubscription> subscription) -> coro::Task<Result<void>> = 0;
-
-        // Synchronous cleanup for deleter
         virtual auto unsubscribeRawSync(uint64_t id) -> void = 0;
+        // clang-format on
 
         template<typename T>
-        auto read(std::string_view path, std::chrono::milliseconds timeout = NO_TIMEOUT) -> coro::Task<Result<T>>
+        auto read(std::string_view path, std::chrono::milliseconds timeout = NO_TIMEOUT)
+          -> coro::Task<Result<T>>
         {
             T value{};
             auto result = co_await readInto(path, std::as_writable_bytes(std::span{ &value, 1 }), timeout);
@@ -84,7 +83,8 @@ namespace tlink
         template<typename T>
         auto subscribe(std::string_view path,
                        SubscriptionType type = SubscriptionType::OnChange,
-                       std::chrono::milliseconds interval = NO_TIMEOUT) -> coro::Task<Result<Subscription<T>>>;
+                       std::chrono::milliseconds interval = NO_TIMEOUT)
+          -> coro::Task<Result<Subscription<T>>>;
 
         template<typename T>
         auto unsubscribe(Subscription<T>& sub) -> coro::Task<Result<void>>;
@@ -122,9 +122,8 @@ namespace tlink
     };
 
     template<typename T>
-    auto IDriver::subscribe(std::string_view path,
-                           SubscriptionType type,
-                           std::chrono::milliseconds interval) -> coro::Task<Result<Subscription<T>>>
+    auto IDriver::subscribe(std::string_view path, SubscriptionType type, std::chrono::milliseconds interval)
+      -> coro::Task<Result<Subscription<T>>>
     {
         auto rawSub = co_await subscribeRaw(path, type, interval);
         if (!rawSub) {

@@ -15,8 +15,7 @@ namespace tlink::drivers
     class AdsDriver : public tlink::IDriver
     {
       public:
-        AdsDriver(coro::IExecutor& ex,
-                  std::string_view remoteNetId,
+        AdsDriver(std::string_view remoteNetId,
                   std::string ipAddress,
                   uint16_t port = AMSPORT_R0_PLC_TC3,
                   std::string_view localNetId = "");
@@ -56,7 +55,6 @@ namespace tlink::drivers
                                          uint32_t hUser);
         void OnNotification(const AdsNotificationHeader* pNotification);
 
-        coro::IExecutor& m_ex;
         AmsNetId m_remoteNetId;
         std::string m_ipAddress;
         uint16_t m_port;

@@ -34,3 +34,9 @@ option(TLINK_BUILD_DRIVER_ADS "Build the ADS protocol driver" ON)
 if(TLINK_BUILD_DRIVER_ADS)
     add_subdirectory(drivers/ads)
 endif()
+
+option(TLINK_BUILD_DRIVER_OPCUA "Build the OPC UA protocol driver" ON)
+
+if(TLINK_BUILD_DRIVER_OPCUA)
+    add_subdirectory(drivers/opcua)
+endif()

@@ -15,7 +15,6 @@
 
 namespace
 {
-    static std::atomic_bool s_localNetIdSet{ false };
     static auto strToNetId(std::string_view str) -> AmsNetId
     {
         auto parts{ str | std::views::split('.') };
@@ -156,13 +155,11 @@ namespace std
 namespace tlink::drivers
 {
 
-    AdsDriver::AdsDriver(coro::IExecutor& ex,
-                         std::string_view remoteNetId,
+    AdsDriver::AdsDriver(std::string_view remoteNetId,
                          std::string ipAddress,
                          uint16_t port,
                          std::string_view localNetId)
-      : m_ex(ex)
-      , m_remoteNetId{ strToNetId(remoteNetId) }
+      : m_remoteNetId{ strToNetId(remoteNetId) }
       , m_ipAddress(std::move(ipAddress))
       , m_port{ port }
       , m_route{ nullptr }
@@ -337,13 +334,11 @@ namespace tlink::drivers
 
             std::lock_guard lock(m_mutex);
             // Custom deleter to ensure we unsubscribe ONLY when the last reference dies
-            auto rawSub = std::shared_ptr<RawSubscription>(
-                new RawSubscription(id),
-                [this](RawSubscription* p) {
-                    this->unsubscribeRawSync(p->id);
-                    delete p;
-                }
-            );
+            auto rawSub =
+              std::shared_ptr<RawSubscription>(new RawSubscription(id), [this](RawSubscription* p) {
+                this->unsubscribeRawSync(p->id);
+                delete p;
+            });
 
             m_subscriptionContexts.emplace(
               id,

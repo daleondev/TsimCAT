@@ -13,6 +13,8 @@ add_subdirectory(external/ADS/AdsLib)
 set_target_properties(ads PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/external/ADS")
 target_compile_definitions(ads PRIVATE CONFIG_DEFAULT_LOGLEVEL=1)
 
+add_subdirectory(external/open62541)
+
 set(ELEMENTS_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(external/elements)
 
@@ -60,12 +62,10 @@ target_link_libraries(
     TsimCAT
     PRIVATE
     stdc++exp
-    ads::ads
     elements
     nlohmann_json::nlohmann_json
-    magic_enum::magic_enum
-    tlink::tlink
     tlink::ads
+    tlink::opcua
     asio::asio
 )
 
