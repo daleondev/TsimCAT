@@ -123,9 +123,9 @@ struct TaskPromiseBase
         struct Awaiter
         {
             bool await_ready() noexcept { return false; }
-            std::coroutine_handle<> await_suspend(Task<T>::handle_type h) noexcept
+            std::coroutine_handle<> await_suspend(Task<T>::handle_type handle) noexcept
             {
-                return h.promise().waiter ? h.promise().waiter : std::noop_coroutine();
+                return handle.promise().waiter ? handle.promise().waiter : std::noop_coroutine();
             }
             void await_resume() noexcept {}
         };
