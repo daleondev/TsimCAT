@@ -30,7 +30,7 @@ auto runApp(tlink::coro::IExecutor& ex) -> tlink::coro::Task<void>
 
     // 3. Start a Subscription (Asynchronous Stream)
     std::println("App: Subscribing to P_GripperControl.stPneumaticGripperData.bOpen...");
-    auto subRes = co_await adsDriver.subscribeRaw(
+    auto subRes = co_await adsDriver.subscribe(
       "P_GripperControl.stPneumaticGripperData.bOpen", tlink::SubscriptionType::Cyclic, 1000ms);
 
     if (subRes) {
@@ -38,15 +38,12 @@ auto runApp(tlink::coro::IExecutor& ex) -> tlink::coro::Task<void>
         std::println("App: Subscription active. Waiting for first 3 updates...");
 
         for (int i = 0; i < 3; ++i) {
-            // Suspends until the next update is pushed by the driver
-            auto update = co_await sub->stream.next();
-            // if (update) {
-            std::println("   [Update {:02}] Received {} bytes", i + 1, update.size());
-            // }
+            auto update = co_await sub.stream.next();
+            std::println("   [Update {:02}] Received {} bytes", i + 1, update);
         }
 
         std::println("App: Unsubscribing to P_GripperControl.stPneumaticGripperData.bOpen...");
-        auto unsubRes = co_await adsDriver.unsubscribe(sub);
+        auto unsubRes = co_await adsDriver.unsubscribe(sub.rawSub);
         if (unsubRes) {
             std::println("App: Unsubscribed!");
         }

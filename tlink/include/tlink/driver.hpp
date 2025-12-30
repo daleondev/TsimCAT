@@ -18,44 +18,21 @@ namespace tlink
     struct RawSubscription
     {
         const uint64_t id;
-        coro::RawAsyncChannel stream{};
+        coro::RawAsyncChannel stream;
     };
 
-    // template<typename T>
-    // struct Subscription
-    // {
-    //     const uint64_t id;
-    //     coro::AsyncChannel<T> stream{};
-    // };
+    template<typename T>
+    struct Subscription
+    {
+        std::shared_ptr<RawSubscription> rawSub;
+        coro::AsyncChannel<T> stream;
+    };
 
     enum class SubscriptionType
     {
         OnChange,
         Cyclic
     };
-
-    // // Standard data packet for subscriptions
-    // using RawDataPacket = std::vector<std::byte>;
-
-    // // The stream type used by subscribers
-    // using RawDataStream = AsyncChannel<Result<RawDataPacket>>;
-
-    // enum class SubscriptionType
-    // {
-    //     OnChange, // Trigger only when value changes
-    //     Cyclic    // Trigger at fixed intervals
-    // };
-
-    // struct RawSubscription
-    // {
-    //     uint64_t id;
-    //     RawDataStream stream;
-    //     RawSubscription(uint64_t i)
-    //       : id{ i }
-    //       , stream{}
-    //     {
-    //     }
-    // };
 
     class IDriver
     {
@@ -97,15 +74,19 @@ namespace tlink
             co_return co_await writeFrom(path, std::as_bytes(std::span{ &value, 1 }), timeout);
         }
 
-        // auto subscribe(std::string_view path,
-        //                SubscriptionType type = SubscriptionType::OnChange,
-        //                std::chrono::milliseconds interval = NO_TIMEOUT)
-        //   -> coro::Task<Result<std::shared_ptr<Subscription<int>>>>
-        // {
-        //     auto sub = co_await subscribeRaw(path, type, interval);
+        auto subscribe(std::string_view path,
+                       SubscriptionType type = SubscriptionType::OnChange,
+                       std::chrono::milliseconds interval = NO_TIMEOUT)
+          -> coro::Task<Result<Subscription<int>>>
+        {
+            auto rawSub = co_await subscribeRaw(path, type, interval);
+            if (!rawSub) {
+                co_return std::unexpected(rawSub.error());
+            }
 
-        //     co_return;
-        // };
+            co_return Subscription<int>{ .rawSub = rawSub.value(),
+                                         .stream = coro::AsyncChannel<int>(rawSub.value()->stream) };
+        };
     };
 
 } // namespace tlink

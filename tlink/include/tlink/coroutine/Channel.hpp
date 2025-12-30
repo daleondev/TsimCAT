@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Context.hpp"
+#include "Task.hpp"
 
 #include <cstring>
 #include <span>
@@ -11,8 +12,7 @@ namespace tlink::coro
 {
     namespace detail
     {
-        template<typename T>
-        struct AsyncAwaiter;
+        struct RawAsyncAwaiter;
     }
 
     class RawAsyncChannel
@@ -37,7 +37,7 @@ namespace tlink::coro
             };
         }
 
-        auto next() -> detail::AsyncAwaiter<Bytes>;
+        auto next() -> detail::RawAsyncAwaiter;
 
       protected:
         std::mutex m_mutex;
@@ -48,25 +48,36 @@ namespace tlink::coro
             IExecutor* executor;
         } m_coro{ nullptr, nullptr };
 
-        template<typename U>
-        friend class detail::AsyncAwaiter;
+        friend class detail::RawAsyncAwaiter;
     };
 
     template<typename T>
-    class AsyncChannel : public RawAsyncChannel
+    class AsyncChannel
     {
       public:
-        auto push(T value) -> void { RawAsyncChannel::push(std::as_bytes(std::span{ &value, 1 })); }
-        auto next() -> detail::AsyncAwaiter<T>;
+        AsyncChannel(RawAsyncChannel& rawChannel)
+          : m_rawChannel{ rawChannel }
+        {
+        }
+
+        auto push(T value) -> void { m_rawChannel.push(std::as_bytes(std::span{ &value, 1 })); }
+
+        auto next() -> Task<int>
+        {
+            auto raw = co_await m_rawChannel.next();
+            T val{};
+            std::memcpy(&val, raw.data(), sizeof(T));
+            co_return val;
+        }
+
+      private:
+        RawAsyncChannel& m_rawChannel;
     };
 
     namespace detail
     {
-        template<typename T>
-        struct AsyncAwaiter
+        struct RawAsyncAwaiter
         {
-            // static_assert(std::is_same_v<T, RawAsyncChannel::Bytes> || std::is_trivially_copyable_v<T>);
-
             RawAsyncChannel& channel;
 
             auto await_ready() -> bool
@@ -95,31 +106,15 @@ namespace tlink::coro
                 return true;
             }
 
-            auto await_resume() -> T
+            auto await_resume() -> RawAsyncChannel::Bytes
             {
-                RawAsyncChannel::Bytes raw;
-                {
-                    std::lock_guard lock(channel.m_mutex);
-                    raw = std::move(channel.m_queue.front());
-                    channel.m_queue.pop_front();
-                }
-
-                if constexpr (std::is_same_v<T, RawAsyncChannel::Bytes>) {
-                    return raw;
-                }
-                else {
-                    T val{};
-                    std::memcpy(&val, raw.data(), sizeof(T));
-                    return val;
-                }
+                std::lock_guard lock(channel.m_mutex);
+                auto raw{ std::move(channel.m_queue.front()) };
+                channel.m_queue.pop_front();
+                return raw;
             }
         };
     }
 
-    inline auto RawAsyncChannel::next() -> detail::AsyncAwaiter<Bytes> { return { *this }; }
-    template<typename T>
-    auto AsyncChannel<T>::next() -> detail::AsyncAwaiter<T>
-    {
-        return { *this };
-    }
+    inline auto RawAsyncChannel::next() -> detail::RawAsyncAwaiter { return { *this }; }
 }
