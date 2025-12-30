@@ -19,9 +19,11 @@ namespace tlink::coro
         struct RawAsyncAwaiter;
     }
 
-    template<typename T>
-        requires std::is_trivially_copyable_v<T>
-    class AsyncChannel;
+    enum class ChannelMode
+    {
+        Broadcast,   // Every waiter gets every update (Pub/Sub)
+        LoadBalancer // Updates are distributed among waiters (Work Queue)
+    };
 
     class RawAsyncChannel
     {
@@ -33,14 +35,17 @@ namespace tlink::coro
         {
             std::coroutine_handle<> handle;
             IExecutor* executor;
+            // For broadcast, we need a place to put the result
+            std::optional<Bytes>* resultDest = nullptr;
         };
 
         struct State
         {
             std::mutex mutex;
-            std::deque<Bytes> queue;
+            std::deque<Bytes> queue; // Used for LoadBalancer or buffering when no waiters
             bool closed = false;
             std::deque<Waiter> waiters;
+            ChannelMode mode = ChannelMode::Broadcast;
         };
 
       public:
@@ -49,25 +54,59 @@ namespace tlink::coro
         {
         }
 
+        auto setMode(ChannelMode mode) -> void
+        {
+            std::lock_guard lock(m_state->mutex);
+            m_state->mode = mode;
+        }
+
         auto push(Bytes raw) -> void
         {
             std::unique_lock lock(m_state->mutex);
             if (m_state->closed) {
                 return;
             }
-            m_state->queue.push_back(std::move(raw));
 
-            if (!m_state->waiters.empty()) {
-                auto [handle, exec] = m_state->waiters.front();
+            if (m_state->waiters.empty()) {
+                m_state->queue.push_back(std::move(raw));
+                return;
+            }
+
+            if (m_state->mode == ChannelMode::LoadBalancer) {
+                auto waiter = m_state->waiters.front();
                 m_state->waiters.pop_front();
+                
+                if (waiter.resultDest) {
+                    *waiter.resultDest = std::move(raw);
+                }
+
                 lock.unlock();
-                if (exec) {
-                    exec->schedule(handle);
+                if (waiter.executor) {
+                    waiter.executor->schedule(waiter.handle);
+                } else {
+                    waiter.handle.resume();
                 }
-                else {
-                    handle.resume();
+            }
+            else {
+                // Broadcast: Every current waiter gets a copy
+                auto toResume = std::move(m_state->waiters);
+                m_state->waiters.clear();
+                
+                for (auto& waiter : toResume) {
+                    if (waiter.resultDest) {
+                        *waiter.resultDest = raw; // Copy
+                    }
                 }
-            };
+
+                lock.unlock();
+                for (auto& waiter : toResume) {
+                    if (waiter.executor) {
+                        waiter.executor->schedule(waiter.handle);
+                    } else {
+                        waiter.handle.resume();
+                    }
+                }
+            }
         }
 
         auto close() -> void
@@ -82,17 +121,17 @@ namespace tlink::coro
                 toResume = std::move(m_state->waiters);
             }
 
-            for (auto& [handle, exec] : toResume) {
-                if (exec) {
-                    exec->schedule(handle);
+            for (auto& waiter : toResume) {
+                if (waiter.executor) {
+                    waiter.executor->schedule(waiter.handle);
                 }
                 else {
-                    handle.resume();
+                    waiter.handle.resume();
                 }
             }
         }
 
-        auto next() -> detail::RawAsyncAwaiter;
+        auto next(std::optional<Bytes>& dest) -> detail::RawAsyncAwaiter;
 
       protected:
         std::shared_ptr<State> m_state;
@@ -114,24 +153,28 @@ namespace tlink::coro
         {
         }
 
-        auto push(T value) -> void
+        auto setMode(ChannelMode mode) -> void
         {
-            RawAsyncChannel handle;
-            handle.m_state = m_state;
-            handle.push(std::vector<std::byte>(
-              reinterpret_cast<const std::byte*>(&value), reinterpret_cast<const std::byte*>(&value) + sizeof(T)));
+            if (m_state) {
+                std::lock_guard lock(m_state->mutex);
+                m_state->mode = mode;
+            }
         }
 
         auto next() -> Task<std::optional<T>>
         {
             RawAsyncChannel handle;
             handle.m_state = m_state;
-            auto raw = co_await handle.next();
-            if (!raw) {
+            
+            std::optional<RawAsyncChannel::Bytes> result;
+            auto awaiter = handle.next(result);
+            co_await awaiter;
+
+            if (!result) {
                 co_return std::nullopt;
             }
             T val{};
-            std::memcpy(&val, raw->data(), sizeof(T));
+            std::memcpy(&val, result->data(), sizeof(T));
             co_return val;
         }
 
@@ -144,11 +187,20 @@ namespace tlink::coro
         struct RawAsyncAwaiter
         {
             std::shared_ptr<RawAsyncChannel::State> state;
+            std::optional<RawAsyncChannel::Bytes>& dest;
 
             auto await_ready() -> bool
             {
                 std::lock_guard lock(state->mutex);
-                return !state->queue.empty() || state->closed;
+                if (state->closed) return true;
+                
+                // If there's something in the queue (from buffered push), take it
+                if (!state->queue.empty()) {
+                    dest = std::move(state->queue.front());
+                    state->queue.pop_front();
+                    return true;
+                }
+                return false;
             }
 
             template<typename P>
@@ -156,7 +208,8 @@ namespace tlink::coro
             {
                 std::lock_guard lock(state->mutex);
 
-                if (!state->queue.empty() || state->closed) {
+                // Re-check state under lock
+                if (state->closed || !state->queue.empty()) {
                     return false;
                 }
 
@@ -165,23 +218,19 @@ namespace tlink::coro
                     executor = handle.promise().executor;
                 }
 
-                state->waiters.push_back({ handle, executor });
+                state->waiters.push_back({ handle, executor, &dest });
                 return true;
             }
 
-            auto await_resume() -> std::optional<RawAsyncChannel::Bytes>
+            auto await_resume() -> void
             {
-                std::lock_guard lock(state->mutex);
-                if (state->queue.empty()) {
-                    return std::nullopt;
-                }
-
-                auto raw{ std::move(state->queue.front()) };
-                state->queue.pop_front();
-                return raw;
+                // Result is already in 'dest' or dest is nullopt (closed)
             }
         };
     }
 
-    inline auto RawAsyncChannel::next() -> detail::RawAsyncAwaiter { return { m_state }; }
+    inline auto RawAsyncChannel::next(std::optional<Bytes>& dest) -> detail::RawAsyncAwaiter 
+    { 
+        return { m_state, dest }; 
+    }
 }
