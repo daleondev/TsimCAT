@@ -57,7 +57,7 @@ namespace tlink::coro
         {
             other.m_handle = nullptr;
         }
-        auto operator=(Task&& other) -> Task& noexcept
+        auto operator=(Task&& other) noexcept -> Task&
         {
             if (this != &other) {
                 if (m_handle) {
@@ -68,8 +68,8 @@ namespace tlink::coro
             return *this;
         }
 
-        auto await_ready() const -> bool noexcept { return !m_handle || m_handle.done(); }
-        auto await_suspend(std::coroutine_handle<> waiter) -> std::coroutine_handle<> noexcept
+        auto await_ready() const noexcept -> bool { return !m_handle || m_handle.done(); }
+        auto await_suspend(std::coroutine_handle<> waiter) noexcept -> std::coroutine_handle<>
         {
             m_handle.promise().waiter = waiter;
             return m_handle;
@@ -83,22 +83,8 @@ namespace tlink::coro
                 return; // explicitly return void (propably not neccessary)
             }
         }
-        auto await_transform(Task<U>&& childTask) -> Task<U>&&
-        {
-            // propagate execution context to child
-            if (childTask.m_handle) {
-                if (executor) {
-                    childHandle.promise().executor = executor;
-                }
-            }
-            return std::move(childTask);
-        }
-        template<typename U>
-        auto await_transform(U&& task) -> U&&
-        {
-            return std::forward<U>(task);
-        }
 
+        inline auto getHandle() -> handle_type& { return m_handle; }
         inline auto getHandle() const -> const handle_type& { return m_handle; }
 
       private:
@@ -124,6 +110,7 @@ namespace tlink::coro
         {
             std::coroutine_handle<> waiter;
             std::exception_ptr exception;
+            IExecutor* executor{ nullptr };
 
             template<typename... Args>
             TaskPromiseBase(IExecutor& ex, Args&&...)
@@ -151,11 +138,27 @@ namespace tlink::coro
                     {
                         return handle.promise().waiter ? handle.promise().waiter : std::noop_coroutine();
                     }
-                    auto await_resume() -> void noexcept {}
+                    auto await_resume() noexcept -> void {}
                 } awaiter{};
                 return awaiter;
             }
             auto unhandled_exception() -> void { exception = std::current_exception(); }
+            template<typename U>
+            auto await_transform(Task<U>&& childTask) -> Task<U>&&
+            {
+                // propagate execution context to child
+                if (childTask.getHandle()) {
+                    if (executor) {
+                        childTask.getHandle().promise().executor = executor;
+                    }
+                }
+                return std::move(childTask);
+            }
+            template<typename U>
+            auto await_transform(U&& task) -> U&&
+            {
+                return std::forward<U>(task);
+            }
         };
 
         template<typename T = void>

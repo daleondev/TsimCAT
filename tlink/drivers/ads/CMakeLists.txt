@@ -4,9 +4,10 @@ add_library(tlink_ads STATIC)
 add_library(tlink::ads ALIAS tlink_ads)
 
 # Source files
-target_sources(tlink_ads PRIVATE 
-    src/ads.cpp
-    include/tlink/drivers/ads.hpp
+target_sources(tlink_ads 
+    PRIVATE 
+    src/Ads.cpp
+    include/tlink/drivers/Ads.hpp
 )
 
 # Public headers

@@ -1,29 +1,28 @@
-#include "tlink/drivers/ads.hpp"
-#include "tlink/core/context.hpp"
+#include "tlink/drivers/ADS.hpp"
+#include "tlink/coroutine/Context.hpp"
 
 #include <magic_enum/magic_enum.hpp>
 
-#include <print>
 #include <atomic>
-#include <ranges>
 #include <cassert>
 #include <iostream>
-#include <unordered_set>
-#include <unordered_map>
 #include <mutex>
+#include <print>
+#include <ranges>
 #include <thread>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace
 {
-    static std::atomic_bool s_localNetIdSet{false};
+    static std::atomic_bool s_localNetIdSet{ false };
     static auto strToNetId(std::string_view str) -> AmsNetId
     {
-        auto parts{str | std::views::split('.')};
+        auto parts{ str | std::views::split('.') };
         AmsNetId netId{};
 
-        auto i{0uz};
-        for (auto &&part : parts)
-        {
+        auto i{ 0uz };
+        for (auto&& part : parts) {
             assert(i < 6 && "Invalid NetId string");
             std::from_chars(part.data(), part.data() + part.size(), netId.b[i]);
             ++i;
@@ -109,11 +108,8 @@ namespace
 
     class AdsErrorCategory : public std::error_category
     {
-    public:
-        const char *name() const noexcept override
-        {
-            return "AdsError";
-        }
+      public:
+        const char* name() const noexcept override { return "AdsError"; }
 
         std::string message(int ev) const override
         {
@@ -121,7 +117,7 @@ namespace
         }
     };
 
-    const std::error_category &ads_category()
+    const std::error_category& ads_category()
     {
         static AdsErrorCategory instance;
         return instance;
@@ -129,16 +125,13 @@ namespace
 
     std::error_code make_error_code(AdsError e)
     {
-        return std::error_code(
-            static_cast<int>(e),
-            ads_category());
+        return std::error_code(static_cast<int>(e), ads_category());
     }
 
-    static AdsError handleException(const std::exception &ex)
+    static AdsError handleException(const std::exception& ex)
     {
-        auto *adsEx{dynamic_cast<const AdsException *>(&ex)};
-        if (adsEx)
-        {
+        auto* adsEx{ dynamic_cast<const AdsException*>(&ex) };
+        if (adsEx) {
             std::println(std::cerr, "Ads Exception: {}", adsEx->what());
             return static_cast<AdsError>(adsEx->errorCode);
         }
@@ -148,13 +141,13 @@ namespace
 
     // Registry for safe 64-bit -> 32-bit callback handling
     static std::mutex s_registryMutex;
-    static std::unordered_map<uint32_t, tlink::drivers::AdsDriver *> s_registry;
-    static std::atomic<uint32_t> s_nextDriverId{1};
+    static std::unordered_map<uint32_t, tlink::drivers::AdsDriver*> s_registry;
+    static std::atomic<uint32_t> s_nextDriverId{ 0 };
 }
 
 namespace std
 {
-    template <>
+    template<>
     struct is_error_code_enum<AdsError> : true_type
     {
     };
@@ -163,13 +156,21 @@ namespace std
 namespace tlink::drivers
 {
 
-    AdsDriver::AdsDriver(tlink::Context &ctx, std::string_view remoteNetId, std::string ipAddress, uint16_t port, std::string_view localNetId)
-        : m_ctx(ctx), m_remoteNetId{strToNetId(remoteNetId)}, m_ipAddress(std::move(ipAddress)), m_port{port},
-          m_route{nullptr}, m_localNetId{strToNetId(localNetId)}, m_defaultTimeout{}, m_driverId{s_nextDriverId++}
+    AdsDriver::AdsDriver(coro::IExecutor& ex,
+                         std::string_view remoteNetId,
+                         std::string ipAddress,
+                         uint16_t port,
+                         std::string_view localNetId)
+      : m_ex(ex)
+      , m_remoteNetId{ strToNetId(remoteNetId) }
+      , m_ipAddress(std::move(ipAddress))
+      , m_port{ port }
+      , m_route{ nullptr }
+      , m_defaultTimeout{}
+      , m_driverId{ s_nextDriverId++ }
     {
-        if (!localNetId.empty())
-        {
-            bhf::ads::SetLocalAddress(m_localNetId);
+        if (!localNetId.empty()) {
+            bhf::ads::SetLocalAddress(strToNetId(localNetId));
         }
 
         {
@@ -188,209 +189,192 @@ namespace tlink::drivers
         }
     }
 
-    auto AdsDriver::connect(std::chrono::milliseconds timeout) -> Task<Result<void>>
+    auto AdsDriver::connect(std::chrono::milliseconds timeout) -> coro::Task<Result<void>>
     {
-
-        auto err{AdsError::None};
-        try
-        {
+        auto err{ AdsError::None };
+        try {
             m_route = std::make_unique<AdsDevice>(m_ipAddress, m_remoteNetId, m_port);
 
             m_defaultTimeout = getTimeout();
             setTimeout(timeout);
 
             (void)m_route->GetDeviceInfo();
-        }
-        catch (const std::exception &ex)
-        {
+        } catch (const std::exception& ex) {
             err = handleException(ex);
         }
 
         co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
     }
 
-    auto AdsDriver::disconnect(std::chrono::milliseconds timeout) -> Task<Result<void>>
+    auto AdsDriver::disconnect(std::chrono::milliseconds timeout) -> coro::Task<Result<void>>
     {
-        if (!m_route)
-        {
+        if (!m_route) {
             co_return success();
         }
 
-        auto err{AdsError::None};
-        try
-        {
+        auto err{ AdsError::None };
+        try {
             setTimeout(timeout);
 
             {
                 std::lock_guard lock(m_mutex);
-                m_subscriptionContexts.clear();
+                // m_subscriptionContexts.clear();
             }
 
             m_route.reset();
-        }
-        catch (const std::exception &ex)
-        {
+        } catch (const std::exception& ex) {
             err = handleException(ex);
         }
 
         co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
     }
 
-    auto AdsDriver::readInto(std::string_view path, std::span<std::byte> dest, std::chrono::milliseconds timeout) -> Task<Result<size_t>>
+    auto AdsDriver::readInto(std::string_view path,
+                             std::span<std::byte> dest,
+                             std::chrono::milliseconds timeout) -> coro::Task<Result<size_t>>
     {
         uint32_t bytesRead = 0;
-        auto err{AdsError::None};
-        try
-        {
+        auto err{ AdsError::None };
+        try {
             setTimeout(timeout);
 
-            auto handle{m_route->GetHandle(std::string(path))};
-            err = static_cast<AdsError>(m_route->ReadReqEx2(ADSIGRP_SYM_VALBYHND, *handle, dest.size(),
-                                                            dest.data(), &bytesRead));
-        }
-        catch (const std::exception &ex)
-        {
+            auto handle{ m_route->GetHandle(std::string(path)) };
+            err = static_cast<AdsError>(
+              m_route->ReadReqEx2(ADSIGRP_SYM_VALBYHND, *handle, dest.size(), dest.data(), &bytesRead));
+        } catch (const std::exception& ex) {
             err = handleException(ex);
         }
 
-        if (err != AdsError::None)
-        {
+        if (err != AdsError::None) {
             co_return std::unexpected(make_error_code(err));
         }
 
         co_return bytesRead;
     }
 
-    auto AdsDriver::writeFrom(std::string_view path, std::span<const std::byte> src, std::chrono::milliseconds timeout) -> Task<Result<void>>
+    auto AdsDriver::writeFrom(std::string_view path,
+                              std::span<const std::byte> src,
+                              std::chrono::milliseconds timeout) -> coro::Task<Result<void>>
     {
-        auto err{AdsError::None};
-        try
-        {
+        auto err{ AdsError::None };
+        try {
             setTimeout(timeout);
 
-            auto handle{m_route->GetHandle(std::string(path))};
-            err = static_cast<AdsError>(m_route->WriteReqEx(ADSIGRP_SYM_VALBYHND, *handle, src.size(), src.data()));
-        }
-        catch (const std::exception &ex)
-        {
+            auto handle{ m_route->GetHandle(std::string(path)) };
+            err = static_cast<AdsError>(
+              m_route->WriteReqEx(ADSIGRP_SYM_VALBYHND, *handle, src.size(), src.data()));
+        } catch (const std::exception& ex) {
             err = handleException(ex);
         }
 
         co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
     }
 
-    void AdsDriver::NotificationCallback(const AmsAddr *pAddr, const AdsNotificationHeader *pNotification, uint32_t hUser)
-    {
-        if (!hUser)
-            return;
+    // void AdsDriver::NotificationCallback(const AmsAddr* pAddr,
+    //                                      const AdsNotificationHeader* pNotification,
+    //                                      uint32_t hUser)
+    // {
+    //     if (!hUser)
+    //         return;
 
-        AdsDriver *driver = nullptr;
-        {
-            std::unique_lock lock(s_registryMutex, std::try_to_lock);
-            if (!lock.owns_lock())
-                return;
+    //     AdsDriver* driver = nullptr;
+    //     {
+    //         std::unique_lock lock(s_registryMutex, std::try_to_lock);
+    //         if (!lock.owns_lock())
+    //             return;
 
-            if (auto it = s_registry.find(hUser); it != s_registry.end())
-            {
-                driver = it->second;
-            }
-        }
+    //         if (auto it = s_registry.find(hUser); it != s_registry.end()) {
+    //             driver = it->second;
+    //         }
+    //     }
 
-        if (driver)
-        {
-            driver->OnNotification(pNotification);
-        }
-    }
+    //     if (driver) {
+    //         driver->OnNotification(pNotification);
+    //     }
+    // }
 
-    void AdsDriver::OnNotification(const AdsNotificationHeader *pNotification)
-    {
-        SubscriptionContext *context;
-        std::vector<std::byte> data;
+    // void AdsDriver::OnNotification(const AdsNotificationHeader* pNotification)
+    // {
+    //     SubscriptionContext* context;
+    //     std::vector<std::byte> data;
 
-        {
-            std::unique_lock lock(m_mutex, std::try_to_lock);
-            if (!lock.owns_lock())
-                return;
+    //     {
+    //         std::unique_lock lock(m_mutex, std::try_to_lock);
+    //         if (!lock.owns_lock())
+    //             return;
 
-            if (auto it = m_subscriptionContexts.find(pNotification->hNotification); it != m_subscriptionContexts.end())
-            {
-                context = &it->second;
-                const auto *dataPtr = reinterpret_cast<const std::byte *>(pNotification + 1);
-                data.assign(dataPtr, dataPtr + pNotification->cbSampleSize);
-            }
-        }
+    //         if (auto it = m_subscriptionContexts.find(pNotification->hNotification);
+    //             it != m_subscriptionContexts.end()) {
+    //             context = &it->second;
+    //             const auto* dataPtr = reinterpret_cast<const std::byte*>(pNotification + 1);
+    //             data.assign(dataPtr, dataPtr + pNotification->cbSampleSize);
+    //         }
+    //     }
 
-        if (context && context->stream)
-        {
-            // Push data without resuming immediately
-            context->stream->stream.push_silent(std::move(data));
+    //     if (context && context->stream) {
+    //         // Push data without resuming immediately
+    //         context->stream->stream.push_silent(std::move(data));
 
-            // Extract the waiter and schedule it on the main context thread.
-            // This prevents the ADS callback thread from executing coroutine logic
-            // (like disconnect()) which causes deadlocks.
-            if (auto waiter = context->stream->stream.take_waiter())
-            {
-                m_ctx.schedule(waiter);
-            }
-        }
-    }
+    //         // Extract the waiter and schedule it on the main context thread.
+    //         // This prevents the ADS callback thread from executing coroutine logic
+    //         // (like disconnect()) which causes deadlocks.
+    //         if (auto waiter = context->stream->stream.take_waiter()) {
+    //             m_ctx.schedule(waiter);
+    //         }
+    //     }
+    // }
 
-    auto AdsDriver::subscribe(std::string_view path, SubscriptionType type, std::chrono::milliseconds interval) -> Task<Result<std::shared_ptr<RawSubscription>>>
-    {
-        uint32_t transMode{(type == SubscriptionType::OnChange) ? ADSTRANS_SERVERONCHA : ADSTRANS_SERVERCYCLE};
-        uint32_t cycleTime{static_cast<uint32_t>(interval.count() * 10000)};
+    // auto AdsDriver::subscribe(std::string_view path,
+    //                           SubscriptionType type,
+    //                           std::chrono::milliseconds interval)
+    //   -> coro::Task<Result<std::shared_ptr<RawSubscription>>>
+    // {
+    //     uint32_t transMode{ (type == SubscriptionType::OnChange) ? ADSTRANS_SERVERONCHA
+    //                                                              : ADSTRANS_SERVERCYCLE };
+    //     uint32_t cycleTime{ static_cast<uint32_t>(interval.count() * 10000) };
 
-        AdsNotificationAttrib attrib{
-            .cbLength = 1024,
-            .nTransMode = transMode,
-            .nMaxDelay = 0,
-            .nCycleTime = cycleTime};
+    //     AdsNotificationAttrib attrib{
+    //         .cbLength = 1024, .nTransMode = transMode, .nMaxDelay = 0, .nCycleTime = cycleTime
+    //     };
 
-        auto err{AdsError::None};
-        try
-        {
-            auto symbolHandle{m_route->GetHandle(std::string(path))};
-            auto notificationHandle{m_route->GetHandle(ADSIGRP_SYM_VALBYHND, *symbolHandle, attrib, &AdsDriver::NotificationCallback, m_driverId)};
-            auto id{*notificationHandle};
+    //     auto err{ AdsError::None };
+    //     try {
+    //         auto symbolHandle{ m_route->GetHandle(std::string(path)) };
+    //         auto notificationHandle{ m_route->GetHandle(
+    //           ADSIGRP_SYM_VALBYHND, *symbolHandle, attrib, &AdsDriver::NotificationCallback, m_driverId) };
+    //         auto id{ *notificationHandle };
 
-            std::lock_guard lock(m_mutex);
-            auto subscription{
-                m_subscriptionContexts.emplace(
-                    id,
-                    SubscriptionContext{.symbolHandle = std::move(symbolHandle),
-                                        .notificationHandle = std::move(notificationHandle),
-                                        .stream = std::make_shared<RawSubscription>(id)})};
+    //         std::lock_guard lock(m_mutex);
+    //         auto subscription{ m_subscriptionContexts.emplace(
+    //           id,
+    //           SubscriptionContext{ .symbolHandle = std::move(symbolHandle),
+    //                                .notificationHandle = std::move(notificationHandle),
+    //                                .stream = std::make_shared<RawSubscription>(id) }) };
 
-            co_return subscription.first->second.stream;
-        }
-        catch (const std::exception &ex)
-        {
-            err = handleException(ex);
-        }
+    //         co_return subscription.first->second.stream;
+    //     } catch (const std::exception& ex) {
+    //         err = handleException(ex);
+    //     }
 
-        co_return std::unexpected(make_error_code(err));
-    }
+    //     co_return std::unexpected(make_error_code(err));
+    // }
 
-    auto AdsDriver::unsubscribe(std::shared_ptr<RawSubscription> subscription) -> Task<Result<void>>
-    {
-        if (!subscription)
-        {
-            co_return success();
-        }
+    // auto AdsDriver::unsubscribe(std::shared_ptr<RawSubscription> subscription) -> coro::Task<Result<void>>
+    // {
+    //     if (!subscription) {
+    //         co_return success();
+    //     }
 
-        auto err{AdsError::None};
-        try
-        {
-            std::lock_guard lock(m_mutex);
-            m_subscriptionContexts.erase(static_cast<uint32_t>(subscription->id));
-        }
-        catch (const std::exception &ex)
-        {
-            err = handleException(ex);
-        }
+    //     auto err{ AdsError::None };
+    //     try {
+    //         std::lock_guard lock(m_mutex);
+    //         m_subscriptionContexts.erase(static_cast<uint32_t>(subscription->id));
+    //     } catch (const std::exception& ex) {
+    //         err = handleException(ex);
+    //     }
 
-        co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
-    }
+    //     co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
+    // }
 
     auto AdsDriver::getTimeout() -> std::chrono::milliseconds
     {
@@ -399,7 +383,7 @@ namespace tlink::drivers
 
     auto AdsDriver::setTimeout(std::chrono::milliseconds timeout) -> void
     {
-        auto ms{timeout.count()};
+        auto ms{ timeout.count() };
         m_route->SetTimeout(ms ? ms : m_defaultTimeout.count());
     }
 

@@ -22,7 +22,11 @@ target_sources(tlink INTERFACE
     include/tlink/coroutine/Channel.hpp
 )
 
-target_compile_features(tlink INTERFACE cxx_std_23)
+target_compile_features(
+    tlink 
+    INTERFACE 
+    cxx_std_23
+)
 
 # --- Driver Submodules ---
 option(TLINK_BUILD_DRIVER_ADS "Build the ADS protocol driver" ON)

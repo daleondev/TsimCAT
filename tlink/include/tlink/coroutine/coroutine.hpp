@@ -4,6 +4,8 @@
 #include "Context.hpp"
 #include "Task.hpp"
 
+#include <functional>
+
 namespace tlink::coro
 {
     namespace detail
