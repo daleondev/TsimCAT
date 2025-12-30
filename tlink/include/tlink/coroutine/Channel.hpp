@@ -5,6 +5,7 @@
 
 #include <cstring>
 #include <deque>
+#include <list>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -38,6 +39,7 @@ namespace tlink::coro
             // For broadcast, we need a place to put the result
             std::optional<Bytes>* resultDest = nullptr;
             std::weak_ptr<void> lifeToken;
+            detail::RawAsyncAwaiter* awaiterPtr = nullptr;
         };
 
         struct State
@@ -45,7 +47,7 @@ namespace tlink::coro
             std::mutex mutex;
             std::deque<Bytes> queue; // Used for LoadBalancer or buffering when no waiters
             bool closed = false;
-            std::deque<Waiter> waiters;
+            std::list<Waiter> waiters;
             ChannelMode mode = ChannelMode::Broadcast;
         };
 
@@ -61,82 +63,8 @@ namespace tlink::coro
             m_state->mode = mode;
         }
 
-        auto push(Bytes raw) -> void
-        {
-            std::unique_lock lock(m_state->mutex);
-            if (m_state->closed) {
-                return;
-            }
-
-            if (m_state->waiters.empty()) {
-                m_state->queue.push_back(std::move(raw));
-                return;
-            }
-
-            if (m_state->mode == ChannelMode::LoadBalancer) {
-                auto waiter = m_state->waiters.front();
-                m_state->waiters.pop_front();
-                
-                if (waiter.resultDest) {
-                    *waiter.resultDest = std::move(raw);
-                }
-
-                lock.unlock();
-                if (waiter.executor) {
-                    if (auto token = waiter.lifeToken.lock()) {
-                        waiter.executor->schedule(waiter.handle);
-                    }
-                } else {
-                    waiter.handle.resume();
-                }
-            }
-            else {
-                // Broadcast: Every current waiter gets a copy
-                auto toResume = std::move(m_state->waiters);
-                m_state->waiters.clear();
-                
-                for (auto& waiter : toResume) {
-                    if (waiter.resultDest) {
-                        *waiter.resultDest = raw; // Copy
-                    }
-                }
-
-                lock.unlock();
-                for (auto& waiter : toResume) {
-                    if (waiter.executor) {
-                        if (auto token = waiter.lifeToken.lock()) {
-                            waiter.executor->schedule(waiter.handle);
-                        }
-                    } else {
-                        waiter.handle.resume();
-                    }
-                }
-            }
-        }
-
-        auto close() -> void
-        {
-            std::deque<Waiter> toResume;
-            {
-                std::lock_guard lock(m_state->mutex);
-                if (m_state->closed) {
-                    return;
-                }
-                m_state->closed = true;
-                toResume = std::move(m_state->waiters);
-            }
-
-            for (auto& waiter : toResume) {
-                if (waiter.executor) {
-                    if (auto token = waiter.lifeToken.lock()) {
-                        waiter.executor->schedule(waiter.handle);
-                    }
-                }
-                else {
-                    waiter.handle.resume();
-                }
-            }
-        }
+        auto push(Bytes raw) -> void;
+        auto close() -> void;
 
         auto next(std::optional<Bytes>& dest) -> detail::RawAsyncAwaiter;
 
@@ -195,6 +123,25 @@ namespace tlink::coro
         {
             std::shared_ptr<RawAsyncChannel::State> state;
             std::optional<RawAsyncChannel::Bytes>& dest;
+            std::optional<std::list<RawAsyncChannel::Waiter>::iterator> m_iterator;
+
+            ~RawAsyncAwaiter()
+            {
+                if (m_iterator) {
+                    std::lock_guard lock(state->mutex);
+                    // Re-check under lock (though single-threaded destruction usually implies safety, 
+                    // race could happen if 'push' is concurrent with cancellation)
+                    if (m_iterator) { 
+                       state->waiters.erase(*m_iterator);
+                    }
+                }
+            }
+
+            // Called by Channel to signal completion/detachment
+            void unlink() 
+            {
+                m_iterator = std::nullopt;
+            }
 
             auto await_ready() -> bool
             {
@@ -230,13 +177,14 @@ namespace tlink::coro
                     }
                 }
 
-                state->waiters.push_back({ handle, executor, &dest, std::move(lifeToken) });
+                m_iterator = state->waiters.insert(state->waiters.end(), { handle, executor, &dest, std::move(lifeToken), this });
                 return true;
             }
 
             auto await_resume() -> void
             {
                 // Result is already in 'dest' or dest is nullopt (closed)
+                // If we resumed normally, 'unlink()' was already called by 'push'.
             }
         };
     }
@@ -244,5 +192,97 @@ namespace tlink::coro
     inline auto RawAsyncChannel::next(std::optional<Bytes>& dest) -> detail::RawAsyncAwaiter 
     { 
         return { m_state, dest }; 
+    }
+
+    inline auto RawAsyncChannel::push(Bytes raw) -> void
+    {
+        std::unique_lock lock(m_state->mutex);
+        if (m_state->closed) {
+            return;
+        }
+
+        if (m_state->waiters.empty()) {
+            m_state->queue.push_back(std::move(raw));
+            return;
+        }
+
+        if (m_state->mode == ChannelMode::LoadBalancer) {
+            auto waiter = m_state->waiters.front();
+            m_state->waiters.pop_front();
+            
+            // Detach from awaiter so it doesn't try to erase itself on destruction
+            if (waiter.awaiterPtr) {
+                waiter.awaiterPtr->unlink();
+            }
+
+            if (waiter.resultDest) {
+                *waiter.resultDest = std::move(raw);
+            }
+
+            lock.unlock();
+            if (waiter.executor) {
+                if (auto token = waiter.lifeToken.lock()) {
+                    waiter.executor->schedule(waiter.handle);
+                }
+            } else {
+                waiter.handle.resume();
+            }
+        }
+        else {
+            // Broadcast: Every current waiter gets a copy
+            auto toResume = std::move(m_state->waiters);
+            // List moved-from state is valid but unspecified, clear it to be sure
+            m_state->waiters.clear(); 
+            
+            for (auto& waiter : toResume) {
+                // Detach from awaiter so it doesn't try to erase itself on destruction
+                if (waiter.awaiterPtr) {
+                    waiter.awaiterPtr->unlink();
+                }
+
+                if (waiter.resultDest) {
+                    *waiter.resultDest = raw; // Copy
+                }
+            }
+
+            lock.unlock();
+            for (auto& waiter : toResume) {
+                if (waiter.executor) {
+                    if (auto token = waiter.lifeToken.lock()) {
+                        waiter.executor->schedule(waiter.handle);
+                    }
+                } else {
+                    waiter.handle.resume();
+                }
+            }
+        }
+    }
+
+    inline auto RawAsyncChannel::close() -> void
+    {
+        std::list<Waiter> toResume;
+        {
+            std::lock_guard lock(m_state->mutex);
+            if (m_state->closed) {
+                return;
+            }
+            m_state->closed = true;
+            toResume = std::move(m_state->waiters);
+        }
+
+        for (auto& waiter : toResume) {
+            if (waiter.awaiterPtr) {
+                waiter.awaiterPtr->unlink();
+            }
+            
+            if (waiter.executor) {
+                if (auto token = waiter.lifeToken.lock()) {
+                    waiter.executor->schedule(waiter.handle);
+                }
+            }
+            else {
+                waiter.handle.resume();
+            }
+        }
     }
 }

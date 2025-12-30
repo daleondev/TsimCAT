@@ -49,7 +49,12 @@ namespace tlink::coro
           : m_handle(h)
         {
         }
-        ~Task() { m_handle.destroy(); }
+        ~Task()
+        {
+            if (m_handle) {
+                m_handle.destroy();
+            }
+        }
 
         Task(const Task&) = delete;
         auto operator=(const Task&) -> Task& = delete;

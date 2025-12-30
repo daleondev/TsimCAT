@@ -173,9 +173,50 @@ void testLifetimeSafety()
     std::println("------------------------------------");
 }
 
+auto cancellationTestTask(tlink::coro::AsyncChannel<int>& chan) -> tlink::coro::Task<void>
+{
+    co_await chan.next();
+    std::println(stderr, "  [Task] CRITICAL ERROR: Cancellation task resumed!");
+    std::terminate();
+}
+
+void testCancellationSafety()
+{
+    std::println("------------------------------------");
+    std::println("Test: Cancellation Safety");
+
+    tlink::coro::RawAsyncChannel rawChannel;
+    tlink::coro::AsyncChannel<int> channel(rawChannel);
+
+    {
+        std::println("  [Scope] Creating task...");
+        auto task = cancellationTestTask(channel);
+
+        // Manually resume to the first suspension point (the channel.next())
+        // In a real app, co_spawn or awaiting would do this.
+        task.getHandle().resume();
+
+        std::println("  [Scope] Task is now suspended on channel. Destroying task...");
+    } // task destructor calls m_handle.destroy() -> frame destroyed -> RawAsyncAwaiter destroyed -> removed from channel
+
+    std::println("  [Scope] Task destroyed.");
+
+    std::println("  [Test] Pushing data to channel (should have no waiters)...");
+    int payload = 123;
+    tlink::coro::RawAsyncChannel::Bytes bytes(sizeof(int));
+    std::memcpy(bytes.data(), &payload, sizeof(int));
+
+    // If unregistration failed, this will attempt to resume a dead handle and crash.
+    rawChannel.push(std::move(bytes));
+
+    std::println("  [Test] Push complete. No Crash!");
+    std::println("------------------------------------");
+}
+
 auto main() -> int
 {
     testLifetimeSafety();
+    testCancellationSafety();
 
     std::println("TLink Framework: Broadcast Validation");
     std::println("------------------------------------");
