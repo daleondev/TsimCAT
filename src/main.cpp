@@ -3,10 +3,25 @@
 
 #include <print>
 
+using namespace std::chrono_literals;
+
+auto waiterTask(int id, tlink::Subscription<bool>& sub) -> tlink::coro::Task<void>
+{
+    std::println("Waiter [{}]: Started", id);
+    while (true) {
+        auto update = co_await sub.stream.next();
+        if (update) {
+            std::println("Waiter [{}]: Received Value: {}", id, *update);
+        }
+        else {
+            std::println("Waiter [{}]: Stream closed, exiting.", id);
+            break;
+        }
+    }
+}
+
 auto runApp(tlink::coro::IExecutor& ex) -> tlink::coro::Task<void>
 {
-    using namespace std::chrono_literals;
-
     tlink::drivers::AdsDriver adsDriver(
       ex, "192.168.56.1.1.1", "192.168.56.1", AMSPORT_R0_PLC_TC3, "192.168.56.1.1.20");
 
@@ -21,36 +36,37 @@ auto runApp(tlink::coro::IExecutor& ex) -> tlink::coro::Task<void>
 
     std::println("App: Connected!");
 
-    std::println("App: P_GripperControl.stPneumaticGripperData.bOpen...");
-    tlink::Result<bool> readRes =
-      co_await adsDriver.read<bool>("P_GripperControl.stPneumaticGripperData.bOpen");
-    if (readRes) {
-        std::println("Value: {}", readRes.value());
-    }
-
-    // 3. Start a Subscription (Asynchronous Stream)
     std::println("App: Subscribing to P_GripperControl.stPneumaticGripperData.bOpen...");
     auto subRes = co_await adsDriver.subscribe<bool>(
-      "P_GripperControl.stPneumaticGripperData.bOpen", tlink::SubscriptionType::Cyclic, 1000ms);
+      "P_GripperControl.stPneumaticGripperData.bOpen", tlink::SubscriptionType::Cyclic, 500ms);
 
     if (subRes) {
         auto sub = subRes.value();
-        std::println("App: Subscription active. Waiting for first 3 updates...");
 
-        for (int i = 0; i < 3; ++i) {
-            auto update = co_await sub.stream.next();
-            if (update) {
-                std::println("   [Update {:02}] Value: {}", i + 1, *update);
-            } else {
-                std::println("   [Update {:02}] Stream closed", i + 1);
-                break;
-            }
-        }
+                std::println("App: Spawning 3 concurrent waiters on the same stream...");
+                co_spawn(ex, [&sub](auto&) { return waiterTask(1, sub); });
+                co_spawn(ex, [&sub](auto&) { return waiterTask(2, sub); });
+                co_spawn(ex, [&sub](auto&) { return waiterTask(3, sub); });
+        
+                // Instead of blocking the thread, we wait for 10 updates to pass through the waiters.
+                // We can do this by just suspending the main task for a while if we had a timer,
+                // but since we don't, we'll have the main task also take 5 updates.
+                // This validates that 4 waiters (1, 2, 3 + main) can share the stream.
+                std::println("App: Main task also joining the stream for 5 updates...");
+                for (int i = 0; i < 5; ++i) {
+                     auto update = co_await sub.stream.next();
+                     if (update) {
+                         std::println("App: Main task received update: {}", *update);
+                     }
+                }
+        
+                std::println("App: Main task done waiting. Unsubscribing now...");
+                auto unsubRes = co_await adsDriver.unsubscribe(sub);
+        // Give waiters a moment to print their exit messages
+        std::this_thread::sleep_for(200ms);
 
-        std::println("App: Unsubscribing to P_GripperControl.stPneumaticGripperData.bOpen...");
-        auto unsubRes = co_await adsDriver.unsubscribe(sub);
         if (unsubRes) {
-            std::println("App: Unsubscribed!");
+            std::println("App: Unsubscribed successfully!");
         }
     }
 
@@ -63,13 +79,13 @@ auto runApp(tlink::coro::IExecutor& ex) -> tlink::coro::Task<void>
 
 auto main() -> int
 {
-    std::println("TLink Framework: Initialized");
-    std::println("---------------------------");
+    std::println("TLink Framework: Validation Test");
+    std::println("-------------------------------");
 
     tlink::coro::Context ctx;
     co_spawn(ctx, runApp);
     ctx.run();
 
-    std::println("---------------------------");
+    std::println("-------------------------------");
     return 0;
 }
