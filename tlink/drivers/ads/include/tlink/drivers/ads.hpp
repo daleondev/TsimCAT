@@ -37,6 +37,7 @@ namespace tlink::drivers
                        SubscriptionType type = SubscriptionType::OnChange,
                        std::chrono::milliseconds interval = NO_TIMEOUT) -> coro::Task<Result<std::shared_ptr<RawSubscription>>> override;
         auto unsubscribeRaw(std::shared_ptr<RawSubscription> subscription) -> coro::Task<Result<void>> override;
+        auto unsubscribeRawSync(uint64_t id) -> void override;
         // clang-format on
 
       private:

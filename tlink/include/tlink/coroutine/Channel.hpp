@@ -4,6 +4,9 @@
 #include "Task.hpp"
 
 #include <cstring>
+#include <deque>
+#include <memory>
+#include <mutex>
 #include <optional>
 #include <span>
 #include <utility>
@@ -16,22 +19,47 @@ namespace tlink::coro
         struct RawAsyncAwaiter;
     }
 
+    template<typename T>
+        requires std::is_trivially_copyable_v<T>
+    class AsyncChannel;
+
     class RawAsyncChannel
     {
       public:
         using Bytes = std::vector<std::byte>;
 
+      protected:
+        struct Waiter
+        {
+            std::coroutine_handle<> handle;
+            IExecutor* executor;
+        };
+
+        struct State
+        {
+            std::mutex mutex;
+            std::deque<Bytes> queue;
+            bool closed = false;
+            std::deque<Waiter> waiters;
+        };
+
+      public:
+        RawAsyncChannel()
+          : m_state(std::make_shared<State>())
+        {
+        }
+
         auto push(Bytes raw) -> void
         {
-            std::unique_lock lock(m_mutex);
-            if (m_closed) {
+            std::unique_lock lock(m_state->mutex);
+            if (m_state->closed) {
                 return;
             }
-            m_queue.push_back(std::move(raw));
+            m_state->queue.push_back(std::move(raw));
 
-            if (!m_waiters.empty()) {
-                auto [handle, exec] = m_waiters.front();
-                m_waiters.pop_front();
+            if (!m_state->waiters.empty()) {
+                auto [handle, exec] = m_state->waiters.front();
+                m_state->waiters.pop_front();
                 lock.unlock();
                 if (exec) {
                     exec->schedule(handle);
@@ -46,9 +74,12 @@ namespace tlink::coro
         {
             std::deque<Waiter> toResume;
             {
-                std::lock_guard lock(m_mutex);
-                m_closed = true;
-                toResume = std::move(m_waiters);
+                std::lock_guard lock(m_state->mutex);
+                if (m_state->closed) {
+                    return;
+                }
+                m_state->closed = true;
+                toResume = std::move(m_state->waiters);
             }
 
             for (auto& [handle, exec] : toResume) {
@@ -64,18 +95,12 @@ namespace tlink::coro
         auto next() -> detail::RawAsyncAwaiter;
 
       protected:
-        struct Waiter
-        {
-            std::coroutine_handle<> handle;
-            IExecutor* executor;
-        };
-
-        std::mutex m_mutex;
-        std::deque<Bytes> m_queue;
-        bool m_closed = false;
-        std::deque<Waiter> m_waiters;
+        std::shared_ptr<State> m_state;
 
         friend class detail::RawAsyncAwaiter;
+        template<typename T>
+            requires std::is_trivially_copyable_v<T>
+        friend class AsyncChannel;
     };
 
     template<typename T>
@@ -83,16 +108,25 @@ namespace tlink::coro
     class AsyncChannel
     {
       public:
-        AsyncChannel(RawAsyncChannel& rawChannel)
-          : m_rawChannel{ rawChannel }
+        AsyncChannel() = default;
+        AsyncChannel(const RawAsyncChannel& raw)
+          : m_state(raw.m_state)
         {
         }
 
-        auto push(T value) -> void { m_rawChannel.push(std::as_bytes(std::span{ &value, 1 })); }
+        auto push(T value) -> void
+        {
+            RawAsyncChannel handle;
+            handle.m_state = m_state;
+            handle.push(std::vector<std::byte>(
+              reinterpret_cast<const std::byte*>(&value), reinterpret_cast<const std::byte*>(&value) + sizeof(T)));
+        }
 
         auto next() -> Task<std::optional<T>>
         {
-            auto raw = co_await m_rawChannel.next();
+            RawAsyncChannel handle;
+            handle.m_state = m_state;
+            auto raw = co_await handle.next();
             if (!raw) {
                 co_return std::nullopt;
             }
@@ -102,27 +136,27 @@ namespace tlink::coro
         }
 
       private:
-        RawAsyncChannel& m_rawChannel;
+        std::shared_ptr<RawAsyncChannel::State> m_state;
     };
 
     namespace detail
     {
         struct RawAsyncAwaiter
         {
-            RawAsyncChannel& channel;
+            std::shared_ptr<RawAsyncChannel::State> state;
 
             auto await_ready() -> bool
             {
-                std::lock_guard lock(channel.m_mutex);
-                return !channel.m_queue.empty() || channel.m_closed;
+                std::lock_guard lock(state->mutex);
+                return !state->queue.empty() || state->closed;
             }
 
             template<typename P>
             auto await_suspend(std::coroutine_handle<P> handle) -> bool
             {
-                std::lock_guard lock(channel.m_mutex);
+                std::lock_guard lock(state->mutex);
 
-                if (!channel.m_queue.empty() || channel.m_closed) {
+                if (!state->queue.empty() || state->closed) {
                     return false;
                 }
 
@@ -131,23 +165,23 @@ namespace tlink::coro
                     executor = handle.promise().executor;
                 }
 
-                channel.m_waiters.push_back({ handle, executor });
+                state->waiters.push_back({ handle, executor });
                 return true;
             }
 
             auto await_resume() -> std::optional<RawAsyncChannel::Bytes>
             {
-                std::lock_guard lock(channel.m_mutex);
-                if (channel.m_queue.empty()) {
+                std::lock_guard lock(state->mutex);
+                if (state->queue.empty()) {
                     return std::nullopt;
                 }
 
-                auto raw{ std::move(channel.m_queue.front()) };
-                channel.m_queue.pop_front();
+                auto raw{ std::move(state->queue.front()) };
+                state->queue.pop_front();
                 return raw;
             }
         };
     }
 
-    inline auto RawAsyncChannel::next() -> detail::RawAsyncAwaiter { return { *this }; }
+    inline auto RawAsyncChannel::next() -> detail::RawAsyncAwaiter { return { m_state }; }
 }

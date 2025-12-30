@@ -336,13 +336,22 @@ namespace tlink::drivers
             auto id{ *notificationHandle };
 
             std::lock_guard lock(m_mutex);
-            auto subscription{ m_subscriptionContexts.emplace(
+            // Custom deleter to ensure we unsubscribe ONLY when the last reference dies
+            auto rawSub = std::shared_ptr<RawSubscription>(
+                new RawSubscription(id),
+                [this](RawSubscription* p) {
+                    this->unsubscribeRawSync(p->id);
+                    delete p;
+                }
+            );
+
+            m_subscriptionContexts.emplace(
               id,
               SubscriptionContext{ .symbolHandle = std::move(symbolHandle),
                                    .notificationHandle = std::move(notificationHandle),
-                                   .stream = std::make_shared<RawSubscription>(id) }) };
+                                   .stream = rawSub });
 
-            co_return subscription.first->second.stream;
+            co_return rawSub;
         } catch (const std::exception& ex) {
             err = handleException(ex);
         }
@@ -355,17 +364,22 @@ namespace tlink::drivers
         if (!subscription) {
             co_return success();
         }
+        // Just clearing our internal reference is enough, the deleter handles the rest
+        // when the user's reference also goes away.
+        unsubscribeRawSync(subscription->id);
+        co_return success();
+    }
 
-        auto err{ AdsError::None };
-        try {
-            std::lock_guard lock(m_mutex);
-            subscription->stream.close();
-            m_subscriptionContexts.erase(static_cast<uint32_t>(subscription->id));
-        } catch (const std::exception& ex) {
-            err = handleException(ex);
+    auto AdsDriver::unsubscribeRawSync(uint64_t id) -> void
+    {
+        std::lock_guard lock(m_mutex);
+        if (auto it = m_subscriptionContexts.find(static_cast<uint32_t>(id));
+            it != m_subscriptionContexts.end()) {
+            if (it->second.stream) {
+                it->second.stream->stream.close();
+            }
+            m_subscriptionContexts.erase(it);
         }
-
-        co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
     }
 
     auto AdsDriver::getTimeout() -> std::chrono::milliseconds
@@ -379,4 +393,4 @@ namespace tlink::drivers
         m_route->SetTimeout(ms ? ms : m_defaultTimeout.count());
     }
 
-} // namespace tlink::drivers
+} // namespace tlink
