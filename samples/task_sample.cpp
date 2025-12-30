@@ -20,7 +20,19 @@ public:
     {
         DetachedTask get_return_object() { return DetachedTask{handle_type::from_promise(*this)}; }
         std::suspend_always initial_suspend() { return {}; }
-        std::suspend_never final_suspend() noexcept { return {}; }
+        auto final_suspend() noexcept
+        {
+            struct HandleDestroyer
+            {
+                bool await_ready() noexcept { return false; }
+                void await_suspend(std::coroutine_handle<> handle) noexcept
+                {
+                    handle.destroy();
+                }
+                void await_resume() noexcept {}
+            };
+            return HandleDestroyer{};
+        }
         void unhandled_exception() { std::terminate(); }
         void return_void() {}
     };
@@ -199,20 +211,20 @@ private:
 };
 
 template <typename T>
-concept Context = requires(T t, std::coroutine_handle<> h) {
+concept Executor = requires(T t, std::coroutine_handle<> h) {
     { t.run() };
     { t.stop() };
     { t.schedule(h) };
 };
 
-template <Context T, std::invocable<T &> C>
-void co_spawn(T &ctx, C &&coro)
+template <Executor Exe, std::invocable<Exe &> Coro>
+void co_spawn(Exe &exe, Coro &&coro)
 {
-    auto detached = [&ctx, c = std::forward<C>(coro)]() mutable -> DetachedTask
+    auto detached = [&exe, c = std::forward<Coro>(coro)]() mutable -> DetachedTask
     {
-        co_await std::invoke(std::move(c), ctx);
+        co_await std::invoke(std::move(c), exe);
     }();
-    ctx.schedule(detached.getHandle());
+    exe.schedule(detached.getHandle());
 }
 
 Task<int> coro()
@@ -223,11 +235,11 @@ Task<int> coro()
 int main()
 {
     CoroContext ctx;
-    co_spawn(ctx, [](CoroContext &ctx) -> Task<void>
+    co_spawn(ctx, [](Executor auto &exe) -> Task<void>
              {
         auto i = co_await coro();
         std::println("{}", i);
-        ctx.stop(); });
+        exe.stop(); });
     ctx.run();
     return 0;
 }
