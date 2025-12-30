@@ -345,7 +345,7 @@ namespace tlink::drivers
         co_return std::unexpected(make_error_code(err));
     }
 
-    auto AdsDriver::unsubscribe(std::shared_ptr<RawSubscription> subscription) -> coro::Task<Result<void>>
+    auto AdsDriver::unsubscribeRaw(std::shared_ptr<RawSubscription> subscription) -> coro::Task<Result<void>>
     {
         if (!subscription) {
             co_return success();

@@ -62,7 +62,7 @@ namespace tlink::coro
 
         auto push(T value) -> void { m_rawChannel.push(std::as_bytes(std::span{ &value, 1 })); }
 
-        auto next() -> Task<int>
+        auto next() -> Task<T>
         {
             auto raw = co_await m_rawChannel.next();
             T val{};

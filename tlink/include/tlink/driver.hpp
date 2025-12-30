@@ -53,7 +53,7 @@ namespace tlink
 
         virtual auto subscribeRaw(std::string_view path, SubscriptionType type = SubscriptionType::OnChange,
                                std::chrono::milliseconds interval = NO_TIMEOUT) -> coro::Task<Result<std::shared_ptr<RawSubscription>>> = 0;
-        virtual auto unsubscribe(std::shared_ptr<RawSubscription> subscription) -> coro::Task<Result<void>> = 0;
+        virtual auto unsubscribeRaw(std::shared_ptr<RawSubscription> subscription) -> coro::Task<Result<void>> = 0;
         // clang-format on
 
         template<typename T>
@@ -74,19 +74,25 @@ namespace tlink
             co_return co_await writeFrom(path, std::as_bytes(std::span{ &value, 1 }), timeout);
         }
 
+        template<typename T>
         auto subscribe(std::string_view path,
                        SubscriptionType type = SubscriptionType::OnChange,
-                       std::chrono::milliseconds interval = NO_TIMEOUT)
-          -> coro::Task<Result<Subscription<int>>>
+                       std::chrono::milliseconds interval = NO_TIMEOUT) -> coro::Task<Result<Subscription<T>>>
         {
             auto rawSub = co_await subscribeRaw(path, type, interval);
             if (!rawSub) {
                 co_return std::unexpected(rawSub.error());
             }
 
-            co_return Subscription<int>{ .rawSub = rawSub.value(),
-                                         .stream = coro::AsyncChannel<int>(rawSub.value()->stream) };
+            co_return Subscription<T>{ .rawSub = rawSub.value(),
+                                       .stream = coro::AsyncChannel<T>(rawSub.value()->stream) };
         };
+
+        template<typename T>
+        auto unsubscribe(Subscription<T> subscription) -> coro::Task<Result<void>>
+        {
+            co_return co_await unsubscribeRaw(subscription.rawSub);
+        }
     };
 
 } // namespace tlink

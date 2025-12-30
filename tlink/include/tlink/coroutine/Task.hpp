@@ -4,6 +4,7 @@
 
 #include <cstdlib>
 #include <exception>
+#include <optional>
 #include <utility>
 
 namespace tlink::coro
@@ -78,10 +79,10 @@ namespace tlink::coro
         auto await_resume() -> T
         {
             if constexpr (!std::is_void_v<T>) {
-                return std::move(m_handle.promise().value);
+                return std::move(*m_handle.promise().value);
             }
             else {
-                return; // explicitly return void (propably not neccessary)
+                return;
             }
         }
 
@@ -167,8 +168,8 @@ namespace tlink::coro
         {
             using TaskPromiseBase<T>::TaskPromiseBase;
 
-            T value;
-            auto return_value(T val) -> void { value = std::move(val); }
+            std::optional<T> value;
+            auto return_value(T val) -> void { value.emplace(std::move(val)); }
         };
 
         template<>
