@@ -37,6 +37,7 @@ namespace tlink::coro
             IExecutor* executor;
             // For broadcast, we need a place to put the result
             std::optional<Bytes>* resultDest = nullptr;
+            std::weak_ptr<void> lifeToken;
         };
 
         struct State
@@ -82,7 +83,9 @@ namespace tlink::coro
 
                 lock.unlock();
                 if (waiter.executor) {
-                    waiter.executor->schedule(waiter.handle);
+                    if (auto token = waiter.lifeToken.lock()) {
+                        waiter.executor->schedule(waiter.handle);
+                    }
                 } else {
                     waiter.handle.resume();
                 }
@@ -101,7 +104,9 @@ namespace tlink::coro
                 lock.unlock();
                 for (auto& waiter : toResume) {
                     if (waiter.executor) {
-                        waiter.executor->schedule(waiter.handle);
+                        if (auto token = waiter.lifeToken.lock()) {
+                            waiter.executor->schedule(waiter.handle);
+                        }
                     } else {
                         waiter.handle.resume();
                     }
@@ -123,7 +128,9 @@ namespace tlink::coro
 
             for (auto& waiter : toResume) {
                 if (waiter.executor) {
-                    waiter.executor->schedule(waiter.handle);
+                    if (auto token = waiter.lifeToken.lock()) {
+                        waiter.executor->schedule(waiter.handle);
+                    }
                 }
                 else {
                     waiter.handle.resume();
@@ -214,11 +221,16 @@ namespace tlink::coro
                 }
 
                 IExecutor* executor = nullptr;
+                std::weak_ptr<void> lifeToken;
+
                 if constexpr (requires { handle.promise().executor; }) {
                     executor = handle.promise().executor;
+                    if (executor) {
+                        lifeToken = executor->getLifeToken();
+                    }
                 }
 
-                state->waiters.push_back({ handle, executor, &dest });
+                state->waiters.push_back({ handle, executor, &dest, std::move(lifeToken) });
                 return true;
             }
 

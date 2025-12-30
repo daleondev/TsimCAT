@@ -5,6 +5,7 @@
 #include <condition_variable>
 #include <coroutine>
 #include <deque>
+#include <memory>
 #include <mutex>
 
 namespace tlink::coro
@@ -16,6 +17,7 @@ namespace tlink::coro
         virtual void run() = 0;
         virtual void stop() = 0;
         virtual void schedule(std::coroutine_handle<> handle) = 0;
+        virtual auto getLifeToken() -> std::weak_ptr<void> = 0;
     };
 
     template<typename T>
@@ -66,10 +68,13 @@ namespace tlink::coro
             m_cv.notify_one();
         }
 
+        auto getLifeToken() -> std::weak_ptr<void> override { return m_lifeToken; }
+
       private:
         std::atomic<bool> m_running{ true };
         std::mutex m_mutex;
         std::condition_variable m_cv;
         std::deque<std::coroutine_handle<>> m_queue;
+        std::shared_ptr<int> m_lifeToken{ std::make_shared<int>(0) };
     };
 }

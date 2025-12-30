@@ -115,8 +115,68 @@ auto runApp(tlink::coro::IExecutor& ex) -> tlink::coro::Task<void>
     ex.stop();
 }
 
+void testLifetimeSafety()
+{
+    std::println("------------------------------------");
+    std::println("Test: Lifetime Safety (Liveness Token)");
+    
+    // 1. Channel lives OUTSIDE the context
+    tlink::coro::RawAsyncChannel rawChannel;
+    tlink::coro::AsyncChannel<int> channel(rawChannel);
+
+    {
+        // 2. Context lives INSIDE this scope
+        tlink::coro::Context ctx;
+        std::println("  [Scope] Context Created.");
+
+        tlink::coro::co_spawn(ctx, [&](auto&) -> tlink::coro::Task<void> {
+            std::println("  [Task] Started. Waiting for data...");
+            // This will register the task with the channel.
+            // It captures the Context's WeakPtr token.
+            auto val = co_await channel.next();
+            
+            // IF the safety fix works, this line should NEVER run because
+            // the channel won't schedule us if the context is dead.
+            if (val) {
+                std::println(stderr, "  [Task] CRITICAL ERROR: Resumed after Context destruction! Value: {}", *val);
+                std::terminate();
+            } else {
+                std::println("  [Task] Channel closed (expected path if closed explicitly).");
+            }
+        });
+
+        // Run the context in a background thread so we don't block
+        {
+            std::jthread runner([&] { ctx.run(); });
+            std::this_thread::sleep_for(10ms); // Let task suspend at co_await
+            ctx.stop();
+        } // runner joins here
+        
+        std::println("  [Scope] Context stopped.");
+        
+    } // ctx is destroyed here. The "Life Token" expires.
+
+    std::println("  [Scope] Context Destroyed.");
+
+    // 3. Trigger the bug
+    std::println("  [Test] Pushing data to channel (orphan waiter)...");
+    
+    int payload = 42;
+    tlink::coro::RawAsyncChannel::Bytes bytes(sizeof(int));
+    std::memcpy(bytes.data(), &payload, sizeof(int));
+    
+    // If the fix is MISSING, this will crash (access violation on dead executor).
+    // If the fix is PRESENT, this will detect expired token and skip scheduling.
+    rawChannel.push(std::move(bytes));
+
+    std::println("  [Test] Push complete. No Crash!");
+    std::println("------------------------------------");
+}
+
 auto main() -> int
 {
+    testLifetimeSafety();
+
     std::println("TLink Framework: Broadcast Validation");
     std::println("------------------------------------");
 
