@@ -1,0 +1,178 @@
+#pragma once
+
+#include "Context.hpp"
+
+#include <cstdlib>
+#include <exception>
+
+namespace tlink::coro
+{
+    namespace detail
+    {
+        struct DetachedTaskPromise;
+        template<typename T>
+        struct TaskPromise;
+    }
+
+    class DetachedTask
+    {
+      public:
+        using promise_type = detail::DetachedTaskPromise;
+        using handle_type = std::coroutine_handle<promise_type>;
+
+        DetachedTask(handle_type handle)
+          : m_handle(handle)
+        {
+        }
+        ~DetachedTask()
+        {
+            // handle not destroyed in destructor -> detached
+            // handle later destroyed in promise_type::final_suspend()
+        }
+
+        inline auto getHandle() const -> const handle_type& { return m_handle; }
+
+      private:
+        handle_type m_handle;
+    };
+
+    template<typename T>
+    class Task
+    {
+      public:
+        using promise_type = detail::TaskPromise<T>;
+        using handle_type = std::coroutine_handle<promise_type>;
+
+        Task(handle_type h)
+          : m_handle(h)
+        {
+        }
+        ~Task() { m_handle.destroy(); }
+
+        Task(const Task&) = delete;
+        auto operator=(const Task&) -> Task& = delete;
+
+        Task(Task&& other) noexcept
+          : m_handle(other.m_handle)
+        {
+            other.m_handle = nullptr;
+        }
+        auto operator=(Task&& other) -> Task& noexcept
+        {
+            if (this != &other) {
+                if (m_handle) {
+                    m_handle.destroy();
+                }
+                m_handle = std::exchange(other.m_handle, nullptr);
+            }
+            return *this;
+        }
+
+        auto await_ready() const -> bool noexcept { return !m_handle || m_handle.done(); }
+        auto await_suspend(std::coroutine_handle<> waiter) -> std::coroutine_handle<> noexcept
+        {
+            m_handle.promise().waiter = waiter;
+            return m_handle;
+        }
+        auto await_resume() -> T
+        {
+            if constexpr (!std::is_void_v<T>) {
+                return std::move(m_handle.promise().value);
+            }
+            else {
+                return; // explicitly return void (propably not neccessary)
+            }
+        }
+        auto await_transform(Task<U>&& childTask) -> Task<U>&&
+        {
+            // propagate execution context to child
+            if (childTask.m_handle) {
+                if (executor) {
+                    childHandle.promise().executor = executor;
+                }
+            }
+            return std::move(childTask);
+        }
+        template<typename U>
+        auto await_transform(U&& task) -> U&&
+        {
+            return std::forward<U>(task);
+        }
+
+        inline auto getHandle() const -> const handle_type& { return m_handle; }
+
+      private:
+        handle_type m_handle;
+    };
+
+    namespace detail
+    {
+        struct DetachedTaskPromise
+        {
+            auto get_return_object() -> DetachedTask
+            {
+                return DetachedTask{ DetachedTask::handle_type::from_promise(*this) };
+            }
+            auto initial_suspend() -> std::suspend_always { return {}; }
+            auto final_suspend() noexcept -> std::suspend_always { return {}; /*destroys handle here*/ }
+            auto unhandled_exception() -> void { std::abort(); }
+            auto return_void() -> void {}
+        };
+
+        template<typename T>
+        struct TaskPromiseBase
+        {
+            std::coroutine_handle<> waiter;
+            std::exception_ptr exception;
+
+            template<typename... Args>
+            TaskPromiseBase(IExecutor& ex, Args&&...)
+              : executor(&ex)
+            {
+            }
+            template<typename Class, typename... Args>
+            TaskPromiseBase(Class&&, IExecutor& ex, Args&&...)
+              : executor(&ex)
+            {
+            }
+            TaskPromiseBase() = default;
+
+            auto get_return_object() -> Task<T>
+            {
+                return Task<T>::handle_type::from_promise(static_cast<TaskPromise<T>&>(*this));
+            }
+            auto initial_suspend() -> std::suspend_always { return {}; }
+            auto final_suspend() noexcept
+            {
+                struct
+                {
+                    auto await_ready() noexcept -> bool { return false; }
+                    auto await_suspend(Task<T>::handle_type handle) noexcept -> std::coroutine_handle<>
+                    {
+                        return handle.promise().waiter ? handle.promise().waiter : std::noop_coroutine();
+                    }
+                    auto await_resume() -> void noexcept {}
+                } awaiter{};
+                return awaiter;
+            }
+            auto unhandled_exception() -> void { exception = std::current_exception(); }
+        };
+
+        template<typename T = void>
+        struct TaskPromise : public TaskPromiseBase<T>
+        {
+            using TaskPromiseBase<T>::TaskPromiseBase;
+
+            T value;
+            auto return_value(T val) -> void { value = std::move(val); }
+        };
+
+        template<>
+        struct TaskPromise<void> : public TaskPromiseBase<void>
+        {
+            using TaskPromiseBase<void>::TaskPromiseBase;
+
+            auto return_void() -> void {}
+        };
+    }
+}

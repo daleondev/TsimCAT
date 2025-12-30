@@ -14,11 +14,12 @@ target_include_directories(
 
 target_sources(tlink INTERFACE
     include/tlink/tlink.hpp
-    include/tlink/driver.hpp
-    include/tlink/core/result.hpp
-    include/tlink/core/task.hpp
-    include/tlink/core/context.hpp
-    include/tlink/core/channel.hpp
+    include/tlink/Driver.hpp
+    include/tlink/Result.hpp
+    include/tlink/coroutine/coroutine.hpp
+    include/tlink/coroutine/Context.hpp
+    include/tlink/coroutine/Task.hpp
+    include/tlink/coroutine/Channel.hpp
 )
 
 target_compile_features(tlink INTERFACE cxx_std_23)

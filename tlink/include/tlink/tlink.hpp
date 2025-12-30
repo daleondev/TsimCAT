@@ -3,11 +3,11 @@
 // TLink - Task-based Coroutine Link Framework
 // Foundation for asynchronous communication protocols.
 
-#include "core/result.hpp"
-#include "core/task.hpp"
-#include "core/context.hpp"
-#include "driver.hpp"
+#include "Driver.hpp"
+#include "Result.hpp"
+#include "coroutine/coroutine.hpp"
 
-namespace tlink {
+namespace tlink
+{
     // Framework-level helper functions can go here
 }
