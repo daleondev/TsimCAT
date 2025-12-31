@@ -22,7 +22,8 @@ namespace tsim::ui
           , m_view(m_window)
           , m_navigator([this](size_t index) { this->show_page(index); })
           , m_conveyor_sim(std::make_shared<sim::ConveyorSimulator>())
-          , m_plc_manager(m_conveyor_sim)
+          , m_robot_sim(std::make_shared<sim::RobotSimulator>())
+          , m_plc_manager(m_conveyor_sim, m_robot_sim)
         {
             m_window.on_close = [this]() { m_app.stop(); };
             
@@ -36,15 +37,18 @@ namespace tsim::ui
         void setup_content()
         {
             m_conveyor_page = std::make_shared<ConveyorPage>();
+            m_robot_page = std::make_shared<RobotPage>();
             
-            // Link UI error toggle to simulation
-            m_conveyor_page->on_error = [this](bool active) {
-                m_conveyor_sim->set_manual_error(active);
+            m_conveyor_page->on_error = [this](bool active) { m_conveyor_sim->set_manual_error(active); };
+            
+            m_robot_page->on_error = [this](bool active) { m_robot_sim->set_manual_error(active); };
+            m_robot_page->on_area_manual = [this](int index, bool free) { 
+                m_robot_sim->toggle_area_manual(index, free); 
             };
 
             m_deck = share(deck(
                 align_left_top(make_overview_page()),
-                align_left_top(make_robot_page()),
+                align_left_top(hold(m_robot_page->get_content())),
                 align_left_top(hold(m_conveyor_page->get_content())),
                 align_left_top(make_sensors_page()),
                 align_left_top(make_safety_page())
@@ -68,6 +72,7 @@ namespace tsim::ui
         {
             float dt = 0.016f;
             m_conveyor_sim->step(dt);
+            m_robot_sim->step(dt);
 
             m_conveyor_page->update(
                 m_conveyor_sim->get_control(), 
@@ -75,7 +80,19 @@ namespace tsim::ui
                 m_conveyor_sim->get_actual_velocity(),
                 m_conveyor_sim->get_item_count()
             );
+
+            m_robot_page->update(
+                m_robot_sim->get_control(),
+                m_robot_sim->get_status()
+            );
             
+            // Trigger cyclic PLC update
+            static int frame_count = 0;
+            if (++frame_count >= 6) { // ~10Hz
+                m_plc_manager.sync_status();
+                frame_count = 0;
+            }
+
             m_view.refresh();
             m_timer = m_view.post(std::chrono::milliseconds(16), [this]() { this->on_timer(); });
         }
@@ -93,8 +110,10 @@ namespace tsim::ui
         std::shared_ptr<deck_element> m_deck;
 
         std::shared_ptr<sim::ConveyorSimulator> m_conveyor_sim;
+        std::shared_ptr<sim::RobotSimulator> m_robot_sim;
         sim::PLCManager m_plc_manager;
         std::shared_ptr<ConveyorPage> m_conveyor_page;
+        std::shared_ptr<RobotPage> m_robot_page;
         view::steady_timer_ptr m_timer;
     };
 }
