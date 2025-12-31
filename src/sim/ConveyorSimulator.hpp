@@ -4,6 +4,8 @@
 #include <atomic>
 #include <mutex>
 #include <cmath>
+#include <print>
+#include <iostream>
 
 namespace tsim::sim
 {
@@ -17,12 +19,12 @@ namespace tsim::sim
             std::lock_guard lock(m_mutex);
             m_control = ctrl;
             
-            // Handshake logic:
-            // If PLC wants to run and there is no error, we are "Running"
-            if (m_control.bRun && !m_errorManual) {
+            // Logging to debug mapping issues
+            std::println("Sim: Command received - Run: {}, Reverse: {}", (int)m_control.bRun, (int)m_control.bReverse);
+
+            if (m_control.bRun != 0 && !m_errorManual) {
                 m_status.bRunning = 1;
             } else if (m_actualVelocity == 0.0f) {
-                // Only say "Stopped" to the PLC when we actually reached zero speed
                 m_status.bRunning = 0;
             }
         }
@@ -49,20 +51,17 @@ namespace tsim::sim
         float get_actual_velocity() const { std::lock_guard lock(m_mutex); return m_actualVelocity; }
         uint32_t get_item_count() const { std::lock_guard lock(m_mutex); return m_itemCount; }
 
-        /**
-         * Simple simulation step.
-         */
         void step(float dt)
         {
             std::lock_guard lock(m_mutex);
             
-            const float targetSpeed = 0.5f; 
+            const float targetMaxSpeed = 0.5f; 
 
-            if (m_control.bRun && !m_errorManual) {
+            if (m_control.bRun != 0 && !m_errorManual) {
                 m_status.bRunning = 1;
                 
-                // Fixed: Check bReverse correctly (it's a uint8_t in our model)
-                float target = (m_control.bReverse != 0) ? -targetSpeed : targetSpeed;
+                // Direction: 0 = Forward (+), 1 = Backward (-)
+                float target = (m_control.bReverse != 0) ? -targetMaxSpeed : targetMaxSpeed;
                 float diff = target - m_actualVelocity;
                 float step_size = 2.0f * dt; 
                 
@@ -78,11 +77,9 @@ namespace tsim::sim
                     m_distance_buffer -= 1.0f;
                 }
             } else {
-                // Decelerate to zero
                 float step_size = 3.0f * dt;
                 if (std::abs(m_actualVelocity) < step_size) {
                     m_actualVelocity = 0.0f;
-                    // PLC will see bRunning = 0 only when actual speed is zero
                     m_status.bRunning = 0;
                 } else {
                     m_actualVelocity += (m_actualVelocity > 0 ? -step_size : step_size);
