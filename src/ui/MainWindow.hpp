@@ -36,6 +36,11 @@ namespace tsim::ui
         void setup_content()
         {
             m_conveyor_page = std::make_shared<ConveyorPage>();
+            
+            // Link UI error toggle to simulation
+            m_conveyor_page->on_error = [this](bool active) {
+                m_conveyor_sim->set_manual_error(active);
+            };
 
             m_deck = share(deck(
                 align_left_top(make_overview_page()),

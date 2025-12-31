@@ -10,8 +10,8 @@ namespace tsim::model
     #pragma pack(push, 1)
     struct ConveyorControl
     {
-        bool bRun;          // Enable conveyor movement
-        bool bReverse;      // Set direction (false: forward, true: backward)
+        uint8_t bRun;          // Enable conveyor movement (1: Run, 0: Stop)
+        uint8_t bReverse;      // Set direction (0: Forward, 1: Backward)
     };
 
     /**
@@ -19,8 +19,8 @@ namespace tsim::model
      */
     struct ConveyorStatus
     {
-        bool bRunning;          // Is currently moving
-        bool bError;            // Fault status
+        uint8_t bRunning;      // Is currently moving
+        uint8_t bError;        // Fault status
     };
     #pragma pack(pop)
 }
