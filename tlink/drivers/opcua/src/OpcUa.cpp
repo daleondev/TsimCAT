@@ -376,7 +376,18 @@ namespace tlink::drivers
         };
     }
 
-    UaDriver::~UaDriver() = default;
+    UaDriver::~UaDriver()
+    {
+        // Ensure we stop the worker before destroying the client
+        m_workerRunning = false;
+        if (m_worker.joinable()) {
+            m_worker.join();
+        }
+        // Disconnect if still connected
+        if (m_client) {
+            UA_Client_disconnect(m_client.get());
+        }
+    }
 
     auto UaDriver::connect(std::chrono::milliseconds timeout) -> coro::Task<Result<void>>
     {
@@ -384,15 +395,48 @@ namespace tlink::drivers
             co_return std::unexpected(make_error_code(UaStatus::Bad));
         }
 
-        auto status{ getStatus(UA_Client_connect(m_client.get(), m_endpointUrl.c_str())) };
-        co_return isBad(status) ? std::unexpected(make_error_code(status)) : success();
+        UA_StatusCode status;
+        {
+            std::lock_guard lock(m_mutex);
+            status = UA_Client_connect(m_client.get(), m_endpointUrl.c_str());
+        }
+
+        auto uaStatus{ getStatus(status) };
+        if (isBad(uaStatus)) {
+            co_return std::unexpected(make_error_code(uaStatus));
+        }
+
+        if (!m_workerRunning) {
+            m_workerRunning = true;
+            m_worker = std::jthread([this] { this->worker(); });
+        }
+
+        co_return success();
     }
 
     auto UaDriver::disconnect(std::chrono::milliseconds timeout) -> coro::Task<Result<void>>
     {
+        m_workerRunning = false;
+        if (m_worker.joinable()) {
+            m_worker.join();
+        }
+
         if (m_client) {
+            std::lock_guard lock(m_mutex);
             UA_Client_disconnect(m_client.get());
         }
+
+        {
+            std::lock_guard lock(m_mutex);
+            // Clear subscriptions
+            for (auto& [id, sub] : m_monitoredItems) {
+                if (sub)
+                    sub->stream.close();
+            }
+            m_monitoredItems.clear();
+            m_subscriptionId = 0;
+        }
+
         co_return success();
     }
 
@@ -413,8 +457,14 @@ namespace tlink::drivers
 
         UA_Variant value;
         UA_Variant_init(&value);
-        auto status{ getStatus(
-          UA_Client_readValueAttribute(m_client.get(), nodeToNative(node.value()), &value)) };
+
+        UaStatus status;
+        {
+            std::lock_guard lock(m_mutex);
+            status =
+              getStatus(UA_Client_readValueAttribute(m_client.get(), nodeToNative(node.value()), &value));
+        }
+
         if (isBad(status)) {
             UA_Variant_clear(&value);
             co_return std::unexpected(make_error_code(status));
@@ -454,8 +504,13 @@ namespace tlink::drivers
         }
 
         UA_NodeId typeNode;
-        auto status{ getStatus(
-          UA_Client_readDataTypeAttribute(m_client.get(), nodeToNative(node.value()), &typeNode)) };
+        UaStatus status;
+        {
+            std::lock_guard lock(m_mutex);
+            status = getStatus(
+              UA_Client_readDataTypeAttribute(m_client.get(), nodeToNative(node.value()), &typeNode));
+        }
+
         if (isBad(status)) {
             UA_NodeId_clear(&typeNode);
             co_return std::unexpected(make_error_code(status));
@@ -481,7 +536,13 @@ namespace tlink::drivers
 
         UA_Variant value;
         UA_Variant_setScalar(&value, data, type);
-        status = getStatus(UA_Client_writeValueAttribute(m_client.get(), nodeToNative(node.value()), &value));
+
+        {
+            std::lock_guard lock(m_mutex);
+            status =
+              getStatus(UA_Client_writeValueAttribute(m_client.get(), nodeToNative(node.value()), &value));
+        }
+
         UA_NodeId_clear(&typeNode);
         UA_Variant_clear(&value);
 
@@ -497,8 +558,21 @@ namespace tlink::drivers
                                 std::chrono::milliseconds interval)
       -> coro::Task<Result<std::shared_ptr<RawSubscription>>>
     {
+        std::lock_guard lock(m_mutex);
         if (!m_client || !m_connected || !m_sessionActive) {
             co_return std::unexpected(make_error_code(UaStatus::BadNotConnected));
+        }
+
+        if (m_subscriptionId == 0) {
+            UA_CreateSubscriptionRequest request = UA_CreateSubscriptionRequest_default();
+            UA_CreateSubscriptionResponse response =
+              UA_Client_Subscriptions_create(m_client.get(), request, nullptr, nullptr, nullptr);
+
+            auto status{ getStatus(response.responseHeader.serviceResult) };
+            if (isBad(status)) {
+                co_return std::unexpected(make_error_code(status));
+            }
+            m_subscriptionId = response.subscriptionId;
         }
 
         auto node{ strToNode(path) };
@@ -506,16 +580,54 @@ namespace tlink::drivers
             co_return std::unexpected(make_error_code(UaStatus::BadNodeIdInvalid));
         }
 
-        // Stub
-        co_return std::unexpected(std::make_error_code(std::errc::not_supported));
+        UA_MonitoredItemCreateRequest monRequest =
+          UA_MonitoredItemCreateRequest_default(nodeToNative(node.value()));
+        monRequest.requestedParameters.samplingInterval = static_cast<UA_Double>(interval.count());
+
+        UA_MonitoredItemCreateResult monResult =
+          UA_Client_MonitoredItems_createDataChange(m_client.get(),
+                                                    m_subscriptionId,
+                                                    UA_TIMESTAMPSTORETURN_BOTH,
+                                                    monRequest,
+                                                    nullptr,
+                                                    dataChangeNotificationCallback,
+                                                    nullptr);
+
+        auto status{ getStatus(monResult.statusCode) };
+        if (isBad(status)) {
+            co_return std::unexpected(make_error_code(status));
+        }
+
+        auto sub = std::shared_ptr<RawSubscription>(new RawSubscription(monResult.monitoredItemId),
+                                                    [this](RawSubscription* p) {
+            this->unsubscribeRawSync(p->id);
+            delete p;
+        });
+
+        m_monitoredItems.emplace(monResult.monitoredItemId, sub);
+        co_return sub;
     }
 
     auto UaDriver::unsubscribeRaw(std::shared_ptr<RawSubscription> subscription) -> coro::Task<Result<void>>
     {
+        if (subscription) {
+            unsubscribeRawSync(subscription->id);
+        }
         co_return success();
     }
 
-    auto UaDriver::unsubscribeRawSync(uint64_t id) -> void {}
+    auto UaDriver::unsubscribeRawSync(uint64_t id) -> void
+    {
+        std::lock_guard lock(m_mutex);
+        if (auto it = m_monitoredItems.find(static_cast<uint32_t>(id)); it != m_monitoredItems.end()) {
+            UA_Client_MonitoredItems_deleteSingle(
+              m_client.get(), m_subscriptionId, static_cast<UA_UInt32>(id));
+            if (it->second) {
+                it->second->stream.close();
+            }
+            m_monitoredItems.erase(it);
+        }
+    }
 
     auto UaDriver::handleChannelState(UA_SecureChannelState state) -> void
     {
@@ -557,6 +669,62 @@ namespace tlink::drivers
                 break;
             case UA_SESSIONSTATE_CLOSING:
                 break;
+        }
+    }
+
+    void UaDriver::worker()
+    {
+        while (m_workerRunning) {
+            {
+                std::lock_guard lock(m_mutex);
+                if (m_client) {
+                    UA_Client_run_iterate(m_client.get(), 0);
+                }
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    }
+
+    void UaDriver::dataChangeNotificationCallback(UA_Client* client,
+                                                  UA_UInt32 subId,
+                                                  void* subContext,
+                                                  UA_UInt32 monId,
+                                                  void* monContext,
+                                                  UA_DataValue* value)
+    {
+        // clientContext points to UaDriver
+        auto* driver = reinterpret_cast<UaDriver*>(UA_Client_getConfig(client)->clientContext);
+        if (driver) {
+            driver->handleDataChange(monId, value);
+        }
+    }
+
+    void UaDriver::handleDataChange(UA_UInt32 monId, UA_DataValue* value)
+    {
+        std::shared_ptr<RawSubscription> sub;
+        {
+            std::lock_guard lock(m_mutex);
+            if (auto it = m_monitoredItems.find(monId); it != m_monitoredItems.end()) {
+                sub = it->second;
+            }
+        }
+
+        if (!sub)
+            return;
+
+        if (value && value->hasValue) {
+            size_t size = UA_calcSizeBinary(value->value.data, value->value.type, nullptr);
+            if (size > 0) {
+                UA_ByteString bytes;
+                bytes.length = size;
+                std::vector<std::byte> buffer(size);
+                bytes.data = reinterpret_cast<UA_Byte*>(buffer.data());
+
+                auto status = UA_encodeBinary(value->value.data, value->value.type, &bytes, nullptr);
+                if (status == UA_STATUSCODE_GOOD) {
+                    sub->stream.push(std::move(buffer));
+                }
+            }
         }
     }
 

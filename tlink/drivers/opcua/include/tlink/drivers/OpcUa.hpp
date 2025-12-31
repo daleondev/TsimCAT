@@ -7,7 +7,10 @@
 #include <open62541/client_highlevel.h>
 #include <open62541/client_subscriptions.h>
 
+#include <atomic>
+#include <mutex>
 #include <string>
+#include <thread>
 
 namespace tlink::drivers
 {
@@ -39,12 +42,20 @@ namespace tlink::drivers
       private:
         auto handleChannelState(UA_SecureChannelState state) -> void;
         auto handleSessionState(UA_SessionState state) -> void;
+        auto worker() -> void;
+
+        static void dataChangeNotificationCallback(UA_Client* client,
+                                                   UA_UInt32 subId,
+                                                   void* subContext,
+                                                   UA_UInt32 monId,
+                                                   void* monContext,
+                                                   UA_DataValue* value);
+        void handleDataChange(UA_UInt32 monId, UA_DataValue* value);
 
         std::string m_endpointUrl;
         bool m_connected{ false };
         bool m_sessionActive{ false };
-        bool m_subscribed;
-        uint32_t m_subscriptionId;
+        uint32_t m_subscriptionId{ 0 };
 
         struct UA_ClientDeleter
         {
@@ -52,17 +63,11 @@ namespace tlink::drivers
         };
         std::unique_ptr<UA_Client, UA_ClientDeleter> m_client;
 
-        struct ListenerContext
-        {
-            uint32_t listenerId;
-            std::shared_ptr<RawSubscription> stream;
-        };
-        struct SubscriptionContext
-        {
-            uint32_t subscriptionId;
-            std::vector<ListenerContext> listeners;
-        };
-        std::unordered_map<uint32_t, SubscriptionContext> m_subscriptions;
+        std::unordered_map<uint32_t, std::shared_ptr<RawSubscription>> m_monitoredItems;
+
+        std::recursive_mutex m_mutex;
+        std::atomic<bool> m_workerRunning{ false };
+        std::jthread m_worker;
     };
 
 } // namespace tlink::drivers

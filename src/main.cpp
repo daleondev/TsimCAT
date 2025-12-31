@@ -235,10 +235,29 @@ auto runOpcUa(tlink::coro::IExecutor& ex) -> tlink::coro::Task<void>
     auto readRes = co_await uaDriver.read<uint32_t>("ns=4;s=GVL.Counter.Counter32", 100ms);
     if (!readRes) {
         std::println(stderr, "[{}] App: Failed to read: {}", getTimestamp(), readRes.error().message());
-        ex.stop();
-        co_return;
+    } else {
+        std::println("[{}] App: Read value: {}", getTimestamp(), readRes.value());
     }
-    std::println("[{}] App: Read value: {}", getTimestamp(), readRes.value());
+
+    std::println("[{}] App: Subscribing to ns=4;s=GVL.Counter.Counter32...", getTimestamp());
+    auto subRes = co_await uaDriver.subscribe<uint32_t>("ns=4;s=GVL.Counter.Counter32", tlink::SubscriptionType::OnChange, 500ms);
+    
+    if (subRes) {
+        auto sub = subRes.value();
+        std::println("[{}] App: Waiting for 5 updates...", getTimestamp());
+        for (int i = 0; i < 5; ++i) {
+            auto update = co_await sub.stream.next();
+            if (update) {
+                std::println("[{}] App: Received update: {}", getTimestamp(), *update);
+            } else {
+                std::println("[{}] App: Stream closed", getTimestamp());
+                break;
+            }
+        }
+        co_await uaDriver.unsubscribe(sub);
+    } else {
+        std::println(stderr, "[{}] App: Subscription failed: {}", getTimestamp(), subRes.error().message());
+    }
 
     std::println("[{}] App: Disconnecting...", getTimestamp());
     co_await uaDriver.disconnect();
