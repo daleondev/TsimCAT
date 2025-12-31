@@ -77,12 +77,12 @@ target_include_directories(
 target_link_libraries(
     TsimCAT
     PRIVATE
-    stdc++exp
     tlink::ads
     tlink::opcua
     elements
     nlohmann_json::nlohmann_json
     asio::asio
+    stdc++exp
 )
 
 target_compile_features(
