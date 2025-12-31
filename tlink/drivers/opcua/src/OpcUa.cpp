@@ -564,8 +564,32 @@ namespace tlink::drivers
         }
 
         int64_t intervalMs = interval.count();
-        uint32_t subId = 0;
 
+        // 1. For cyclic, we use client-side polling
+        if (type == SubscriptionType::Cyclic) {
+            static uint32_t s_pollingIdCounter = 0x80000000;
+            uint32_t id = s_pollingIdCounter++;
+
+            auto subStream =
+              std::shared_ptr<RawSubscription>(new RawSubscription(id), [this](RawSubscription* p) {
+                this->unsubscribeRawSync(p->id);
+                delete p;
+            });
+
+            m_monitoredItems.emplace(
+              id,
+              MonitoredItemInfo{ .subscriptionId = 0,
+                                 .stream = subStream,
+                                 .isPolling = true,
+                                 .path = std::string(path),
+                                 .interval = interval,
+                                 .nextPoll = std::chrono::steady_clock::now() });
+
+            co_return subStream;
+        }
+
+        // 2. For OnChange, we use server-side monitored items
+        uint32_t subId = 0;
         auto itSub = m_subscriptionMap.find(intervalMs);
         if (itSub == m_subscriptionMap.end()) {
             UA_CreateSubscriptionRequest request = UA_CreateSubscriptionRequest_default();
@@ -613,7 +637,9 @@ namespace tlink::drivers
             delete p;
         });
 
-        m_monitoredItems.emplace(monResult.monitoredItemId, MonitoredItemInfo{ subId, subStream });
+        m_monitoredItems.emplace(
+          monResult.monitoredItemId,
+          MonitoredItemInfo{ .subscriptionId = subId, .stream = subStream, .isPolling = false });
         co_return subStream;
     }
 
@@ -629,8 +655,10 @@ namespace tlink::drivers
     {
         std::lock_guard lock(m_mutex);
         if (auto it = m_monitoredItems.find(static_cast<uint32_t>(id)); it != m_monitoredItems.end()) {
-            UA_Client_MonitoredItems_deleteSingle(
-              m_client.get(), it->second.subscriptionId, static_cast<UA_UInt32>(id));
+            if (!it->second.isPolling) {
+                UA_Client_MonitoredItems_deleteSingle(
+                  m_client.get(), it->second.subscriptionId, static_cast<UA_UInt32>(id));
+            }
             if (it->second.stream) {
                 it->second.stream->stream.close();
             }
@@ -684,14 +712,51 @@ namespace tlink::drivers
     void UaDriver::worker()
     {
         while (m_workerRunning) {
+            auto now = std::chrono::steady_clock::now();
             {
                 std::lock_guard lock(m_mutex);
                 if (m_client) {
+                    // 1. Process regular subscriptions
                     UA_Client_run_iterate(m_client.get(), 0);
+
+                    // 2. Process polling items
+                    for (auto& [id, info] : m_monitoredItems) {
+                        if (info.isPolling && now >= info.nextPoll) {
+                            doPoll(info);
+                            info.nextPoll = now + info.interval;
+                        }
+                    }
                 }
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
+    }
+
+    void UaDriver::doPoll(MonitoredItemInfo& info)
+    {
+        auto node{ strToNode(info.path) };
+        if (!node)
+            return;
+
+        UA_Variant value;
+        UA_Variant_init(&value);
+        auto status = UA_Client_readValueAttribute(m_client.get(), nodeToNative(node.value()), &value);
+
+        if (status == UA_STATUSCODE_GOOD) {
+            size_t size = UA_calcSizeBinary(value.data, value.type, nullptr);
+            if (size > 0) {
+                UA_ByteString bytes;
+                bytes.length = size;
+                std::vector<std::byte> buffer(size);
+                bytes.data = reinterpret_cast<UA_Byte*>(buffer.data());
+
+                auto encodeStatus = UA_encodeBinary(value.data, value.type, &bytes, nullptr);
+                if (encodeStatus == UA_STATUSCODE_GOOD) {
+                    info.stream->stream.push(std::move(buffer));
+                }
+            }
+        }
+        UA_Variant_clear(&value);
     }
 
     void UaDriver::dataChangeNotificationCallback(UA_Client* client,

@@ -59,6 +59,10 @@ namespace tlink::drivers
         {
             uint32_t subscriptionId;
             std::shared_ptr<RawSubscription> stream;
+            bool isPolling{ false };
+            std::string path;
+            std::chrono::milliseconds interval;
+            std::chrono::steady_clock::time_point nextPoll;
         };
         std::unordered_map<uint32_t, MonitoredItemInfo> m_monitoredItems;
         std::unordered_map<int64_t, uint32_t> m_subscriptionMap;
@@ -68,6 +72,8 @@ namespace tlink::drivers
             inline void operator()(UA_Client* client) { UA_Client_delete(client); }
         };
         std::unique_ptr<UA_Client, UA_ClientDeleter> m_client;
+
+        auto doPoll(MonitoredItemInfo& info) -> void;
 
         std::recursive_mutex m_mutex;
         std::atomic<bool> m_workerRunning{ false };
