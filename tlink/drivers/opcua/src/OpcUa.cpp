@@ -3,9 +3,9 @@
 
 #include <algorithm>
 #include <magic_enum/magic_enum.hpp>
-#include <map>
 #include <print>
 #include <string>
+#include <unordered_map>
 #include <variant>
 
 namespace
@@ -354,18 +354,6 @@ namespace
     {
         return std::error_code(static_cast<int>(e), ua_category());
     }
-
-    using StateCallback =
-      std::function<void(UA_Client*, UA_SecureChannelState, UA_SessionState, UA_StatusCode)>;
-    static std::map<UA_Client*, StateCallback> s_stateCallbacks;
-
-    using SubscriptionDeleteCallback = std::function<void(UA_Client*, UA_UInt32, void*)>;
-    static std::map<std::pair<UA_Client*, uint32_t>, SubscriptionDeleteCallback>
-      s_subscriptionDeleteCallbacks;
-
-    // using ListenerCallback = std::function<void(UA_Client*, UA_UInt32, void*)>;
-    // static std::map<std::pair<UA_Client*, uint32_t>, SubscriptionDeleteCallback>
-    //   s_subscriptionDeleteCallbacks;
 }
 
 namespace tlink::drivers
@@ -377,74 +365,14 @@ namespace tlink::drivers
         m_client.reset(UA_Client_new());
         UA_ClientConfig* config{ UA_Client_getConfig(m_client.get()) };
         UA_ClientConfig_setDefault(config);
-
-        StateCallback stateCallback = [this](UA_Client* client,
-                                             UA_SecureChannelState channelState,
-                                             UA_SessionState sessionState,
-                                             UA_StatusCode connectStatus) -> void {
-            switch (channelState) {
-                case UA_SECURECHANNELSTATE_CLOSED:
-                    m_connected = false;
-                    break;
-                case UA_SECURECHANNELSTATE_OPEN:
-                    m_connected = true;
-                    break;
-                default:
-                    break;
-            }
-
-            switch (sessionState) {
-                case UA_SESSIONSTATE_CLOSED: {
-                    m_sessionActive = false;
-                    break;
-                }
-                case UA_SESSIONSTATE_ACTIVATED: {
-                    m_sessionActive = true;
-
-                    UA_CreateSubscriptionRequest request = UA_CreateSubscriptionRequest_default();
-                    UA_CreateSubscriptionResponse response = UA_Client_Subscriptions_create(
-                      client,
-                      request,
-                      nullptr,
-                      nullptr,
-                      [](UA_Client* client, UA_UInt32 subscriptionId, void* subscriptionContext) {
-                        auto key{ std::make_pair(client, subscriptionId) };
-                        if (s_subscriptionDeleteCallbacks.contains(key)) {
-                            std::invoke(s_subscriptionDeleteCallbacks.at(key),
-                                        client,
-                                        subscriptionId,
-                                        subscriptionContext);
-                        }
-                    });
-
-                    if (response.responseHeader.serviceResult == UA_STATUSCODE_GOOD) {
-                        SubscriptionDeleteCallback subscriptionDeleteCallback =
-                          [this](UA_Client* client, UA_UInt32 subscriptionId, void* subscriptionContext) {
-                            m_subscribed = false;
-                            s_subscriptionDeleteCallbacks.erase({ client, subscriptionId });
-                        };
-
-                        m_subscribed = true;
-                        m_subscriptionId = response.subscriptionId;
-                        s_subscriptionDeleteCallbacks.emplace(
-                          std::make_pair(m_client.get(), m_subscriptionId), subscriptionDeleteCallback);
-                    }
-
-                    break;
-                }
-                case UA_SESSIONSTATE_CREATE_REQUESTED:
-                case UA_SESSIONSTATE_CREATED:
-                case UA_SESSIONSTATE_ACTIVATE_REQUESTED:
-                case UA_SESSIONSTATE_CLOSING:
-                    break;
-            }
-        };
-
+        config->clientContext = this;
         config->stateCallback = [](UA_Client* client,
                                    UA_SecureChannelState channelState,
                                    UA_SessionState sessionState,
                                    UA_StatusCode connectStatus) -> void {
-            std::invoke(s_stateCallbacks.at(client), client, channelState, sessionState, connectStatus);
+            auto* self{ reinterpret_cast<UaDriver*>(UA_Client_getConfig(client)->clientContext) };
+            self->handleChannelState(channelState);
+            self->handleSessionState(sessionState);
         };
     }
 
@@ -472,6 +400,8 @@ namespace tlink::drivers
                             std::span<std::byte> dest,
                             std::chrono::milliseconds timeout) -> coro::Task<Result<size_t>>
     {
+        // TODO: use async
+
         if (!m_client || !m_connected) {
             co_return std::unexpected(make_error_code(UaStatus::BadNotConnected));
         }
@@ -512,6 +442,8 @@ namespace tlink::drivers
                              std::span<const std::byte> src,
                              std::chrono::milliseconds timeout) -> coro::Task<Result<void>>
     {
+        // TODO: use async
+
         if (!m_client || !m_connected) {
             co_return std::unexpected(make_error_code(UaStatus::BadNotConnected));
         }
@@ -565,40 +497,14 @@ namespace tlink::drivers
                                 std::chrono::milliseconds interval)
       -> coro::Task<Result<std::shared_ptr<RawSubscription>>>
     {
-        // if (!m_client || !m_connected || !m_sessionActive) {
-        //     co_return std::unexpected(make_error_code(UaStatus::BadNotConnected));
-        // }
+        if (!m_client || !m_connected || !m_sessionActive) {
+            co_return std::unexpected(make_error_code(UaStatus::BadNotConnected));
+        }
 
-        // auto node{ strToNode(path) };
-        // if (!node) {
-        //     co_return std::unexpected(make_error_code(UaStatus::BadNodeIdInvalid));
-        // }
-
-        // UA_MonitoredItemCreateRequest request =
-        //   UA_MonitoredItemCreateRequest_default(nodeToNative(node.value()));
-        // UA_MonitoredItemCreateResult response =
-        //   UA_Client_MonitoredItems_createDataChange(m_client.get(),
-        //                                             m_subscriptionId,
-        //                                             UA_TIMESTAMPSTORETURN_BOTH,
-        //                                             request,
-        //                                             nullptr,
-        //                                             [](UA_Client* client,
-        //                                                UA_UInt32 subId,
-        //                                                void* subContext,
-        //                                                UA_UInt32 monId,
-        //                                                void* monContext,
-        //                                                UA_DataValue* value) {
-        //     if (s_listeners.contain())
-        //     // UAVariant variant;
-        //     // convertVariant(value->value, variant);
-
-        //     // try {
-        //     //     s_listeners.at({ client, subId, monId })(variant);
-        //     // } catch (std::exception& e) {
-        //     //     (void)e;
-        //     // }
-        // },
-        //                                             nullptr);
+        auto node{ strToNode(path) };
+        if (!node) {
+            co_return std::unexpected(make_error_code(UaStatus::BadNodeIdInvalid));
+        }
 
         // Stub
         co_return std::unexpected(std::make_error_code(std::errc::not_supported));
@@ -610,5 +516,48 @@ namespace tlink::drivers
     }
 
     auto UaDriver::unsubscribeRawSync(uint64_t id) -> void {}
+
+    auto UaDriver::handleChannelState(UA_SecureChannelState state) -> void
+    {
+        switch (state) {
+            case UA_SECURECHANNELSTATE_CLOSED:
+                m_connected = false;
+                break;
+            case UA_SECURECHANNELSTATE_REVERSE_LISTENING:
+            case UA_SECURECHANNELSTATE_CONNECTING:
+            case UA_SECURECHANNELSTATE_CONNECTED:
+            case UA_SECURECHANNELSTATE_REVERSE_CONNECTED:
+            case UA_SECURECHANNELSTATE_RHE_SENT:
+            case UA_SECURECHANNELSTATE_HEL_SENT:
+            case UA_SECURECHANNELSTATE_HEL_RECEIVED:
+            case UA_SECURECHANNELSTATE_ACK_SENT:
+            case UA_SECURECHANNELSTATE_ACK_RECEIVED:
+            case UA_SECURECHANNELSTATE_OPN_SENT:
+                break;
+            case UA_SECURECHANNELSTATE_OPEN:
+                m_connected = true;
+                break;
+            case UA_SECURECHANNELSTATE_CLOSING:
+                break;
+        }
+    }
+
+    auto UaDriver::handleSessionState(UA_SessionState state) -> void
+    {
+        switch (state) {
+            case UA_SESSIONSTATE_CLOSED:
+                m_sessionActive = false;
+                break;
+            case UA_SESSIONSTATE_CREATE_REQUESTED:
+            case UA_SESSIONSTATE_CREATED:
+            case UA_SESSIONSTATE_ACTIVATE_REQUESTED:
+                break;
+            case UA_SESSIONSTATE_ACTIVATED:
+                m_sessionActive = true;
+                break;
+            case UA_SESSIONSTATE_CLOSING:
+                break;
+        }
+    }
 
 } // namespace tlink::drivers

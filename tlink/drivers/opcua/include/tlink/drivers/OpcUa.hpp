@@ -37,6 +37,9 @@ namespace tlink::drivers
         // clang-format on
 
       private:
+        auto handleChannelState(UA_SecureChannelState state) -> void;
+        auto handleSessionState(UA_SessionState state) -> void;
+
         std::string m_endpointUrl;
         bool m_connected{ false };
         bool m_sessionActive{ false };
@@ -48,6 +51,18 @@ namespace tlink::drivers
             inline void operator()(UA_Client* client) { UA_Client_delete(client); }
         };
         std::unique_ptr<UA_Client, UA_ClientDeleter> m_client;
+
+        struct ListenerContext
+        {
+            uint32_t listenerId;
+            std::shared_ptr<RawSubscription> stream;
+        };
+        struct SubscriptionContext
+        {
+            uint32_t subscriptionId;
+            std::vector<ListenerContext> listeners;
+        };
+        std::unordered_map<uint32_t, SubscriptionContext> m_subscriptions;
     };
 
 } // namespace tlink::drivers

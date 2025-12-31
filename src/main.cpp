@@ -1,4 +1,5 @@
 #include "tlink/drivers/Ads.hpp"
+#include "tlink/drivers/OpcUa.hpp"
 #include "tlink/tlink.hpp"
 
 #include <chrono>
@@ -217,17 +218,46 @@ void testCancellationSafety()
     std::println("------------------------------------");
 }
 
+auto runOpcUa(tlink::coro::IExecutor& ex) -> tlink::coro::Task<void>
+{
+    tlink::drivers::UaDriver uaDriver("opc.tcp://127.0.0.1:4840");
+
+    std::println("[{}] App: Connecting to PLC via OPC UA...", getTimestamp());
+    tlink::Result<void> connRes = co_await uaDriver.connect(100ms);
+    if (!connRes) {
+        std::println(stderr, "[{}] App: Failed to connect: {}", getTimestamp(), connRes.error().message());
+        ex.stop();
+        co_return;
+    }
+
+    std::println("[{}] App: Connected!", getTimestamp());
+
+    auto readRes = co_await uaDriver.read<uint32_t>("ns=4;s=GVL.Counter.Counter32", 100ms);
+    if (!readRes) {
+        std::println(stderr, "[{}] App: Failed to read: {}", getTimestamp(), readRes.error().message());
+        ex.stop();
+        co_return;
+    }
+    std::println("[{}] App: Read value: {}", getTimestamp(), readRes.value());
+
+    std::println("[{}] App: Disconnecting...", getTimestamp());
+    co_await uaDriver.disconnect();
+    std::println("[{}] App: Shutdown complete.", getTimestamp());
+
+    ex.stop();
+}
+
 auto main() -> int
 {
-    testLifetimeSafety();
-    testCancellationSafety();
+    // testLifetimeSafety();
+    // testCancellationSafety();
 
     std::println("TLink Framework: Broadcast Validation");
     std::println("------------------------------------");
 
     try {
         tlink::coro::Context ctx;
-        co_spawn(ctx, runApp);
+        co_spawn(ctx, runOpcUa);
         ctx.run();
     } catch (const std::exception& e) {
         std::println(stderr, "Fatal Exception: {}", e.what());
