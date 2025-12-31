@@ -251,6 +251,10 @@ namespace tlink::drivers
             co_return std::unexpected(make_error_code(err));
         }
 
+        if (bytesRead != dest.size()) {
+            co_return std::unexpected(make_error_code(AdsError::Unknown));
+        }
+
         co_return bytesRead;
     }
 
@@ -313,7 +317,7 @@ namespace tlink::drivers
     }
 
     auto AdsDriver::subscribeRaw(std::string_view path,
-                                 std::size_t size,
+                                 size_t size,
                                  SubscriptionType type,
                                  std::chrono::milliseconds interval)
       -> coro::Task<Result<std::shared_ptr<RawSubscription>>>
@@ -322,9 +326,10 @@ namespace tlink::drivers
                                                                  : ADSTRANS_SERVERCYCLE };
         uint32_t cycleTime{ static_cast<uint32_t>(interval.count() * 10000) };
 
-        AdsNotificationAttrib attrib{
-            .cbLength = static_cast<uint32_t>(size), .nTransMode = transMode, .nMaxDelay = 0, .nCycleTime = cycleTime
-        };
+        AdsNotificationAttrib attrib{ .cbLength = static_cast<uint32_t>(size),
+                                      .nTransMode = transMode,
+                                      .nMaxDelay = 0,
+                                      .nCycleTime = cycleTime };
 
         auto err{ AdsError::None };
         try {

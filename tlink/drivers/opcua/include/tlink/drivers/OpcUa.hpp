@@ -29,7 +29,7 @@ namespace tlink::drivers
                        std::chrono::milliseconds timeout = NO_TIMEOUT) -> coro::Task<Result<void>> override;
 
         auto subscribeRaw(std::string_view path,
-                       std::size_t size,
+                       size_t size,
                        SubscriptionType type = SubscriptionType::OnChange,
                        std::chrono::milliseconds interval = NO_TIMEOUT) -> coro::Task<Result<std::shared_ptr<RawSubscription>>> override;
         auto unsubscribeRaw(std::shared_ptr<RawSubscription> subscription) -> coro::Task<Result<void>> override;
@@ -38,7 +38,16 @@ namespace tlink::drivers
 
       private:
         std::string m_endpointUrl;
-        UA_Client* m_client = nullptr;
+        bool m_connected{ false };
+        bool m_sessionActive{ false };
+        bool m_subscribed;
+        uint32_t m_subscriptionId;
+
+        struct UA_ClientDeleter
+        {
+            inline void operator()(UA_Client* client) { UA_Client_delete(client); }
+        };
+        std::unique_ptr<UA_Client, UA_ClientDeleter> m_client;
     };
 
 } // namespace tlink::drivers

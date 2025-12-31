@@ -56,7 +56,7 @@ namespace tlink
                                std::chrono::milliseconds timeout = NO_TIMEOUT) -> coro::Task<Result<void>> = 0;
 
         virtual auto subscribeRaw(std::string_view path,
-                                  std::size_t size,
+                                  size_t size,
                                   SubscriptionType type = SubscriptionType::OnChange,
                                   std::chrono::milliseconds interval = NO_TIMEOUT) -> coro::Task<Result<std::shared_ptr<RawSubscription>>> = 0;
         virtual auto unsubscribeRaw(std::shared_ptr<RawSubscription> subscription) -> coro::Task<Result<void>> = 0;
