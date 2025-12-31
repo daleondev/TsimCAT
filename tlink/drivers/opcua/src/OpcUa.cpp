@@ -397,7 +397,7 @@ namespace tlink::drivers
 
         UA_StatusCode status;
         {
-            std::lock_guard lock(m_mutex);
+            std::scoped_lock lock(m_mutex);
             status = UA_Client_connect(m_client.get(), m_endpointUrl.c_str());
         }
 
@@ -422,12 +422,12 @@ namespace tlink::drivers
         }
 
         if (m_client) {
-            std::lock_guard lock(m_mutex);
+            std::scoped_lock lock(m_mutex);
             UA_Client_disconnect(m_client.get());
         }
 
         {
-            std::lock_guard lock(m_mutex);
+            std::scoped_lock lock(m_mutex);
             // Clear monitored items
             for (auto& [id, info] : m_monitoredItems) {
                 if (info.stream)
@@ -460,7 +460,7 @@ namespace tlink::drivers
 
         UaStatus status;
         {
-            std::lock_guard lock(m_mutex);
+            std::scoped_lock lock(m_mutex);
             status =
               getStatus(UA_Client_readValueAttribute(m_client.get(), nodeToNative(node.value()), &value));
         }
@@ -506,7 +506,7 @@ namespace tlink::drivers
         UA_NodeId typeNode;
         UaStatus status;
         {
-            std::lock_guard lock(m_mutex);
+            std::scoped_lock lock(m_mutex);
             status = getStatus(
               UA_Client_readDataTypeAttribute(m_client.get(), nodeToNative(node.value()), &typeNode));
         }
@@ -538,7 +538,7 @@ namespace tlink::drivers
         UA_Variant_setScalar(&value, data, type);
 
         {
-            std::lock_guard lock(m_mutex);
+            std::scoped_lock lock(m_mutex);
             status =
               getStatus(UA_Client_writeValueAttribute(m_client.get(), nodeToNative(node.value()), &value));
         }
@@ -558,7 +558,7 @@ namespace tlink::drivers
                                 std::chrono::milliseconds interval)
       -> coro::Task<Result<std::shared_ptr<RawSubscription>>>
     {
-        std::lock_guard lock(m_mutex);
+        std::scoped_lock lock(m_mutex);
         if (!m_client || !m_connected || !m_sessionActive) {
             co_return std::unexpected(make_error_code(UaStatus::BadNotConnected));
         }
@@ -576,14 +576,13 @@ namespace tlink::drivers
                 delete p;
             });
 
-            m_monitoredItems.emplace(
-              id,
-              MonitoredItemInfo{ .subscriptionId = 0,
-                                 .stream = subStream,
-                                 .isPolling = true,
-                                 .path = std::string(path),
-                                 .interval = interval,
-                                 .nextPoll = std::chrono::steady_clock::now() });
+            m_monitoredItems.emplace(id,
+                                     MonitoredItemInfo{ .subscriptionId = 0,
+                                                        .stream = subStream,
+                                                        .isPolling = true,
+                                                        .path = std::string(path),
+                                                        .interval = interval,
+                                                        .nextPoll = std::chrono::steady_clock::now() });
 
             co_return subStream;
         }
@@ -653,7 +652,7 @@ namespace tlink::drivers
 
     auto UaDriver::unsubscribeRawSync(uint64_t id) -> void
     {
-        std::lock_guard lock(m_mutex);
+        std::scoped_lock lock(m_mutex);
         if (auto it = m_monitoredItems.find(static_cast<uint32_t>(id)); it != m_monitoredItems.end()) {
             if (!it->second.isPolling) {
                 UA_Client_MonitoredItems_deleteSingle(
@@ -714,7 +713,7 @@ namespace tlink::drivers
         while (m_workerRunning) {
             auto now = std::chrono::steady_clock::now();
             {
-                std::lock_guard lock(m_mutex);
+                std::scoped_lock lock(m_mutex);
                 if (m_client) {
                     // 1. Process regular subscriptions
                     UA_Client_run_iterate(m_client.get(), 0);
@@ -777,7 +776,7 @@ namespace tlink::drivers
     {
         std::shared_ptr<RawSubscription> sub;
         {
-            std::lock_guard lock(m_mutex);
+            std::scoped_lock lock(m_mutex);
             if (auto it = m_monitoredItems.find(monId); it != m_monitoredItems.end()) {
                 sub = it->second.stream;
             }

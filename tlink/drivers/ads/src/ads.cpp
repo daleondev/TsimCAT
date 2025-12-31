@@ -171,7 +171,7 @@ namespace tlink::drivers
         }
 
         {
-            std::lock_guard lock(s_registryMutex);
+            std::scoped_lock lock(s_registryMutex);
             s_registry[m_driverId] = this;
         }
     }
@@ -181,7 +181,7 @@ namespace tlink::drivers
         (void)disconnect(std::chrono::milliseconds(0));
 
         {
-            std::lock_guard lock(s_registryMutex);
+            std::scoped_lock lock(s_registryMutex);
             s_registry.erase(m_driverId);
         }
     }
@@ -214,7 +214,7 @@ namespace tlink::drivers
             setTimeout(timeout);
 
             {
-                std::lock_guard lock(m_mutex);
+                std::scoped_lock lock(m_mutex);
                 for (auto& [id, context] : m_subscriptionContexts) {
                     if (context.stream) {
                         context.stream->stream.close();
@@ -285,7 +285,7 @@ namespace tlink::drivers
 
         AdsDriver* driver = nullptr;
         {
-            std::lock_guard lock(s_registryMutex);
+            std::scoped_lock lock(s_registryMutex);
             if (auto it = s_registry.find(hUser); it != s_registry.end()) {
                 driver = it->second;
             }
@@ -302,7 +302,7 @@ namespace tlink::drivers
         std::vector<std::byte> data;
 
         {
-            std::lock_guard lock(m_mutex);
+            std::scoped_lock lock(m_mutex);
             if (auto it = m_subscriptionContexts.find(pNotification->hNotification);
                 it != m_subscriptionContexts.end()) {
                 stream = it->second.stream;
@@ -338,7 +338,7 @@ namespace tlink::drivers
               ADSIGRP_SYM_VALBYHND, *symbolHandle, attrib, &AdsDriver::NotificationCallback, m_driverId) };
             auto id{ *notificationHandle };
 
-            std::lock_guard lock(m_mutex);
+            std::scoped_lock lock(m_mutex);
             // Custom deleter to ensure we unsubscribe ONLY when the last reference dies
             auto rawSub =
               std::shared_ptr<RawSubscription>(new RawSubscription(id), [this](RawSubscription* p) {
@@ -373,7 +373,7 @@ namespace tlink::drivers
 
     auto AdsDriver::unsubscribeRawSync(uint64_t id) -> void
     {
-        std::lock_guard lock(m_mutex);
+        std::scoped_lock lock(m_mutex);
         if (auto it = m_subscriptionContexts.find(static_cast<uint32_t>(id));
             it != m_subscriptionContexts.end()) {
             if (it->second.stream) {
