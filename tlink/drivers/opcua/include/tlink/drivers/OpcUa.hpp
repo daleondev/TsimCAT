@@ -55,15 +55,19 @@ namespace tlink::drivers
         std::string m_endpointUrl;
         bool m_connected{ false };
         bool m_sessionActive{ false };
-        uint32_t m_subscriptionId{ 0 };
+        struct MonitoredItemInfo
+        {
+            uint32_t subscriptionId;
+            std::shared_ptr<RawSubscription> stream;
+        };
+        std::unordered_map<uint32_t, MonitoredItemInfo> m_monitoredItems;
+        std::unordered_map<int64_t, uint32_t> m_subscriptionMap;
 
         struct UA_ClientDeleter
         {
             inline void operator()(UA_Client* client) { UA_Client_delete(client); }
         };
         std::unique_ptr<UA_Client, UA_ClientDeleter> m_client;
-
-        std::unordered_map<uint32_t, std::shared_ptr<RawSubscription>> m_monitoredItems;
 
         std::recursive_mutex m_mutex;
         std::atomic<bool> m_workerRunning{ false };

@@ -428,13 +428,13 @@ namespace tlink::drivers
 
         {
             std::lock_guard lock(m_mutex);
-            // Clear subscriptions
-            for (auto& [id, sub] : m_monitoredItems) {
-                if (sub)
-                    sub->stream.close();
+            // Clear monitored items
+            for (auto& [id, info] : m_monitoredItems) {
+                if (info.stream)
+                    info.stream->stream.close();
             }
             m_monitoredItems.clear();
-            m_subscriptionId = 0;
+            m_subscriptionMap.clear();
         }
 
         co_return success();
@@ -563,8 +563,13 @@ namespace tlink::drivers
             co_return std::unexpected(make_error_code(UaStatus::BadNotConnected));
         }
 
-        if (m_subscriptionId == 0) {
+        int64_t intervalMs = interval.count();
+        uint32_t subId = 0;
+
+        auto itSub = m_subscriptionMap.find(intervalMs);
+        if (itSub == m_subscriptionMap.end()) {
             UA_CreateSubscriptionRequest request = UA_CreateSubscriptionRequest_default();
+            request.requestedPublishingInterval = static_cast<double>(intervalMs);
             UA_CreateSubscriptionResponse response =
               UA_Client_Subscriptions_create(m_client.get(), request, nullptr, nullptr, nullptr);
 
@@ -572,7 +577,11 @@ namespace tlink::drivers
             if (isBad(status)) {
                 co_return std::unexpected(make_error_code(status));
             }
-            m_subscriptionId = response.subscriptionId;
+            subId = response.subscriptionId;
+            m_subscriptionMap[intervalMs] = subId;
+        }
+        else {
+            subId = itSub->second;
         }
 
         auto node{ strToNode(path) };
@@ -582,11 +591,11 @@ namespace tlink::drivers
 
         UA_MonitoredItemCreateRequest monRequest =
           UA_MonitoredItemCreateRequest_default(nodeToNative(node.value()));
-        monRequest.requestedParameters.samplingInterval = static_cast<UA_Double>(interval.count());
+        monRequest.requestedParameters.samplingInterval = static_cast<UA_Double>(intervalMs);
 
         UA_MonitoredItemCreateResult monResult =
           UA_Client_MonitoredItems_createDataChange(m_client.get(),
-                                                    m_subscriptionId,
+                                                    subId,
                                                     UA_TIMESTAMPSTORETURN_BOTH,
                                                     monRequest,
                                                     nullptr,
@@ -598,14 +607,14 @@ namespace tlink::drivers
             co_return std::unexpected(make_error_code(status));
         }
 
-        auto sub = std::shared_ptr<RawSubscription>(new RawSubscription(monResult.monitoredItemId),
-                                                    [this](RawSubscription* p) {
+        auto subStream = std::shared_ptr<RawSubscription>(new RawSubscription(monResult.monitoredItemId),
+                                                          [this](RawSubscription* p) {
             this->unsubscribeRawSync(p->id);
             delete p;
         });
 
-        m_monitoredItems.emplace(monResult.monitoredItemId, sub);
-        co_return sub;
+        m_monitoredItems.emplace(monResult.monitoredItemId, MonitoredItemInfo{ subId, subStream });
+        co_return subStream;
     }
 
     auto UaDriver::unsubscribeRaw(std::shared_ptr<RawSubscription> subscription) -> coro::Task<Result<void>>
@@ -621,9 +630,9 @@ namespace tlink::drivers
         std::lock_guard lock(m_mutex);
         if (auto it = m_monitoredItems.find(static_cast<uint32_t>(id)); it != m_monitoredItems.end()) {
             UA_Client_MonitoredItems_deleteSingle(
-              m_client.get(), m_subscriptionId, static_cast<UA_UInt32>(id));
-            if (it->second) {
-                it->second->stream.close();
+              m_client.get(), it->second.subscriptionId, static_cast<UA_UInt32>(id));
+            if (it->second.stream) {
+                it->second.stream->stream.close();
             }
             m_monitoredItems.erase(it);
         }
@@ -705,7 +714,7 @@ namespace tlink::drivers
         {
             std::lock_guard lock(m_mutex);
             if (auto it = m_monitoredItems.find(monId); it != m_monitoredItems.end()) {
-                sub = it->second;
+                sub = it->second.stream;
             }
         }
 
