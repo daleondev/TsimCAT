@@ -4,8 +4,6 @@
 #include "Context.hpp"
 #include "Task.hpp"
 
-#include <functional>
-
 namespace tlink::coro
 {
     namespace detail
@@ -20,7 +18,7 @@ namespace tlink::coro
     template<Executor Ex, std::invocable<Ex&> Coro>
     void co_spawn(Ex& ex, Coro&& coro)
     {
-        auto detached = detail::co_spawn_impl(ex, std::forward<Coro>(coro));
+        auto detached{ detail::co_spawn_impl(ex, std::forward<Coro>(coro)) };
         ex.schedule(detached.getHandle());
     }
 }

@@ -10,7 +10,9 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_TOOLCHAIN_FILE": "D:/vcpkg/scripts/buildsystems/vcpkg.cmake",
-                "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic"
+                "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic",
+                "TLINK_ADS_SHARED": "OFF",
+                "TLINK_OPCUA_SHARED": "ON"
             }
         },
         {
@@ -22,7 +24,9 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_TOOLCHAIN_FILE": "D:/vcpkg/scripts/buildsystems/vcpkg.cmake",
-                "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic"
+                "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic",
+                "TLINK_ADS_SHARED": "OFF",
+                "TLINK_OPCUA_SHARED": "OFF"
             }
         }
     ],

@@ -5,7 +5,6 @@
 #include <condition_variable>
 #include <coroutine>
 #include <deque>
-#include <memory>
 #include <mutex>
 
 namespace tlink::coro

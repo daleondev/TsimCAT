@@ -29,15 +29,12 @@ target_compile_features(
     cxx_std_23
 )
 
-# --- Driver Submodules ---
-option(TLINK_BUILD_DRIVER_ADS "Build the ADS protocol driver" ON)
-
+option(TLINK_BUILD_DRIVER_ADS "Build the ADS protocol driver" OFF)
 if(TLINK_BUILD_DRIVER_ADS)
     add_subdirectory(drivers/ads)
 endif()
 
-option(TLINK_BUILD_DRIVER_OPCUA "Build the OPC UA protocol driver" ON)
-
+option(TLINK_BUILD_DRIVER_OPCUA "Build the OPC UA protocol driver" OFF)
 if(TLINK_BUILD_DRIVER_OPCUA)
     add_subdirectory(drivers/opcua)
 endif()
