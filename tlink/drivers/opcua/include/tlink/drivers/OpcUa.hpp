@@ -7,10 +7,8 @@
 #include <open62541/client_highlevel.h>
 #include <open62541/client_subscriptions.h>
 
-#include <atomic>
-#include <mutex>
-#include <string>
 #include <thread>
+#include <unordered_map>
 
 namespace tlink::drivers
 {

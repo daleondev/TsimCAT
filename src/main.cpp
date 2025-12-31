@@ -242,7 +242,7 @@ auto runOpcUa(tlink::coro::IExecutor& ex) -> tlink::coro::Task<void>
 
     std::println("[{}] App: Subscribing to ns=4;s=GVL.Counter.Counter32...", getTimestamp());
     auto subRes = co_await uaDriver.subscribe<uint32_t>(
-      "ns=4;s=GVL.Counter.Counter32", tlink::SubscriptionType::Cyclic, 500ms);
+      "ns=4;s=GVL.Counter.Counter32", tlink::SubscriptionType::OnChange, 1ms);
 
     if (subRes) {
         auto sub = subRes.value();

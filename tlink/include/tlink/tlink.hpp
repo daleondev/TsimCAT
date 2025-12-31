@@ -9,5 +9,4 @@
 
 namespace tlink
 {
-    // Framework-level helper functions can go here
-}
+} // namespace tlink

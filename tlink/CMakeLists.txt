@@ -16,6 +16,7 @@ target_sources(tlink INTERFACE
     include/tlink/tlink.hpp
     include/tlink/Driver.hpp
     include/tlink/Result.hpp
+    include/tlink/Subscription.hpp
     include/tlink/coroutine/coroutine.hpp
     include/tlink/coroutine/Context.hpp
     include/tlink/coroutine/Task.hpp
