@@ -1,11 +1,10 @@
 #pragma once
 
-#include <atomic>
-#include <concepts>
+#include "utils.hpp"
+
 #include <condition_variable>
 #include <coroutine>
 #include <deque>
-#include <mutex>
 
 namespace tlink::coro
 {
@@ -13,9 +12,9 @@ namespace tlink::coro
     {
       public:
         virtual ~IExecutor() = default;
-        virtual void run() = 0;
-        virtual void stop() = 0;
-        virtual void schedule(std::coroutine_handle<> handle) = 0;
+        virtual auto run() -> void = 0;
+        virtual auto stop() -> void = 0;
+        virtual auto schedule(std::coroutine_handle<> handle) -> void = 0;
         virtual auto getLifeToken() -> std::weak_ptr<void> = 0;
     };
 
@@ -38,8 +37,7 @@ namespace tlink::coro
                 std::unique_lock lock(m_mutex);
 
                 while (!m_queue.empty()) {
-                    auto handle{ std::move(m_queue.front()) };
-                    m_queue.pop_front();
+                    auto handle{ utils::pop(m_queue) };
 
                     lock.unlock();
                     if (handle && !handle.done()) {
@@ -60,10 +58,7 @@ namespace tlink::coro
 
         void schedule(std::coroutine_handle<> handle)
         {
-            {
-                std::lock_guard lock(m_mutex);
-                m_queue.push_back(handle);
-            }
+            utils::push(m_queue, handle, m_mutex);
             m_cv.notify_one();
         }
 

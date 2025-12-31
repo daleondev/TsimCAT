@@ -2,7 +2,6 @@
 
 #include "Context.hpp"
 
-#include <cstdlib>
 #include <exception>
 #include <optional>
 #include <utility>
@@ -23,7 +22,7 @@ namespace tlink::coro
         using handle_type = std::coroutine_handle<promise_type>;
 
         DetachedTask(handle_type handle)
-          : m_handle(handle)
+          : m_handle{ handle }
         {
         }
         ~DetachedTask()
@@ -45,12 +44,13 @@ namespace tlink::coro
         using promise_type = detail::TaskPromise<T>;
         using handle_type = std::coroutine_handle<promise_type>;
 
-        Task(handle_type h)
-          : m_handle(h)
+        Task(handle_type handle)
+          : m_handle{ handle }
         {
         }
         ~Task()
         {
+            // handle destroyed when going out of scope
             if (m_handle) {
                 m_handle.destroy();
             }
@@ -60,9 +60,8 @@ namespace tlink::coro
         auto operator=(const Task&) -> Task& = delete;
 
         Task(Task&& other) noexcept
-          : m_handle(other.m_handle)
+          : m_handle{ std::exchange(other.m_handle, nullptr) }
         {
-            other.m_handle = nullptr;
         }
         auto operator=(Task&& other) noexcept -> Task&
         {
@@ -89,17 +88,13 @@ namespace tlink::coro
 
             if constexpr (!std::is_void_v<T>) {
                 if (!m_handle.promise().value) {
-                     throw std::runtime_error("Broken Promise: Task completed without returning a value.");
+                    throw std::runtime_error("Broken Promise: Task completed without returning a value.");
                 }
                 return std::move(*m_handle.promise().value);
             }
-            else {
-                return;
-            }
         }
 
-        inline auto getHandle() -> handle_type& { return m_handle; }
-        inline auto getHandle() const -> const handle_type& { return m_handle; }
+        auto getHandle() const -> const handle_type& { return m_handle; }
 
       private:
         handle_type m_handle;
@@ -111,10 +106,10 @@ namespace tlink::coro
         {
             auto get_return_object() -> DetachedTask
             {
-                return DetachedTask{ DetachedTask::handle_type::from_promise(*this) };
+                return { DetachedTask::handle_type::from_promise(*this) };
             }
             auto initial_suspend() -> std::suspend_always { return {}; }
-            auto final_suspend() noexcept -> std::suspend_never { return {}; }
+            auto final_suspend() noexcept -> std::suspend_never { return {}; /* suspends when done */ }
             auto unhandled_exception() -> void { std::abort(); }
             auto return_void() -> void {}
         };
@@ -122,8 +117,8 @@ namespace tlink::coro
         template<typename T>
         struct TaskPromiseBase
         {
-            std::coroutine_handle<> waiter;
-            std::exception_ptr exception;
+            std::coroutine_handle<> waiter{};
+            std::exception_ptr exception{};
             IExecutor* executor{ nullptr };
 
             template<typename... Args>

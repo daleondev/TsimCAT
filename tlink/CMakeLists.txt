@@ -21,6 +21,7 @@ target_sources(tlink INTERFACE
     include/tlink/coroutine/Context.hpp
     include/tlink/coroutine/Task.hpp
     include/tlink/coroutine/Channel.hpp
+    include/tlink/coroutine/utils.hpp
 )
 
 target_compile_features(

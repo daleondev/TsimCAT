@@ -272,15 +272,15 @@ auto runOpcUa(tlink::coro::IExecutor& ex) -> tlink::coro::Task<void>
 
 auto main() -> int
 {
-    // testLifetimeSafety();
-    // testCancellationSafety();
+    testLifetimeSafety();
+    testCancellationSafety();
 
     std::println("TLink Framework: Broadcast Validation");
     std::println("------------------------------------");
 
     try {
         tlink::coro::Context ctx;
-        co_spawn(ctx, runOpcUa);
+        co_spawn(ctx, runApp);
         ctx.run();
     } catch (const std::exception& e) {
         std::println(stderr, "Fatal Exception: {}", e.what());
