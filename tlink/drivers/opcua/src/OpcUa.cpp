@@ -362,6 +362,10 @@ namespace
     using SubscriptionDeleteCallback = std::function<void(UA_Client*, UA_UInt32, void*)>;
     static std::map<std::pair<UA_Client*, uint32_t>, SubscriptionDeleteCallback>
       s_subscriptionDeleteCallbacks;
+
+    using ListenerCallback = std::function<void(UA_Client*, UA_UInt32, void*)>;
+    static std::map<std::pair<UA_Client*, uint32_t>, SubscriptionDeleteCallback>
+      s_subscriptionDeleteCallbacks;
 }
 
 namespace tlink::drivers
@@ -477,24 +481,30 @@ namespace tlink::drivers
             co_return std::unexpected(make_error_code(UaStatus::BadNodeIdInvalid));
         }
 
-        UA_Variant variant;
-        UA_Variant_init(&variant);
+        UA_Variant value;
+        UA_Variant_init(&value);
         auto status{ getStatus(
-          UA_Client_readValueAttribute(m_client.get(), nodeToNative(node.value()), &variant)) };
+          UA_Client_readValueAttribute(m_client.get(), nodeToNative(node.value()), &value)) };
         if (isBad(status)) {
-            UA_Variant_clear(&variant);
+            UA_Variant_clear(&value);
             co_return std::unexpected(make_error_code(status));
         }
 
-        UA_ExtensionObject* obj = reinterpret_cast<UA_ExtensionObject*>(variant.data);
-        size_t bytesRead{ obj->content.encoded.body.length };
-        if (bytesRead != dest.size()) {
-            co_return std::unexpected(make_error_code(UaStatus::Bad));
+        size_t bytesRead{ UA_calcSizeBinary(value.data, value.type, nullptr) };
+        if (bytesRead > dest.size()) {
+            UA_Variant_clear(&value);
+            co_return std::unexpected(make_error_code(UaStatus::BadEncodingLimitsExceeded));
         }
-        std::ranges::move(std::span{ reinterpret_cast<std::byte*>(obj), bytesRead }, dest.begin());
 
-        UA_ExtensionObject_clear(obj);
-        UA_Variant_clear(&variant);
+        UA_ByteString bytes;
+        bytes.length = dest.size();
+        bytes.data = reinterpret_cast<UA_Byte*>(dest.data());
+        status = getStatus(UA_encodeBinary(value.data, value.type, &bytes, nullptr));
+        UA_Variant_clear(&value);
+
+        if (isBad(status)) {
+            co_return std::unexpected(make_error_code(status));
+        }
         co_return bytesRead;
     };
 
@@ -511,35 +521,41 @@ namespace tlink::drivers
             co_return std::unexpected(make_error_code(UaStatus::BadNodeIdInvalid));
         }
 
-        UA_ExtensionObject obj;
-        UA_ExtensionObject_init(&obj);
-        obj.encoding = UA_EXTENSIONOBJECT_ENCODED_BYTESTRING;
-        obj.content.encoded.typeId.namespaceIndex = node->ns;
-        if (node->id.index() == 0) {
-            obj.content.encoded.typeId.identifierType = UA_NodeIdType::UA_NODEIDTYPE_NUMERIC;
-            obj.content.encoded.typeId.identifier.numeric = std::get<0>(node->id);
-        }
-        else {
-            obj.content.encoded.typeId.identifierType = UA_NodeIdType::UA_NODEIDTYPE_STRING;
-            obj.content.encoded.typeId.identifier.string = UA_String_fromChars(std::get<1>(node->id).c_str());
-        }
-        obj.content.encoded.body.length = src.size();
-        obj.content.encoded.body.data = new UA_Byte[src.size()];
-        std::ranges::copy(
-          src, std::span{ reinterpret_cast<std::byte*>(obj.content.encoded.body.data), src.size() }.begin());
-
-        UA_Variant variant;
-        UA_Variant_init(&variant);
-        UA_Variant_setScalarCopy(&variant, &obj, &UA_TYPES[UA_TYPES_EXTENSIONOBJECT]);
-
+        UA_NodeId typeNode;
         auto status{ getStatus(
-          UA_Client_writeValueAttribute(m_client.get(), nodeToNative(node.value()), &variant)) };
+          UA_Client_readDataTypeAttribute(m_client.get(), nodeToNative(node.value()), &typeNode)) };
         if (isBad(status)) {
-            UA_Variant_clear(&variant);
+            UA_NodeId_clear(&typeNode);
             co_return std::unexpected(make_error_code(status));
         }
 
-        UA_Variant_clear(&variant);
+        const UA_DataType* type = UA_findDataType(&typeNode);
+        if (!type) {
+            UA_NodeId_clear(&typeNode);
+            co_return std::unexpected(make_error_code(UaStatus::BadTypeDefinitionInvalid));
+        }
+
+        UA_ByteString bytes;
+        bytes.length = src.size();
+        bytes.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(src.data()));
+
+        auto* data{ UA_new(type) };
+        status = getStatus(UA_decodeBinary(&bytes, data, type, nullptr));
+        if (isBad(status)) {
+            UA_NodeId_clear(&typeNode);
+            UA_delete(data, type);
+            co_return std::unexpected(make_error_code(status));
+        }
+
+        UA_Variant value;
+        UA_Variant_setScalar(&value, data, type);
+        status = getStatus(UA_Client_writeValueAttribute(m_client.get(), nodeToNative(node.value()), &value));
+        UA_NodeId_clear(&typeNode);
+        UA_Variant_clear(&value);
+
+        if (isBad(status)) {
+            co_return std::unexpected(make_error_code(status));
+        }
         co_return success();
     }
 
@@ -549,6 +565,41 @@ namespace tlink::drivers
                                 std::chrono::milliseconds interval)
       -> coro::Task<Result<std::shared_ptr<RawSubscription>>>
     {
+        if (!m_client || !m_connected || !m_sessionActive) {
+            co_return std::unexpected(make_error_code(UaStatus::BadNotConnected));
+        }
+
+        auto node{ strToNode(path) };
+        if (!node) {
+            co_return std::unexpected(make_error_code(UaStatus::BadNodeIdInvalid));
+        }
+
+        UA_MonitoredItemCreateRequest request =
+          UA_MonitoredItemCreateRequest_default(nodeToNative(node.value()));
+        UA_MonitoredItemCreateResult response =
+          UA_Client_MonitoredItems_createDataChange(m_client.get(),
+                                                    m_subscriptionId,
+                                                    UA_TIMESTAMPSTORETURN_BOTH,
+                                                    request,
+                                                    nullptr,
+                                                    [](UA_Client* client,
+                                                       UA_UInt32 subId,
+                                                       void* subContext,
+                                                       UA_UInt32 monId,
+                                                       void* monContext,
+                                                       UA_DataValue* value) {
+            if (s_listeners.contain())
+            // UAVariant variant;
+            // convertVariant(value->value, variant);
+
+            // try {
+            //     s_listeners.at({ client, subId, monId })(variant);
+            // } catch (std::exception& e) {
+            //     (void)e;
+            // }
+        },
+                                                    nullptr);
+
         // Stub
         co_return std::unexpected(std::make_error_code(std::errc::not_supported));
     }
