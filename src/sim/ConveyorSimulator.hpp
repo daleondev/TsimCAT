@@ -4,36 +4,52 @@
 #include <atomic>
 #include <mutex>
 #include <cmath>
-#include <print>
-#include <iostream>
+#include <functional>
 
 namespace tsim::sim
 {
     class ConveyorSimulator
     {
     public:
+        using on_status_change_fn = std::function<void(const model::ConveyorStatus&)>;
+
         ConveyorSimulator() = default;
 
         void update_control(const model::ConveyorControl& ctrl)
         {
-            std::lock_guard lock(m_mutex);
-            m_control = ctrl;
-            
-            // Logging to debug mapping issues
-            std::println("Sim: Command received - Run: {}, Reverse: {}", (int)m_control.bRun, (int)m_control.bReverse);
-
-            if (m_control.bRun != 0 && !m_errorManual) {
-                m_status.bRunning = 1;
-            } else if (m_actualVelocity == 0.0f) {
-                m_status.bRunning = 0;
+            bool changed = false;
+            {
+                std::lock_guard lock(m_mutex);
+                m_control = ctrl;
+                
+                // Logic: If PLC says RUN or REVERSE, and no error, we signal Running
+                if ((m_control.bRun != 0 || m_control.bReverse != 0) && !m_errorManual) {
+                    if (m_status.bRunning == 0) {
+                        m_status.bRunning = 1;
+                        changed = true;
+                    }
+                } else if (m_actualVelocity == 0.0f) {
+                    if (m_status.bRunning != 0) {
+                        m_status.bRunning = 0;
+                        changed = true;
+                    }
+                }
+            }
+            if (changed && on_status_change) {
+                on_status_change(get_status());
             }
         }
 
         void set_manual_error(bool active)
         {
-            std::lock_guard lock(m_mutex);
-            m_errorManual = active;
-            m_status.bError = active ? 1 : 0;
+            {
+                std::lock_guard lock(m_mutex);
+                m_errorManual = active;
+                m_status.bError = active ? 1 : 0;
+            }
+            if (on_status_change) {
+                on_status_change(get_status());
+            }
         }
 
         model::ConveyorStatus get_status() const
@@ -53,39 +69,49 @@ namespace tsim::sim
 
         void step(float dt)
         {
-            std::lock_guard lock(m_mutex);
-            
-            const float targetMaxSpeed = 0.5f; 
-
-            if (m_control.bRun != 0 && !m_errorManual) {
-                m_status.bRunning = 1;
+            bool status_changed = false;
+            {
+                std::lock_guard lock(m_mutex);
                 
-                // Direction: 0 = Forward (+), 1 = Backward (-)
-                float target = (m_control.bReverse != 0) ? -targetMaxSpeed : targetMaxSpeed;
-                float diff = target - m_actualVelocity;
-                float step_size = 2.0f * dt; 
-                
-                if (std::abs(diff) < step_size) {
-                    m_actualVelocity = target;
-                } else {
-                    m_actualVelocity += (diff > 0 ? step_size : -step_size);
-                }
+                const float targetMaxSpeed = 0.5f; 
 
-                m_distance_buffer += std::abs(m_actualVelocity) * dt;
-                if (m_distance_buffer >= 1.0f) { 
-                    m_itemCount++;
-                    m_distance_buffer -= 1.0f;
-                }
-            } else {
-                float step_size = 3.0f * dt;
-                if (std::abs(m_actualVelocity) < step_size) {
-                    m_actualVelocity = 0.0f;
-                    m_status.bRunning = 0;
+                if ((m_control.bRun != 0 || m_control.bReverse != 0) && !m_errorManual) {
+                    m_status.bRunning = 1;
+                    
+                    float target = (m_control.bReverse != 0) ? -targetMaxSpeed : targetMaxSpeed;
+                    float diff = target - m_actualVelocity;
+                    float step_size = 2.0f * dt; 
+                    
+                    if (std::abs(diff) < step_size) {
+                        m_actualVelocity = target;
+                    } else {
+                        m_actualVelocity += (diff > 0 ? step_size : -step_size);
+                    }
+
+                    m_distance_buffer += std::abs(m_actualVelocity) * dt;
+                    if (m_distance_buffer >= 1.0f) { 
+                        m_itemCount++;
+                        m_distance_buffer -= 1.0f;
+                    }
                 } else {
-                    m_actualVelocity += (m_actualVelocity > 0 ? -step_size : step_size);
+                    float step_size = 3.0f * dt;
+                    if (std::abs(m_actualVelocity) < step_size) {
+                        if (m_actualVelocity != 0.0f || m_status.bRunning != 0) {
+                            m_actualVelocity = 0.0f;
+                            m_status.bRunning = 0;
+                            status_changed = true; 
+                        }
+                    } else {
+                        m_actualVelocity += (m_actualVelocity > 0 ? -step_size : step_size);
+                    }
                 }
             }
+            if (status_changed && on_status_change) {
+                on_status_change(get_status());
+            }
         }
+
+        on_status_change_fn on_status_change;
 
     private:
         mutable std::mutex m_mutex;

@@ -10,12 +10,20 @@
 
 namespace tsim::sim
 {
+    /**
+     * PLCManager manages a single ADS connection to the TwinCAT PLC.
+     * It listens for control updates and pushes status changes back to the PLC.
+     */
     class PLCManager
     {
     public:
         PLCManager(std::shared_ptr<ConveyorSimulator> conveyor)
             : m_conveyor(std::move(conveyor))
         {
+            // Subscribe to simulator events to trigger status writes
+            m_conveyor->on_status_change = [this](const model::ConveyorStatus& status) {
+                this->request_status_write(status);
+            };
         }
 
         ~PLCManager()
@@ -26,42 +34,49 @@ namespace tsim::sim
         void start()
         {
             m_running = true;
-            
-            // 1. Command Subscription Thread
-            m_comm_thread = std::jthread([this] {
-                tlink::coro::Context ctx;
-                tlink::coro::co_spawn(ctx, [this](auto& ex) -> tlink::coro::Task<void> {
-                    co_await this->run_subscription_loop();
+            m_thread = std::jthread([this] {
+                // Initialize the coroutine context in this dedicated thread
+                tlink::coro::co_spawn(m_ctx, [this](auto& ex) -> tlink::coro::Task<void> {
+                    co_await this->run_communication();
                 });
-                ctx.run();
-            });
-
-            // 2. Status Update Thread (Persistent connection to avoid "No Dispatcher" warnings)
-            m_status_thread = std::jthread([this] {
-                this->run_status_loop();
+                m_ctx.run();
             });
         }
 
         void stop()
         {
             m_running = false;
+            m_ctx.stop();
         }
 
     private:
-        tlink::coro::Task<void> run_subscription_loop()
+        void request_status_write(const model::ConveyorStatus& status)
         {
-            // Use local NetId ... .20
-            tlink::drivers::AdsDriver ads(
+            if (!m_running || !m_ads) return;
+
+            // Schedule a one-shot write task in the worker thread's context
+            m_ctx.schedule(tlink::coro::detail::co_spawn_impl(m_ctx, [this, status](auto&) -> tlink::coro::Task<void> {
+                if (m_ads) {
+                    (void)co_await m_ads->write("GVL.stConveyorStatus", status);
+                }
+            }).getHandle());
+        }
+
+        tlink::coro::Task<void> run_communication()
+        {
+            // ONE single driver instance for the whole process
+            m_ads = std::make_unique<tlink::drivers::AdsDriver>(
                 "192.168.56.1.1.1", "192.168.56.1", 851, "192.168.56.1.1.20");
 
-            if (auto res = co_await ads.connect(); !res) {
-                std::println(std::cerr, "PLCManager (Sub): Failed to connect via ADS");
+            if (auto res = co_await m_ads->connect(); !res) {
+                std::cerr << "PLCManager: ADS Connection failed." << std::endl;
                 co_return;
             }
 
-            std::println("PLCManager: Command connection established.");
+            std::cout << "PLCManager: ADS Connection established." << std::endl;
 
-            auto sub_res = co_await ads.subscribe<model::ConveyorControl>("GVL.stConveyorControl");
+            // Process incoming control updates via subscription
+            auto sub_res = co_await m_ads->subscribe<model::ConveyorControl>("GVL.stConveyorControl");
             if (sub_res) {
                 auto sub = sub_res.value();
                 while (m_running) {
@@ -73,38 +88,14 @@ namespace tsim::sim
                     }
                 }
             } else {
-                std::println(std::cerr, "PLCManager: Failed to subscribe to GVL.stConveyorControl");
+                std::cerr << "PLCManager: Failed to subscribe to GVL.stConveyorControl" << std::endl;
             }
         }
 
-        void run_status_loop()
-        {
-            // Use a DIFFERENT local NetId (... .21) for the second persistent connection
-            // This is key to avoiding dispatcher conflicts in the ADS library.
-            tlink::drivers::AdsDriver ads(
-                "192.168.56.1.1.1", "192.168.56.1", 851, "192.168.56.1.1.21");
-
-            tlink::coro::Context ctx;
-            tlink::coro::co_spawn(ctx, [this, &ads](auto& ex) -> tlink::coro::Task<void> {
-                if (auto res = co_await ads.connect(); !res) {
-                    std::println(std::cerr, "PLCManager (Status): Connection failed");
-                    co_return;
-                }
-                
-                std::println("PLCManager: Status connection established.");
-
-                while (m_running) {
-                    (void)co_await ads.write("GVL.stConveyorStatus", m_conveyor->get_status());
-                    // Since this is its own thread, we can safely sleep here
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                }
-            });
-            ctx.run();
-        }
-
         std::shared_ptr<ConveyorSimulator> m_conveyor;
-        std::jthread m_comm_thread;
-        std::jthread m_status_thread;
+        std::unique_ptr<tlink::drivers::AdsDriver> m_ads;
+        tlink::coro::Context m_ctx;
+        std::jthread m_thread;
         std::atomic<bool> m_running{ false };
     };
 }
