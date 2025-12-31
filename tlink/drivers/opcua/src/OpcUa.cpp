@@ -363,9 +363,9 @@ namespace
     static std::map<std::pair<UA_Client*, uint32_t>, SubscriptionDeleteCallback>
       s_subscriptionDeleteCallbacks;
 
-    using ListenerCallback = std::function<void(UA_Client*, UA_UInt32, void*)>;
-    static std::map<std::pair<UA_Client*, uint32_t>, SubscriptionDeleteCallback>
-      s_subscriptionDeleteCallbacks;
+    // using ListenerCallback = std::function<void(UA_Client*, UA_UInt32, void*)>;
+    // static std::map<std::pair<UA_Client*, uint32_t>, SubscriptionDeleteCallback>
+    //   s_subscriptionDeleteCallbacks;
 }
 
 namespace tlink::drivers
@@ -565,40 +565,40 @@ namespace tlink::drivers
                                 std::chrono::milliseconds interval)
       -> coro::Task<Result<std::shared_ptr<RawSubscription>>>
     {
-        if (!m_client || !m_connected || !m_sessionActive) {
-            co_return std::unexpected(make_error_code(UaStatus::BadNotConnected));
-        }
+        // if (!m_client || !m_connected || !m_sessionActive) {
+        //     co_return std::unexpected(make_error_code(UaStatus::BadNotConnected));
+        // }
 
-        auto node{ strToNode(path) };
-        if (!node) {
-            co_return std::unexpected(make_error_code(UaStatus::BadNodeIdInvalid));
-        }
+        // auto node{ strToNode(path) };
+        // if (!node) {
+        //     co_return std::unexpected(make_error_code(UaStatus::BadNodeIdInvalid));
+        // }
 
-        UA_MonitoredItemCreateRequest request =
-          UA_MonitoredItemCreateRequest_default(nodeToNative(node.value()));
-        UA_MonitoredItemCreateResult response =
-          UA_Client_MonitoredItems_createDataChange(m_client.get(),
-                                                    m_subscriptionId,
-                                                    UA_TIMESTAMPSTORETURN_BOTH,
-                                                    request,
-                                                    nullptr,
-                                                    [](UA_Client* client,
-                                                       UA_UInt32 subId,
-                                                       void* subContext,
-                                                       UA_UInt32 monId,
-                                                       void* monContext,
-                                                       UA_DataValue* value) {
-            if (s_listeners.contain())
-            // UAVariant variant;
-            // convertVariant(value->value, variant);
+        // UA_MonitoredItemCreateRequest request =
+        //   UA_MonitoredItemCreateRequest_default(nodeToNative(node.value()));
+        // UA_MonitoredItemCreateResult response =
+        //   UA_Client_MonitoredItems_createDataChange(m_client.get(),
+        //                                             m_subscriptionId,
+        //                                             UA_TIMESTAMPSTORETURN_BOTH,
+        //                                             request,
+        //                                             nullptr,
+        //                                             [](UA_Client* client,
+        //                                                UA_UInt32 subId,
+        //                                                void* subContext,
+        //                                                UA_UInt32 monId,
+        //                                                void* monContext,
+        //                                                UA_DataValue* value) {
+        //     if (s_listeners.contain())
+        //     // UAVariant variant;
+        //     // convertVariant(value->value, variant);
 
-            // try {
-            //     s_listeners.at({ client, subId, monId })(variant);
-            // } catch (std::exception& e) {
-            //     (void)e;
-            // }
-        },
-                                                    nullptr);
+        //     // try {
+        //     //     s_listeners.at({ client, subId, monId })(variant);
+        //     // } catch (std::exception& e) {
+        //     //     (void)e;
+        //     // }
+        // },
+        //                                             nullptr);
 
         // Stub
         co_return std::unexpected(std::make_error_code(std::errc::not_supported));
