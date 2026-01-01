@@ -1,8 +1,9 @@
 #include "tlink/drivers/OpcUa.hpp"
 #include "tlink/coroutine/Context.hpp"
 
+#include <reflect>
+
 #include <algorithm>
-#include <magic_enum/magic_enum.hpp>
 #include <print>
 #include <string>
 #include <unordered_map>
@@ -340,7 +341,7 @@ namespace
 
         std::string message(int ev) const override
         {
-            return std::string(magic_enum::enum_name(static_cast<UaStatus>(ev)));
+            return std::string(reflect::enum_name(static_cast<UaStatus>(ev)));
         }
     };
 

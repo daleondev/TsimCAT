@@ -1,9 +1,6 @@
 [submodule "external/ADS"]
 	path = external/ADS
 	url = https://github.com/Beckhoff/ADS.git
-[submodule "external/magic_enum"]
-	path = external/magic_enum
-	url = https://github.com/Neargye/magic_enum.git
 [submodule "external/json"]
 	path = external/json
 	url = https://github.com/nlohmann/json.git

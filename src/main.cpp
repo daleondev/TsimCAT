@@ -8,10 +8,10 @@ using namespace cycfi::elements;
 
 int main(int argc, char* argv[])
 {
-   app _app("TsimCAT");
-   
-   tsim::ui::MainWindow main_win(_app);
+    app _app("TsimCAT");
 
-   _app.run();
-   return 0;
+    tsim::ui::MainWindow main_win(_app);
+
+    _app.run();
+    return 0;
 }

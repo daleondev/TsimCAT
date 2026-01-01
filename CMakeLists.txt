@@ -34,7 +34,6 @@ set(ELEMENTS_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(external/elements)
 
 add_subdirectory(external/json)
-add_subdirectory(external/magic_enum)
 
 add_library(asio INTERFACE)
 add_library(asio::asio ALIAS asio)

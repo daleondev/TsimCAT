@@ -1,4 +1,4 @@
-#include "reflect.hpp"
+#include <reflect>
 
 #include <chrono>
 #include <concepts>
@@ -73,13 +73,13 @@ namespace detail
     template<typename T>
     consteval auto class_format()
     {
-        constexpr auto size{ class_format_size<T>() };
-        FixedString<size> out;
-        auto* iter = out.buff;
+        FixedString<class_format_size<T>()> out;
+        auto* iter{ out.buff };
 
         auto append = [&](std::string_view s) {
-            for (char c : s)
+            for (char c : s) {
                 *iter++ = c;
+            }
         };
 
         append("[ ");
@@ -130,13 +130,13 @@ namespace detail
     template<typename T, size_t Level = 0>
     consteval auto class_pretty_format()
     {
-        constexpr auto size{ class_pretty_format_size<T, Level>() };
-        FixedString<size> out;
-        auto* iter = out.buff;
+        FixedString<class_pretty_format_size<T, Level>()> out;
+        auto* iter{ out.buff };
 
         auto append = [&](std::string_view s) {
-            for (char c : s)
+            for (char c : s) {
                 *iter++ = c;
+            }
         };
 
         append("{{\n");
@@ -151,8 +151,7 @@ namespace detail
 
             if constexpr (Reflectable<MemberType>) {
                 append(": ");
-                auto nested{ class_pretty_format<MemberType, Level + 1>() };
-                append(std::string_view(nested));
+                append(class_pretty_format<MemberType, Level + 1>());
             }
             else {
                 append(": {}");
@@ -177,7 +176,8 @@ struct std::formatter<T>
 {
     bool pretty{ false };
 
-    constexpr auto parse(auto& ctx) -> std::remove_reference_t<decltype(ctx)>::iterator
+    template<typename Ctx>
+    constexpr auto parse(Ctx& ctx) -> Ctx::iterator
     {
         auto it{ ctx.begin() };
         if (it == ctx.end()) {
@@ -196,7 +196,8 @@ struct std::formatter<T>
         return it;
     }
 
-    auto format(const T& t, auto& ctx) const -> std::remove_reference_t<decltype(ctx)>::iterator
+    template<typename Ctx>
+    auto format(const T& t, Ctx& ctx) const -> Ctx::iterator
     {
         auto make_arg = []<typename Field>(Field&& field) {
             using Type = std::remove_cvref_t<Field>;
@@ -219,12 +220,12 @@ struct std::formatter<T>
         };
 
         if (pretty) {
-            auto make_flat_tuple = [&]<typename Field>(this auto&& self, Field&& field) {
+            auto make_flat_tuple = [&]<typename Field>(this auto&& make_flat_tuple_recursive, Field&& field) {
                 using Type = std::remove_cvref_t<Field>;
 
                 if constexpr (detail::Reflectable<Type>) {
                     return [&]<size_t... Is>(std::index_sequence<Is...>) {
-                        return std::tuple_cat(self(reflect::get<Is>(field))...);
+                        return std::tuple_cat(make_flat_tuple_recursive(reflect::get<Is>(field))...);
                     }(std::make_index_sequence<reflect::size<Type>()>{});
                 }
                 else {
@@ -253,7 +254,8 @@ struct std::formatter<T>
 {
     bool verbose{ false };
 
-    constexpr auto parse(auto& ctx) -> std::remove_reference_t<decltype(ctx)>::iterator
+    template<typename Ctx>
+    constexpr auto parse(Ctx& ctx) -> Ctx::iterator
     {
         auto it{ ctx.begin() };
         if (it == ctx.end()) {
@@ -272,7 +274,8 @@ struct std::formatter<T>
         return it;
     }
 
-    auto format(T t, auto& ctx) const -> std::remove_reference_t<decltype(ctx)>::iterator
+    template<typename Ctx>
+    auto format(T t, Ctx& ctx) const -> Ctx::iterator
     {
         if (verbose) {
             return std::format_to(ctx.out(), "{}:{}", reflect::type_name(t), reflect::enum_name(t));

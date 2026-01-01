@@ -1,7 +1,7 @@
 #include "tlink/drivers/ADS.hpp"
 #include "tlink/coroutine/Context.hpp"
 
-#include <magic_enum/magic_enum.hpp>
+#include <reflect>
 
 #include <atomic>
 #include <cassert>
@@ -112,7 +112,7 @@ namespace
 
         std::string message(int ev) const override
         {
-            return std::string(magic_enum::enum_name(static_cast<AdsError>(ev)));
+            return std::string(reflect::enum_name(static_cast<AdsError>(ev)));
         }
     };
 
