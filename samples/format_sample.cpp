@@ -102,8 +102,7 @@ namespace detail
     consteval auto class_pretty_format_size() -> size_t
     {
         auto size{ 0uz };
-        size += reflect::type_name<T>().size(); // "<class>"
-        size += 5;                              // ": {{\n"
+        size += 3; // "{{\n"
 
         reflect::for_each<T>([&size](const auto I) {
             using MemberType = decltype(typename reflect::member_type<I, T>());
@@ -140,8 +139,7 @@ namespace detail
                 *iter++ = c;
         };
 
-        append(reflect::type_name<T>());
-        append(": {{\n");
+        append("{{\n");
 
         reflect::for_each<T>([&](const auto I) {
             using MemberType = decltype(typename reflect::member_type<I, T>());
@@ -320,7 +318,7 @@ int main()
 
     std::println("{}", (std::string_view)detail::class_pretty_format<TestStruct3>());
     std::println("{}", TestStruct3{});
-    std::println("{:p}", TestStruct3{});
+    std::println("myStruct: {:p}", TestStruct3{});
 
     // std::println("{}", MyEnum::B);
     // std::println("{:v}", MyEnum::C);
