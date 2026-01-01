@@ -8,64 +8,6 @@
 
 namespace detail
 {
-
-    template<size_t N>
-    struct FixedString
-    {
-        char buff[N]{};
-        constexpr operator std::string_view() const { return { buff, N - 1 }; }
-    };
-
-    template<typename T>
-    consteval auto class_format_size() -> size_t
-    {
-        auto size{ 0uz };
-        size += 2;                              // "[ "
-        size += reflect::type_name<T>().size(); // "TestStruct"
-        size += 5;                              // ": {{ "
-
-        reflect::for_each<T>([&size](const auto I) {
-            size += reflect::member_name<I, T>().size(); // "i"
-            size += 4;                                   // ": {}"
-            if constexpr (I < reflect::size<T>() - 1) {
-                size += 2; // ", "
-            }
-        });
-
-        size += 5; // " }} ]"
-        size += 1; // "\0"
-        return size;
-    }
-
-    template<typename T>
-    consteval auto class_format()
-    {
-        constexpr auto size{ class_format_size<T>() };
-        FixedString<size> out;
-        auto* iter = out.buff;
-
-        auto append = [&](std::string_view s) {
-            for (char c : s)
-                *iter++ = c;
-        };
-
-        append("[ ");
-        append(reflect::type_name<T>());
-        append(": {{ ");
-
-        reflect::for_each<T>([&](const auto I) {
-            append(reflect::member_name<I, T>());
-            append(": {}");
-            if constexpr (I < reflect::size<T>() - 1) {
-                append(", ");
-            }
-        });
-
-        append(" }} ]");
-        append("\0");
-        return out;
-    }
-
     // clang-format off
     template<typename T>
     consteval auto namespace_name() noexcept -> std::string_view
@@ -98,6 +40,138 @@ namespace detail
 
     template<typename T>
     concept ScopedEnum = std::is_scoped_enum_v<T>;
+
+    template<size_t N>
+    struct FixedString
+    {
+        char buff[N]{};
+        constexpr operator std::string_view() const { return { buff, N - 1 }; }
+    };
+
+    static constexpr std::string_view INDENT = "  ";
+
+    template<typename T>
+    consteval auto class_format_size() -> size_t
+    {
+        auto size{ 0uz };
+        size += 2;                              // "[ "
+        size += reflect::type_name<T>().size(); // "<class>"
+        size += 5;                              // ": {{ "
+
+        reflect::for_each<T>([&size](const auto I) {
+            size += reflect::member_name<I, T>().size(); // "<member>"
+            size += 4;                                   // ": {}"
+            if constexpr (I < reflect::size<T>() - 1) {
+                size += 2; // ", "
+            }
+        });
+
+        size += 6; // " }} ]\0"
+        return size;
+    }
+
+    template<typename T>
+    consteval auto class_format()
+    {
+        constexpr auto size{ class_format_size<T>() };
+        FixedString<size> out;
+        auto* iter = out.buff;
+
+        auto append = [&](std::string_view s) {
+            for (char c : s)
+                *iter++ = c;
+        };
+
+        append("[ ");
+        append(reflect::type_name<T>());
+        append(": {{ ");
+
+        reflect::for_each<T>([&](const auto I) {
+            append(reflect::member_name<I, T>());
+            append(": {}");
+            if constexpr (I < reflect::size<T>() - 1) {
+                append(", ");
+            }
+        });
+
+        append(" }} ]\0");
+        return out;
+    }
+
+    template<typename T, size_t Level = 0>
+    consteval auto class_pretty_format_size() -> size_t
+    {
+        auto size{ 0uz };
+        size += reflect::type_name<T>().size(); // "<class>"
+        size += 5;                              // ": {{\n"
+
+        reflect::for_each<T>([&size](const auto I) {
+            using MemberType = decltype(typename reflect::member_type<I, T>());
+
+            size += (Level + 1) * INDENT.size();
+            size += reflect::member_name<I, T>().size(); // "<member>"
+            if constexpr (Reflectable<MemberType>) {
+                size += 2; // ": "
+                size += class_pretty_format_size<MemberType, Level + 1>();
+            }
+            else {
+                size += 4; // ": {}"
+            }
+            if constexpr (I < reflect::size<T>() - 1) {
+                size += 1; // ","
+            }
+            size += 1; // "\n"
+        });
+
+        size += Level * INDENT.size();
+        size += 3; // "}}\0"
+        return size;
+    }
+
+    template<typename T, size_t Level = 0>
+    consteval auto class_pretty_format()
+    {
+        constexpr auto size{ class_pretty_format_size<T, Level>() };
+        FixedString<size> out;
+        auto* iter = out.buff;
+
+        auto append = [&](std::string_view s) {
+            for (char c : s)
+                *iter++ = c;
+        };
+
+        append(reflect::type_name<T>());
+        append(": {{\n");
+
+        reflect::for_each<T>([&](const auto I) {
+            using MemberType = decltype(typename reflect::member_type<I, T>());
+
+            for (auto i{ 0uz }; i < (Level + 1); ++i) {
+                append(INDENT);
+            }
+            append(reflect::member_name<I, T>());
+
+            if constexpr (Reflectable<MemberType>) {
+                append(": ");
+                auto nested{ class_pretty_format<MemberType, Level + 1>() };
+                append(std::string_view(nested));
+            }
+            else {
+                append(": {}");
+            }
+
+            if constexpr (I < reflect::size<T>() - 1) {
+                append(",");
+            }
+            append("\n");
+        });
+
+        for (auto i{ 0uz }; i < Level; ++i) {
+            append(INDENT);
+        }
+        append("}}\0");
+        return out;
+    }
 }
 
 template<detail::Reflectable T>
@@ -126,12 +200,13 @@ struct std::formatter<T>
 
     auto format(const T& t, auto& ctx) const -> std::remove_reference_t<decltype(ctx)>::iterator
     {
-        auto make_arg = []<typename Field>(Field&& field) -> decltype(auto) {
-            using Decayed = std::remove_cvref_t<Field>;
-            if constexpr (std::is_same_v<Decayed, const char*> || std::is_same_v<Decayed, char*>) {
+        auto make_arg = []<typename Field>(Field&& field) {
+            using Type = std::remove_cvref_t<Field>;
+
+            if constexpr (std::is_same_v<Type, const char*> || std::is_same_v<Type, char*>) {
                 return std::forward<Field>(field);
             }
-            else if constexpr (std::is_pointer_v<Decayed>) {
+            else if constexpr (std::is_pointer_v<Type>) {
                 return static_cast<const void*>(field);
             }
             else {
@@ -139,13 +214,39 @@ struct std::formatter<T>
             }
         };
 
-        return [&]<size_t... Is>(std::index_sequence<Is...>) {
-            auto args{ std::forward_as_tuple(make_arg(reflect::get<Is>(t))...) };
-            return std::apply([&]<typename... Args>(Args&&... args) {
-                return std::vformat_to(
-                  ctx.out(), detail::class_format<T>(), std::make_format_args(std::forward<Args>(args)...));
+        auto do_fmt = [&](std::string_view fmt, auto&& args) {
+            return std::apply([&](const auto&... args) {
+                return std::vformat_to(ctx.out(), fmt, std::make_format_args(args...));
             }, args);
-        }(std::make_index_sequence<reflect::size<T>()>{});
+        };
+
+        if (pretty) {
+            auto make_flat_tuple = [&]<typename Field>(this auto&& self, Field&& field) {
+                using Type = std::remove_cvref_t<Field>;
+
+                if constexpr (detail::Reflectable<Type>) {
+                    return [&]<size_t... Is>(std::index_sequence<Is...>) {
+                        return std::tuple_cat(self(reflect::get<Is>(field))...);
+                    }(std::make_index_sequence<reflect::size<Type>()>{});
+                }
+                else {
+                    return std::make_tuple(make_arg(std::forward<Field>(field)));
+                }
+            };
+
+            auto args = [&]<size_t... Is>(std::index_sequence<Is...>) {
+                return std::tuple_cat(make_flat_tuple(reflect::get<Is>(t))...);
+            }(std::make_index_sequence<reflect::size<T>()>{});
+
+            return do_fmt(detail::class_pretty_format<T>(), args);
+        }
+        else {
+            auto args = [&]<size_t... Is>(std::index_sequence<Is...>) {
+                return std::forward_as_tuple(make_arg(reflect::get<Is>(t))...);
+            }(std::make_index_sequence<reflect::size<T>()>{});
+
+            return do_fmt(detail::class_format<T>(), args);
+        }
     }
 };
 
@@ -198,6 +299,12 @@ int main()
         short s;
     };
 
+    struct TestStruct3
+    {
+        TestStruct ts;
+        TestStruct2 ts2;
+    };
+
     enum class MyEnum
     {
         A,
@@ -205,17 +312,24 @@ int main()
         C
     };
 
-    TestStruct ts{};
-    std::println("{}", ts);
-    std::println("{}", TestStruct2{ &ts });
-    std::println("{}", MyEnum::B);
-    std::println("{:v}", MyEnum::C);
+    // TestStruct ts{};
+    // std::println("{}", ts);
+    // std::println("{}", TestStruct2{ &ts });
+    // std::println("{:p}", ts);
+    // std::println("{:p}", TestStruct2{ &ts });
 
-    std::array<int, 3> a = { 1, 2, 3 };
-    std::println("{}", a);
+    std::println("{}", (std::string_view)detail::class_pretty_format<TestStruct3>());
+    std::println("{}", TestStruct3{});
+    std::println("{:p}", TestStruct3{});
 
-    std::pair p = { 3, 4uz };
-    std::println("{}", p);
+    // std::println("{}", MyEnum::B);
+    // std::println("{:v}", MyEnum::C);
+
+    // std::array<int, 3> a = { 1, 2, 3 };
+    // std::println("{}", a);
+
+    // std::pair p = { 3, 4uz };
+    // std::println("{}", p);
     // std::println(
     //   "{}",
     //   reflect::detail::function_name<std::remove_pointer_t<std::remove_cvref_t<std::pair<int, int>>>>());
