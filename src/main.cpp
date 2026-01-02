@@ -11,9 +11,9 @@ using namespace cycfi::elements;
 
 int main(int argc, char* argv[])
 {
-    app _app("TsimCAT");
+    // app _app("TsimCAT");
 
-    tsim::ui::MainWindow main_win(_app);
+    // tsim::ui::MainWindow main_win(_app);
 
     struct Test
     {
@@ -30,6 +30,6 @@ int main(int argc, char* argv[])
     };
     std::println("{:p}", Test2{});
 
-    _app.run();
+    // _app.run();
     return 0;
 }

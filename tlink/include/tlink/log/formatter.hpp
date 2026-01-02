@@ -2,9 +2,9 @@
 
 #include <reflect>
 
+#include <array>
 #include <concepts>
 #include <format>
-#include <memory>
 
 namespace tlink::log::format
 {
@@ -60,13 +60,6 @@ namespace tlink::log::format
         requires !std::is_aggregate_v<std::remove_cvref_t<T>>;
     };
 
-    template<size_t N>
-    struct FixedString
-    {
-        char buff[N]{};
-        constexpr operator std::string_view() const { return { buff, N - 1 }; }
-    };
-
     template<typename T>
     consteval auto class_format_size() -> size_t
     {
@@ -84,7 +77,7 @@ namespace tlink::log::format
             }
         });
 
-        size += 6; // " }} ]\0"
+        size += 5; // " }} ]"
         return size;
     }
 
@@ -92,9 +85,9 @@ namespace tlink::log::format
     consteval auto class_format()
     {
         using Type = std::remove_cvref_t<T>;
-        FixedString<class_format_size<Type>()> out;
-        auto* iter{ out.buff };
+        std::array<char, class_format_size<Type>()> fmt{};
 
+        auto* iter{ fmt.begin() };
         auto append = [&](std::string_view s) {
             for (char c : s) {
                 *iter++ = c;
@@ -113,8 +106,8 @@ namespace tlink::log::format
             }
         });
 
-        append(" }} ]\0");
-        return out;
+        append(" }} ]");
+        return reflect::fixed_string<char, fmt.size()>(fmt.data());
     }
 
     static constexpr std::string_view PRETTY_INDENT{ "  " };
@@ -145,7 +138,7 @@ namespace tlink::log::format
         });
 
         size += Level * PRETTY_INDENT.size();
-        size += 3; // "}}\0"
+        size += 2; // "}}"
         return size;
     }
 
@@ -153,9 +146,9 @@ namespace tlink::log::format
     consteval auto class_pretty_format()
     {
         using Type = std::remove_cvref_t<T>;
-        FixedString<class_pretty_format_size<Type, Level>()> out;
-        auto* iter{ out.buff };
+        std::array<char, class_pretty_format_size<Type, Level>()> fmt{};
 
+        auto* iter{ fmt.begin() };
         auto append = [&](std::string_view s) {
             for (char c : s) {
                 *iter++ = c;
@@ -189,8 +182,8 @@ namespace tlink::log::format
         for (auto i{ 0uz }; i < Level; ++i) {
             append(PRETTY_INDENT);
         }
-        append("}}\0");
-        return out;
+        append("}}");
+        return reflect::fixed_string<char, fmt.size()>(fmt.data());
     }
 }
 
