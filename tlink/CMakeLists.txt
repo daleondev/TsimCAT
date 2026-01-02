@@ -37,7 +37,8 @@ target_sources(tlink INTERFACE
     include/tlink/coroutine/Task.hpp
     include/tlink/coroutine/Channel.hpp
     include/tlink/coroutine/utils.hpp
-    include/tlink/log/formatter.hpp
+    include/tlink/log/Logger.hpp
+    include/tlink/log/format.hpp
 )
 
 target_include_directories(

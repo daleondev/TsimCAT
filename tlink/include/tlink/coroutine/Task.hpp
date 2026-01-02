@@ -50,7 +50,6 @@ namespace tlink::coro
         }
         ~Task()
         {
-            // handle destroyed when going out of scope
             if (m_handle) {
                 m_handle.destroy();
             }
@@ -175,7 +174,7 @@ namespace tlink::coro
         {
             using TaskPromiseBase<T>::TaskPromiseBase;
 
-            std::optional<T> value;
+            std::optional<T> value{};
             auto return_value(T val) -> void { value.emplace(std::move(val)); }
         };
 

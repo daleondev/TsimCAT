@@ -31,7 +31,7 @@ namespace tlink::coro
         Context(Context&&) = delete;
         Context& operator=(Context&&) = delete;
 
-        void run()
+        auto run() -> void override
         {
             while (m_running) {
                 std::unique_lock lock(m_mutex);
@@ -50,13 +50,13 @@ namespace tlink::coro
             }
         }
 
-        void stop()
+        auto stop() -> void override
         {
             m_running = false;
             m_cv.notify_all();
         }
 
-        void schedule(std::coroutine_handle<> handle)
+        auto schedule(std::coroutine_handle<> handle) -> void override
         {
             utils::push(m_queue, handle, m_mutex);
             m_cv.notify_one();
@@ -66,9 +66,9 @@ namespace tlink::coro
 
       private:
         std::atomic<bool> m_running{ true };
-        std::mutex m_mutex;
-        std::condition_variable m_cv;
-        std::deque<std::coroutine_handle<>> m_queue;
-        std::shared_ptr<int> m_lifeToken{ std::make_shared<int>(0) };
+        std::mutex m_mutex{};
+        std::condition_variable m_cv{};
+        std::deque<std::coroutine_handle<>> m_queue{};
+        std::shared_ptr<bool> m_lifeToken{ std::make_shared<bool>(true) };
     };
 }

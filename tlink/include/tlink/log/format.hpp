@@ -60,6 +60,7 @@ namespace tlink::log::format
         typename std::remove_cvref_t<T>::element_type;
         { p.get() } -> std::convertible_to<const void*>;
         requires !std::is_aggregate_v<std::remove_cvref_t<T>>;
+        requires std::formattable<typename std::remove_cvref_t<T>::element_type, char>;
     };
 
     template<typename T>

@@ -25,11 +25,6 @@ namespace tlink::coro
       public:
         using Bytes = std::vector<std::byte>;
 
-        RawAsyncChannel()
-          : m_state(std::make_shared<State>())
-        {
-        }
-
         auto setMode(ChannelMode mode) -> void
         {
             std::scoped_lock lock(m_state->mutex);
@@ -44,24 +39,24 @@ namespace tlink::coro
       protected:
         struct Waiter
         {
-            std::coroutine_handle<> handle;
-            IExecutor* executor;
+            std::coroutine_handle<> handle{};
+            IExecutor* executor{ nullptr };
             // For broadcast, we need a place to put the result
-            std::optional<Bytes>* resultDest = nullptr;
-            std::weak_ptr<void> lifeToken;
-            detail::RawAsyncAwaiter* awaiterPtr = nullptr;
+            std::optional<Bytes>* resultDest{ nullptr };
+            std::weak_ptr<void> lifeToken{};
+            detail::RawAsyncAwaiter* awaiterPtr{ nullptr };
         };
 
         struct State
         {
-            std::mutex mutex;
-            std::deque<Bytes> queue; // Used for LoadBalancer or buffering when no waiters
-            bool closed = false;
-            std::list<Waiter> waiters;
-            ChannelMode mode = ChannelMode::Broadcast;
+            std::mutex mutex{};
+            std::deque<Bytes> queue{};
+            bool closed{ false };
+            std::list<Waiter> waiters{};
+            ChannelMode mode{ ChannelMode::Broadcast };
         };
 
-        std::shared_ptr<State> m_state;
+        std::shared_ptr<State> m_state{ std::make_shared<State>() };
 
         friend class detail::RawAsyncAwaiter;
         template<typename T>
@@ -90,24 +85,18 @@ namespace tlink::coro
 
         auto next() -> Task<std::optional<T>>
         {
-            RawAsyncChannel handle;
-            handle.m_state = m_state;
+            RawAsyncChannel raw{};
+            raw.m_state = m_state;
 
-            std::optional<RawAsyncChannel::Bytes> result;
-            co_await handle.next(result);
+            std::optional<RawAsyncChannel::Bytes> result{};
+            co_await raw.next(result);
 
-            if (!result) {
-                co_return std::nullopt;
-            }
-
-            if (result->size() != sizeof(T)) {
+            if (!result || result->size() != sizeof(T)) {
                 co_return std::nullopt;
             }
 
             T val{};
-            auto destBytes{ std::as_writable_bytes(std::span{ &val, 1 }) };
-            std::ranges::move(result.value(), destBytes.begin());
-
+            utils::memmv(val, result.value());
             co_return val;
         }
 
@@ -119,9 +108,9 @@ namespace tlink::coro
     {
         struct RawAsyncAwaiter
         {
-            std::shared_ptr<RawAsyncChannel::State> state;
+            std::shared_ptr<RawAsyncChannel::State> state{};
             std::optional<RawAsyncChannel::Bytes>& dest;
-            std::optional<std::list<RawAsyncChannel::Waiter>::iterator> m_iterator;
+            std::optional<std::list<RawAsyncChannel::Waiter>::iterator> m_iterator{};
 
             ~RawAsyncAwaiter()
             {
@@ -143,7 +132,7 @@ namespace tlink::coro
                 }
 
                 if (!state->queue.empty()) {
-                    dest = utils::pop(state->queue);
+                    dest.emplace(utils::pop(state->queue));
                     return true;
                 }
                 return false;
@@ -158,7 +147,7 @@ namespace tlink::coro
                     return false;
                 }
 
-                IExecutor* executor = nullptr;
+                IExecutor* executor{ nullptr };
                 std::weak_ptr<void> lifeToken;
 
                 if constexpr (requires { handle.promise().executor; }) {
@@ -179,11 +168,23 @@ namespace tlink::coro
                 // If we resumed normally, 'unlink()' was already called by 'push'.
             }
         };
+
+        static auto resumeWaiter(auto& waiter) -> void
+        {
+            if (waiter.executor) {
+                if (auto token = waiter.lifeToken.lock()) {
+                    waiter.executor->schedule(waiter.handle);
+                }
+            }
+            else {
+                waiter.handle.resume();
+            }
+        }
     }
 
     inline auto RawAsyncChannel::next(std::optional<Bytes>& dest) -> detail::RawAsyncAwaiter
     {
-        return { m_state, dest };
+        return detail::RawAsyncAwaiter{ m_state, dest };
     }
 
     inline auto RawAsyncChannel::push(Bytes raw) -> void
@@ -194,6 +195,7 @@ namespace tlink::coro
         }
 
         if (m_state->waiters.empty()) {
+            // store until new waiter spawns
             m_state->queue.push_back(std::move(raw));
             return;
         }
@@ -202,7 +204,7 @@ namespace tlink::coro
             auto waiter{ std::move(m_state->waiters.front()) };
             m_state->waiters.pop_front();
 
-            // Detach from awaiter so it doesn't try to erase itself on destruction
+            // detach from awaiter so it doesnt try to erase itself on destruction
             if (waiter.awaiterPtr) {
                 waiter.awaiterPtr->unlink();
             }
@@ -212,21 +214,14 @@ namespace tlink::coro
             }
 
             lock.unlock();
-            if (waiter.executor) {
-                if (auto token = waiter.lifeToken.lock()) {
-                    waiter.executor->schedule(waiter.handle);
-                }
-            }
-            else {
-                waiter.handle.resume();
-            }
+            detail::resumeWaiter(waiter);
         }
         else {
-            auto toResume = std::move(m_state->waiters);
+            auto toResume{ std::move(m_state->waiters) };
             m_state->waiters.clear();
 
             for (auto& waiter : toResume) {
-                // Detach from awaiter so it doesn't try to erase itself on destruction
+                // detach from awaiter so it doesnt try to erase itself on destruction
                 if (waiter.awaiterPtr) {
                     waiter.awaiterPtr->unlink();
                 }
@@ -238,14 +233,7 @@ namespace tlink::coro
 
             lock.unlock();
             for (auto& waiter : toResume) {
-                if (waiter.executor) {
-                    if (auto token = waiter.lifeToken.lock()) {
-                        waiter.executor->schedule(waiter.handle);
-                    }
-                }
-                else {
-                    waiter.handle.resume();
-                }
+                detail::resumeWaiter(waiter);
             }
         }
     }
@@ -266,15 +254,7 @@ namespace tlink::coro
             if (waiter.awaiterPtr) {
                 waiter.awaiterPtr->unlink();
             }
-
-            if (waiter.executor) {
-                if (auto token = waiter.lifeToken.lock()) {
-                    waiter.executor->schedule(waiter.handle);
-                }
-            }
-            else {
-                waiter.handle.resume();
-            }
+            detail::resumeWaiter(waiter);
         }
     }
 }

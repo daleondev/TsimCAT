@@ -2,6 +2,8 @@
 
 #include <concepts>
 #include <mutex>
+#include <ranges>
+#include <span>
 
 namespace tlink::coro::utils
 {
@@ -37,6 +39,9 @@ namespace tlink::coro::utils
             auto lock() -> void {}
             auto unlock() -> void {}
         };
+
+        template<typename T>
+        concept Serializable = std::is_trivially_copyable_v<T> && !std::is_pointer_v<T>;
     }
 
     template<detail::Lockable L = detail::NotLocked>
@@ -65,5 +70,67 @@ namespace tlink::coro::utils
         else {
             queue.push_back(std::move(value));
         }
+    }
+
+    auto memcpy(detail::Serializable auto& dest, const std::ranges::range auto& src) -> bool
+    {
+        auto destBytes{ std::as_writable_bytes(std::span{ &dest, 1 }) };
+        if (src.size() != destBytes.size()) {
+            return false;
+        }
+        std::ranges::copy(src, destBytes.begin());
+        return true;
+    }
+
+    auto memcpy(std::ranges::range auto& dest, const detail::Serializable auto& src) -> bool
+    {
+        auto srcBytes{ std::as_bytes(std::span{ &src, 1 }) };
+        if (srcBytes.size() != dest.size()) {
+            return false;
+        }
+        std::ranges::copy(srcBytes, dest.begin());
+        return true;
+    }
+
+    auto memcpy(detail::Serializable auto& dest, const detail::Serializable auto& src) -> bool
+    {
+        auto srcBytes{ std::as_bytes(std::span{ &src, 1 }) };
+        auto destBytes{ std::as_writable_bytes(std::span{ &dest, 1 }) };
+        if (srcBytes.size() != destBytes.size()) {
+            return false;
+        }
+        std::ranges::copy(srcBytes, destBytes.begin());
+        return true;
+    }
+
+    auto memmv(detail::Serializable auto& dest, const std::ranges::range auto& src) -> bool
+    {
+        auto destBytes{ std::as_writable_bytes(std::span{ &dest, 1 }) };
+        if (src.size() != destBytes.size()) {
+            return false;
+        }
+        std::ranges::move(src, destBytes.begin());
+        return true;
+    }
+
+    auto memmv(std::ranges::range auto& dest, const detail::Serializable auto& src) -> bool
+    {
+        auto srcBytes{ std::as_bytes(std::span{ &src, 1 }) };
+        if (srcBytes.size() != dest.size()) {
+            return false;
+        }
+        std::ranges::move(srcBytes, dest.begin());
+        return true;
+    }
+
+    auto memmv(detail::Serializable auto& dest, const detail::Serializable auto& src) -> bool
+    {
+        auto srcBytes{ std::as_bytes(std::span{ &src, 1 }) };
+        auto destBytes{ std::as_writable_bytes(std::span{ &dest, 1 }) };
+        if (srcBytes.size() != destBytes.size()) {
+            return false;
+        }
+        std::ranges::move(srcBytes, destBytes.begin());
+        return true;
     }
 }
