@@ -23,15 +23,12 @@ namespace tlink::log::detail
     template<typename T>
     concept ScopedEnum = std::is_scoped_enum_v<T>;
 
-    // clang-format off
-    template <typename T> struct is_smart_ptr : std::false_type {};
-    template <typename T> struct is_smart_ptr<std::unique_ptr<T>> : std::true_type {};
-    template <typename T> struct is_smart_ptr<std::shared_ptr<T>> : std::true_type {};
-    template <typename T> struct is_smart_ptr<std::weak_ptr<T>> : std::true_type {};
-    // clang-format on
-
     template<typename T>
-    concept SmartPtr = is_smart_ptr<std::remove_cvref_t<T>>::value;
+    concept SmartPtr = requires(T p) {
+        typename T::element_type;
+        { p.get() } -> std::convertible_to<const void*>;
+        requires !std::is_aggregate_v<T>;
+    };
 
     template<size_t N>
     struct FixedString
@@ -72,15 +69,18 @@ struct std::formatter<T>
         auto make_arg = []<typename Field>(Field&& field) -> decltype(auto) {
             using Type = std::remove_cvref_t<Field>;
 
-            if constexpr (!std::formattable<Type, char>) {
-                static constexpr std::string_view missing = "-";
-                return missing;
-            }
-            else if constexpr (std::is_same_v<Type, const char*> || std::is_same_v<Type, char*>) {
+            if constexpr (std::is_same_v<Type, const char*> || std::is_same_v<Type, char*>) {
                 return std::forward<Field>(field);
+            }
+            else if constexpr (tlink::log::detail::SmartPtr<Type>) {
+                return static_cast<const void*>(field.get());
             }
             else if constexpr (std::is_pointer_v<Type>) {
                 return static_cast<const void*>(field);
+            }
+            else if constexpr (!std::formattable<Type, char>) {
+                static constexpr std::string_view missing = "-";
+                return missing;
             }
             else {
                 return std::forward<Field>(field);
@@ -157,22 +157,12 @@ struct std::formatter<T>
 };
 
 template<tlink::log::detail::SmartPtr T>
-struct std::formatter<T>
+struct std::formatter<T> : std::formatter<const void*>
 {
-    template<typename Ctx>
-    constexpr auto parse(Ctx& ctx) -> Ctx::iterator
-    {
-        auto it{ ctx.begin() };
-        if (it != ctx.end() && *it != '}') {
-            throw std::format_error("Invalid format args");
-        }
-        return it;
-    }
-
     template<typename Ctx>
     auto format(const T& t, Ctx& ctx) const -> Ctx::iterator
     {
-        return std::format_to(ctx.out(), "{}", static_cast<const void*>(t.get()));
+        return std::formatter<const void*>::format(t.get(), ctx);
     }
 };
 
