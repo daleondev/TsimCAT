@@ -36,7 +36,9 @@ namespace tlink::log::format
     }
 
     template<typename T>
-    concept Reflectable = std::is_class_v<std::remove_cvref_t<T>> && !is_std_type<std::remove_cvref_t<T>>();
+    concept Reflectable =
+      std::is_class_v<std::remove_cvref_t<T>> && std::is_aggregate_v<std::remove_cvref_t<T>> &&
+      !is_std_type<std::remove_cvref_t<T>>();
 
     template<typename T>
     concept ScopedEnum = std::is_scoped_enum_v<std::remove_cvref_t<T>>;
@@ -190,6 +192,11 @@ namespace tlink::log::format
 template<tlink::log::format::Reflectable T>
 struct std::formatter<T>
 {
+    static_assert(
+      requires { T{}; },
+      "Type T contains reference members or other non-value-initializable members, which are not supported "
+      "for automatic formatting. Consider removing references or providing default initializers.");
+
     bool pretty{ false };
 
     template<typename Ctx>

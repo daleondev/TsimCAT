@@ -27,8 +27,11 @@ int main(int argc, char* argv[])
         std::mutex m2;
         std::unique_ptr<int> ptr = std::make_unique<int>();
         const char* str = "Hello";
+        std::string s = "World";
+        std::string_view ex = "!";
     };
     std::println("{:p}", Test2{});
+    std::println("{}", Test2{});
 
     // _app.run();
     return 0;
