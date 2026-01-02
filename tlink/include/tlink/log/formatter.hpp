@@ -36,26 +36,28 @@ namespace tlink::log::format
     }
 
     template<typename T>
-    concept Reflectable = std::is_class_v<T> && !is_std_type<T>();
+    concept Reflectable = std::is_class_v<std::remove_cvref_t<T>> && !is_std_type<std::remove_cvref_t<T>>();
 
     template<typename T>
-    concept ScopedEnum = std::is_scoped_enum_v<T>;
+    concept ScopedEnum = std::is_scoped_enum_v<std::remove_cvref_t<T>>;
 
     template<typename T>
-    concept VoidPtr = std::is_pointer_v<T> && std::is_void_v<std::remove_pointer_t<T>>;
+    concept VoidPtr = std::is_pointer_v<std::remove_cvref_t<T>> &&
+                      std::is_void_v<std::remove_pointer_t<std::remove_cvref_t<T>>>;
 
     template<typename T>
     concept CharPtr =
-      std::is_pointer_v<T> && std::is_same_v<std::remove_cvref_t<std::remove_pointer_t<T>>, char>;
+      std::is_pointer_v<std::remove_cvref_t<T>> &&
+      std::is_same_v<std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<T>>>, char>;
 
     template<typename T>
-    concept ValuePtr = std::is_pointer_v<T> && !CharPtr<T> && !VoidPtr<T>;
+    concept ValuePtr = std::is_pointer_v<std::remove_cvref_t<T>> && !CharPtr<T> && !VoidPtr<T>;
 
     template<typename T>
-    concept SmartPtr = requires(T p) {
-        typename T::element_type;
+    concept SmartPtr = requires(std::remove_cvref_t<T> p) {
+        typename std::remove_cvref_t<T>::element_type;
         { p.get() } -> std::convertible_to<const void*>;
-        requires !std::is_aggregate_v<T>;
+        requires !std::is_aggregate_v<std::remove_cvref_t<T>>;
     };
 
     template<size_t N>
@@ -68,15 +70,16 @@ namespace tlink::log::format
     template<typename T>
     consteval auto class_format_size() -> size_t
     {
+        using Type = std::remove_cvref_t<T>;
         auto size{ 0uz };
-        size += 2;                              // "[ "
-        size += reflect::type_name<T>().size(); // "<class>"
-        size += 5;                              // ": {{ "
+        size += 2;                                 // "[ "
+        size += reflect::type_name<Type>().size(); // "<class>"
+        size += 5;                                 // ": {{ "
 
-        reflect::for_each<T>([&size](const auto I) {
-            size += reflect::member_name<I, T>().size(); // "<member>"
-            size += 4;                                   // ": {}"
-            if constexpr (I < reflect::size<T>() - 1) {
+        reflect::for_each<Type>([&size](const auto I) {
+            size += reflect::member_name<I, Type>().size(); // "<member>"
+            size += 4;                                      // ": {}"
+            if constexpr (I < reflect::size<Type>() - 1) {
                 size += 2; // ", "
             }
         });
@@ -88,7 +91,8 @@ namespace tlink::log::format
     template<typename T>
     consteval auto class_format()
     {
-        FixedString<class_format_size<T>()> out;
+        using Type = std::remove_cvref_t<T>;
+        FixedString<class_format_size<Type>()> out;
         auto* iter{ out.buff };
 
         auto append = [&](std::string_view s) {
@@ -98,13 +102,13 @@ namespace tlink::log::format
         };
 
         append("[ ");
-        append(reflect::type_name<T>());
+        append(reflect::type_name<Type>());
         append(": {{ ");
 
-        reflect::for_each<T>([&](const auto I) {
-            append(reflect::member_name<I, T>());
+        reflect::for_each<Type>([&](const auto I) {
+            append(reflect::member_name<I, Type>());
             append(": {}");
-            if constexpr (I < reflect::size<T>() - 1) {
+            if constexpr (I < reflect::size<Type>() - 1) {
                 append(", ");
             }
         });
@@ -118,14 +122,15 @@ namespace tlink::log::format
     template<typename T, size_t Level = 0>
     consteval auto class_pretty_format_size() -> size_t
     {
+        using Type = std::remove_cvref_t<T>;
         auto size{ 0uz };
         size += 3; // "{{\n"
 
-        reflect::for_each<T>([&size](const auto I) {
-            using MemberType = decltype(typename reflect::member_type<I, T>());
+        reflect::for_each<Type>([&size](const auto I) {
+            using MemberType = decltype(typename reflect::member_type<I, Type>());
 
             size += (Level + 1) * PRETTY_INDENT.size();
-            size += reflect::member_name<I, T>().size(); // "<member>"
+            size += reflect::member_name<I, Type>().size(); // "<member>"
             if constexpr (Reflectable<MemberType>) {
                 size += 2; // ": "
                 size += class_pretty_format_size<MemberType, Level + 1>();
@@ -133,7 +138,7 @@ namespace tlink::log::format
             else {
                 size += 4; // ": {}"
             }
-            if constexpr (I < reflect::size<T>() - 1) {
+            if constexpr (I < reflect::size<Type>() - 1) {
                 size += 1; // ","
             }
             size += 1; // "\n"
@@ -147,7 +152,8 @@ namespace tlink::log::format
     template<typename T, size_t Level = 0>
     consteval auto class_pretty_format()
     {
-        FixedString<class_pretty_format_size<T, Level>()> out;
+        using Type = std::remove_cvref_t<T>;
+        FixedString<class_pretty_format_size<Type, Level>()> out;
         auto* iter{ out.buff };
 
         auto append = [&](std::string_view s) {
@@ -158,13 +164,13 @@ namespace tlink::log::format
 
         append("{{\n");
 
-        reflect::for_each<T>([&](const auto I) {
-            using MemberType = decltype(typename reflect::member_type<I, T>());
+        reflect::for_each<Type>([&](const auto I) {
+            using MemberType = decltype(typename reflect::member_type<I, Type>());
 
             for (auto i{ 0uz }; i < (Level + 1); ++i) {
                 append(PRETTY_INDENT);
             }
-            append(reflect::member_name<I, T>());
+            append(reflect::member_name<I, Type>());
 
             if constexpr (Reflectable<MemberType>) {
                 append(": ");
@@ -174,7 +180,7 @@ namespace tlink::log::format
                 append(": {}");
             }
 
-            if constexpr (I < reflect::size<T>() - 1) {
+            if constexpr (I < reflect::size<Type>() - 1) {
                 append(",");
             }
             append("\n");
@@ -235,9 +241,8 @@ struct std::formatter<T>
             auto make_flat_tuple_args = [check_arg = std::move(check_arg),
                                          make_tuple_args = std::move(make_tuple_args)]<typename Field>(
                                           this auto&& make_flat_tuple_args, Field&& field) {
-                using Type = std::remove_cvref_t<Field>;
-
-                if constexpr (tlink::log::format::Reflectable<Type>) {
+                if constexpr (tlink::log::format::Reflectable<Field>) {
+                    using Type = std::remove_cvref_t<Field>;
                     return [&]<size_t... Is>(std::index_sequence<Is...>) {
                         return std::tuple_cat(make_flat_tuple_args(reflect::get<Is>(field))...);
                     }(std::make_index_sequence<reflect::size<Type>()>{});
