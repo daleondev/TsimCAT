@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
         std::unique_ptr<int> ptr = std::make_unique<int>();
         const char* str = "Hello";
     };
-    std::println("{}", Test2{});
+    std::println("{:p}", Test2{});
 
     _app.run();
     return 0;
