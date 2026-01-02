@@ -15,17 +15,20 @@ int main(int argc, char* argv[])
 
     tsim::ui::MainWindow main_win(_app);
 
-    struct X
+    struct Test
     {
         int i;
         float f;
         std::mutex m;
-        // int* ptr;
-        // std::unique_ptr<X> ptr;
-    } x;
-
-    // x.ptr = std::make_unique<X>();
-    std::println("{}", x);
+    };
+    struct Test2
+    {
+        Test t;
+        std::mutex m2;
+        std::unique_ptr<int> ptr = std::make_unique<int>();
+        const char* str = "Hello";
+    };
+    std::println("{}", Test2{});
 
     _app.run();
     return 0;

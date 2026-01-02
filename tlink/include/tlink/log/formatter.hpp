@@ -87,8 +87,15 @@ struct std::formatter<T>
             }
         };
 
+        auto make_tuple_args = []<typename... Args>(Args&&... args) {
+            using Tuple = std::tuple<std::conditional_t<std::is_lvalue_reference_v<Args>, Args,
+                                                        std::remove_reference_t<Args>>...>;
+            return Tuple(std::forward<Args>(args)...);
+        };
+
         if (pretty) {
-            auto make_flat_tuple = [make_arg_fn = std::move(make_arg)]<typename Field>(
+            auto make_flat_tuple = [make_arg_fn = std::move(make_arg),
+                                    make_tuple_args_fn = std::move(make_tuple_args)]<typename Field>(
                                      this auto&& make_flat_tuple_recursive, Field&& field) {
                 using Type = std::remove_cvref_t<Field>;
 
@@ -98,7 +105,7 @@ struct std::formatter<T>
                     }(std::make_index_sequence<reflect::size<Type>()>{});
                 }
                 else {
-                    return std::make_tuple(make_arg_fn(std::forward<Field>(field)));
+                    return make_tuple_args_fn(make_arg_fn(std::forward<Field>(field)));
                 }
             };
 
@@ -112,11 +119,15 @@ struct std::formatter<T>
             }, args);
         }
         else {
-            return [&]<size_t... Is>(std::index_sequence<Is...>) {
+            auto args = [&]<size_t... Is>(std::index_sequence<Is...>) {
+                return make_tuple_args(make_arg(reflect::get<Is>(t))...);
+            }(std::make_index_sequence<reflect::size<T>()>{});
+
+            return std::apply([&ctx](const auto&... args) {
                 return std::vformat_to(ctx.out(),
                                        tlink::log::detail::class_format<T>(),
-                                       std::make_format_args(make_arg(reflect::get<Is>(t))...));
-            }(std::make_index_sequence<reflect::size<T>()>{});
+                                       std::make_format_args(args...));
+            }, args);
         }
     }
 };
