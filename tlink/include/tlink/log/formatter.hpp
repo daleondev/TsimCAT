@@ -89,7 +89,7 @@ namespace tlink::log::format
         using Type = std::remove_cvref_t<T>;
         std::array<char, class_format_size<Type>()> fmt{};
 
-        auto* iter{ fmt.begin() };
+        auto iter{ fmt.begin() };
         auto append = [&](std::string_view s) {
             for (char c : s) {
                 *iter++ = c;
@@ -150,7 +150,7 @@ namespace tlink::log::format
         using Type = std::remove_cvref_t<T>;
         std::array<char, class_pretty_format_size<Type, Level>()> fmt{};
 
-        auto* iter{ fmt.begin() };
+        auto iter{ fmt.begin() };
         auto append = [&](std::string_view s) {
             for (char c : s) {
                 *iter++ = c;

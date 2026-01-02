@@ -23,7 +23,9 @@ int main(int argc, char* argv[])
     };
     struct Test2
     {
-        Test t;
+        Test* t;
+        std::unique_ptr<Test> upt = std::make_unique<Test>();
+        Test* pt = new Test();
         std::mutex m2;
         std::unique_ptr<int> ptr = std::make_unique<int>();
         const char* str = "Hello";
