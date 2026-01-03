@@ -3,7 +3,6 @@
 #include "Context.hpp"
 
 #include <exception>
-#include <optional>
 #include <utility>
 
 namespace tlink::coro

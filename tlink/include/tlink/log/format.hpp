@@ -309,27 +309,39 @@ struct std::formatter<T>
     }
 };
 
-template<tlink::log::format::ValuePtr T>
-struct std::formatter<T>
+template<std::formattable<char> T>
+struct std::formatter<std::optional<T>> : std::formatter<T>
 {
+    using Base = std::formatter<T>;
+
     template<typename Ctx>
-    constexpr auto parse(Ctx& ctx) -> Ctx::iterator
+    auto format(const std::optional<T>& t, Ctx& ctx) const -> Ctx::iterator
     {
-        auto it{ ctx.begin() };
-        if (it != ctx.end() && *it != '}') {
-            throw std::format_error("Invalid format args");
+        if (!t) {
+            return std::ranges::copy("[ null ]"sv, ctx.out()).out;
         }
-        return it;
+
+        ctx.advance_to(std::ranges::copy("[ "sv, ctx.out()).out);
+        ctx.advance_to(Base::format(*t, ctx));
+        return std::ranges::copy(" ]"sv, ctx.out()).out;
     }
+};
+
+template<tlink::log::format::ValuePtr T>
+struct std::formatter<T> : std::formatter<std::remove_pointer_t<std::remove_cvref_t<T>>>
+{
+    using Base = std::formatter<std::remove_pointer_t<std::remove_cvref_t<T>>>;
 
     template<typename Ctx>
     auto format(T t, Ctx& ctx) const -> Ctx::iterator
     {
-        static constexpr auto fmt{ "{} <- |{}|" };
         if (!t) {
-            return std::format_to(ctx.out(), fmt, "null", static_cast<const void*>(t));
+            return std::format_to(ctx.out(), "[ ({}) -> {} ]", static_cast<const void*>(t), "null");
         }
-        return std::format_to(ctx.out(), fmt, *t, static_cast<const void*>(t));
+
+        ctx.advance_to(std::format_to(ctx.out(), "[ ({}) -> ", static_cast<const void*>(t)));
+        ctx.advance_to(Base::format(*t, ctx));
+        return std::ranges::copy(" ]"sv, ctx.out()).out;
     }
 };
 
@@ -340,18 +352,5 @@ struct std::formatter<T> : std::formatter<typename T::element_type*>
     auto format(const T& t, Ctx& ctx) const -> Ctx::iterator
     {
         return std::formatter<typename T::element_type*>::format(t.get(), ctx);
-    }
-};
-
-template<std::formattable<char> T>
-struct std::formatter<std::optional<T>> : std::formatter<T>
-{
-    template<typename Ctx>
-    auto format(const std::optional<T>& t, Ctx& ctx) const -> Ctx::iterator
-    {
-        if (!t) {
-            return std::format_to(ctx.out(), "nullopt");
-        }
-        return std::formatter<T>::format(t.value(), ctx);
     }
 };
