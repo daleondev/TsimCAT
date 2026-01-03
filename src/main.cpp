@@ -52,7 +52,8 @@ namespace test
         class MyClass : public IClass
         {
           public:
-            void print() { tlink::log::info("Test"); }
+            explicit MyClass(int i) { tlink::log::info("Test"); }
+            static volatile void print() { tlink::log::info("Test"); }
             template<typename T>
             bool print2() const
             {
@@ -64,7 +65,7 @@ namespace test
                 tlink::log::info("Test");
                 return i;
             }
-            static std::optional<int> print4()
+            const static std::optional<int> print4()
             {
                 tlink::log::info("Test");
                 return std::nullopt;
@@ -73,6 +74,12 @@ namespace test
                 requires std::integral<T>
             [[nodiscard]] static inline constexpr auto myFunction(int a, T b = {}) noexcept -> int
             {
+                auto ld = []<typename X, typename Y>(X x, Y y) -> int {
+                    tlink::log::info("Test");
+                    return x + y;
+                };
+                ld(2.4f, 1uz);
+
                 tlink::log::info("Test");
                 return a;
             }
@@ -85,7 +92,34 @@ namespace test
             }
         };
     }
+
+    extern "C" void test() { tlink::log::info("Test"); }
 }
+
+static void test1() { tlink::log::info("Test"); }
+static void test2() { tlink::log::info("Test"); }
+extern void externTest(int i) { tlink::log::info("Test"); }
+
+struct Data
+{
+    std::string text = "Heavy String";
+
+    // 1. L-value overload: The object is alive, so we must COPY the data.
+    // Called on: "obj.get()"
+    std::string get() const&
+    {
+        tlink::log::info("Test");
+        return text;
+    }
+
+    // 2. R-value overload: The object is temporary (dying), so we can MOVE (steal) the data.
+    // Called on: "Data().get()" or "std::move(obj).get()"
+    std::string get() &&
+    {
+        tlink::log::info("Test");
+        return std::move(text);
+    }
+};
 
 int main(int argc, char* argv[])
 {
@@ -114,17 +148,29 @@ int main(int argc, char* argv[])
     // tlink::log::info("All threads joined. Waiting a moment for logs to flush...");
     // std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-    test::detail::MyClass c{};
+    test::detail::MyClass c(100);
     c.print();
-    std::println("1");
     c.print2<const float>();
     c.print3(5);
     test::detail::MyClass::print4();
-    std::println("2");
     test::detail::MyClass::myFunction<int>(1);
     c.myFunction2<uint64_t>();
+    test::test();
+    test1();
+    test2();
+    externTest(1);
 
-    std::println("3");
+    auto l = []<typename T, typename U>(T t, U u) -> int {
+        tlink::log::info("Test");
+        return t + u;
+    };
+    l(2.4f, 1uz);
+
+    Data d;
+
+    std::string s1 = d.get(); // Calls version 1 (L-value) -> Copies
+    std::string s2 = Data().get();
+
     tlink::log::info("Test complete. Exiting.");
     return 0;
 }

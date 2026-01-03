@@ -6,6 +6,7 @@
 #include <chrono>
 #include <format>
 #include <print>
+#include <ranges>
 #include <source_location>
 #include <sstream>
 #include <string>
@@ -14,39 +15,125 @@
 
 namespace tlink::log
 {
+    struct FunctionInfo
+    {
+        std::string_view storage_specifier{};  // static
+        std::string_view function_specifier{}; // virtual
+        std::string_view constexpr_specifier{};
+        std::string_view return_type{};
+
+        std::string_view full_name{};
+        std::string_view short_name{};
+        std::string_view parameter_list{};
+
+        std::string_view const_qualifier{};
+        std::string_view ref_qualifier{}; // & or &&
+
+        std::string_view template_arguments{};
+    };
+
     namespace detail
     {
-        consteval auto parseFunctionName(std::string_view func) -> std::string_view
+        constexpr uint64_t hash(std::string_view str)
         {
-            auto is_alnum = [](char c) {
-                return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_';
+            uint64_t hash = 0xcbf29ce484222325; // FNV offset basis
+            for (char c : str) {
+                hash ^= static_cast<unsigned char>(c);
+                hash *= 0x100000001b3; // FNV prime
+            }
+            return hash;
+        }
+
+        consteval uint64_t operator""_h(const char* str, size_t len)
+        {
+            return hash(std::string_view(str, len));
+        }
+
+        consteval auto parseFunctionName(std::string_view function_name) -> FunctionInfo
+        {
+            FunctionInfo info{};
+
+            if (function_name.empty() || function_name.find('(') == std::string_view::npos) {
+                return info;
+            }
+
+            auto isLambda{ function_name.contains("lambda") };
+
+            auto parts{ std::views::split(function_name, ' ') };
+
+            auto find_part_with = [&parts](const char c) {
+                return std::ranges::find_if(
+                  parts, [&](auto&& part) { return std::ranges::find(part, c) != part.end(); });
             };
 
-            if (func.empty())
-                return "";
+            // full function name
+            auto name_part{ find_part_with('(') };
+            auto name_token{ std::string_view((*name_part).begin(), (*name_part).end()) };
+            auto name_end{ name_token.find('(') };
+            info.full_name = name_token.substr(0, name_end);
 
-            auto parenPos = func.find('(');
-            if (parenPos == std::string_view::npos)
-                return func;
+            // short function name
+            info.short_name = info.full_name;
+            if (info.full_name.contains(':')) {
+                auto name_start{ info.full_name.rfind(':') };
+                info.short_name = info.full_name.substr(name_start + 1);
+            }
 
-            auto end = parenPos;
-            while (end > 0 && func[end - 1] == ' ')
-                --end;
-
-            auto start = end;
-            while (true) {
-                while (start > 0 && is_alnum(func[start - 1]))
-                    --start;
-
-                if (start >= 2 && func[start - 1] == ':' && func[start - 2] == ':') {
-                    start -= 2;
+            // parameter list
+            if (!name_token.contains("()")) {
+                if (name_token.contains(')')) {
+                    info.parameter_list = name_token.substr(name_end + 1, name_token.size() - name_end - 2);
                 }
                 else {
-                    break;
+                    auto first_parameter{ name_token.substr(name_end + 1, name_token.size() - name_end - 1) };
+
+                    auto parameter_part{ find_part_with(')') };
+                    auto parameter_token{ std::string_view((*parameter_part).begin(),
+                                                           (*parameter_part).end()) };
+                    auto parameter_end{ parameter_token.find(')') };
+
+                    auto start_ptr{ first_parameter.data() };
+                    auto end_ptr{ parameter_token.data() + parameter_end };
+                    info.parameter_list = std::string_view(start_ptr, end_ptr - start_ptr);
                 }
             }
 
-            return func.substr(start, end - start);
+            // potential storage/function/constexpr specifier
+            auto current_part{ parts.begin() };
+            auto storage_function_constexpr_specifier_token{ std::string_view((*current_part).begin(),
+                                                                              (*current_part).end()) };
+            switch (hash(storage_function_constexpr_specifier_token)) {
+                case "static"_h:
+                    info.storage_specifier = storage_function_constexpr_specifier_token;
+                    std::ranges::advance(current_part, 1, parts.end());
+                    break;
+                case "virtual"_h:
+                    info.function_specifier = storage_function_constexpr_specifier_token;
+                    std::ranges::advance(current_part, 1, parts.end());
+                    break;
+                case "constexpr"_h:
+                    info.constexpr_specifier = storage_function_constexpr_specifier_token;
+                    std::ranges::advance(current_part, 1, parts.end());
+                    break;
+            }
+
+            // potential constexpr specifier if storage specifier exists
+            if (!info.storage_specifier.empty() && info.constexpr_specifier.empty()) {
+                auto constexpr_specifier_token{ std::string_view((*current_part).begin(),
+                                                                 (*current_part).end()) };
+                if (constexpr_specifier_token == "constexpr") {
+                    info.constexpr_specifier = constexpr_specifier_token;
+                    std::ranges::advance(current_part, 1, parts.end());
+                }
+            }
+
+            // return type
+            auto return_type_token{ std::string_view((*current_part).begin(), (*current_part).end()) };
+            auto start_ptr{ return_type_token.data() };
+            auto end_ptr{ name_token.data() };
+            info.return_type = std::string_view(start_ptr, end_ptr - start_ptr - 1);
+
+            return info;
         }
     }
 
@@ -66,7 +153,7 @@ namespace tlink::log
         std::thread::id threadId;
         std::string file;
         uint32_t line;
-        std::string function;
+        FunctionInfo function;
     };
 
     struct LoggerConfig
@@ -85,7 +172,7 @@ namespace tlink::log
     {
         std::format_string<Args...> str;
         std::source_location loc;
-        std::string_view function;
+        FunctionInfo function;
 
         template<typename T>
             requires std::convertible_to<const T&, std::string_view>
@@ -124,7 +211,7 @@ namespace tlink::log
         template<typename... Args>
         auto log(Level level,
                  std::source_location loc,
-                 std::string_view function,
+                 FunctionInfo function,
                  std::format_string<Args...> fmt,
                  Args&&... args) -> void
         {
@@ -136,7 +223,7 @@ namespace tlink::log
                                  std::this_thread::get_id(),
                                  loc.file_name(),
                                  loc.line(),
-                                 std::string(function) });
+                                 function });
             } catch (...) {
             }
         }
@@ -190,7 +277,7 @@ namespace tlink::log
                 if (m_config.showFunction) {
                     if (!first)
                         std::print(" ");
-                    std::print("in {}", entry.function);
+                    std::print("{}", entry.function);
                 }
                 std::print("] ");
             }
