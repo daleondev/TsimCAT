@@ -53,7 +53,8 @@ namespace tlink::log::format
       std::is_same_v<std::remove_cvref_t<std::remove_pointer_t<std::remove_cvref_t<T>>>, char>;
 
     template<typename T>
-    concept ValuePtr = std::is_pointer_v<std::remove_cvref_t<T>> && !CharPtr<T> && !VoidPtr<T>;
+    concept ValuePtr = std::is_pointer_v<std::remove_cvref_t<T>> && !CharPtr<T> && !VoidPtr<T> &&
+                       std::formattable<typename std::remove_pointer_t<std::remove_cvref_t<T>>, char>;
 
     template<typename T>
     concept SmartPtr = requires(std::remove_cvref_t<T> p) {
@@ -339,5 +340,18 @@ struct std::formatter<T> : std::formatter<typename T::element_type*>
     auto format(const T& t, Ctx& ctx) const -> Ctx::iterator
     {
         return std::formatter<typename T::element_type*>::format(t.get(), ctx);
+    }
+};
+
+template<std::formattable<char> T>
+struct std::formatter<std::optional<T>> : std::formatter<T>
+{
+    template<typename Ctx>
+    auto format(const std::optional<T>& t, Ctx& ctx) const -> Ctx::iterator
+    {
+        if (!t) {
+            return std::format_to(ctx.out(), "nullopt");
+        }
+        return std::formatter<T>::format(t.value(), ctx);
     }
 };

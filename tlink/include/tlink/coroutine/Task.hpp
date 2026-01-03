@@ -137,9 +137,9 @@ namespace tlink::coro
             }
             auto unhandled_exception() -> void
             {
-                // crash program on unhandled exception
+                // terminate program on unhandled exception
 
-                std::abort();
+                std::terminate();
             }
             auto return_void() -> void
             {
