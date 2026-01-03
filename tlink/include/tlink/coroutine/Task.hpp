@@ -28,8 +28,13 @@ namespace tlink::coro
         ~DetachedTask()
         {
             // handle not destroyed in destructor -> detached
-            // handle later destroyed in promise_type::final_suspend()
+            // handle destroyed automatically after execution (final_suspend returns suspend_never)
         }
+
+        DetachedTask(const DetachedTask&) = delete;
+        auto operator=(const DetachedTask&) -> DetachedTask& = delete;
+        DetachedTask(DetachedTask&& other) noexcept = delete;
+        auto operator=(DetachedTask&& other) noexcept -> DetachedTask& = delete;
 
         inline auto getHandle() const -> const handle_type& { return m_handle; }
 
@@ -73,14 +78,23 @@ namespace tlink::coro
             return *this;
         }
 
-        auto await_ready() const noexcept -> bool { return !m_handle || m_handle.done(); }
+        auto await_ready() const noexcept -> bool
+        {
+            // check if result is available
+
+            return !m_handle || m_handle.done();
+        }
         auto await_suspend(std::coroutine_handle<> waiter) noexcept -> std::coroutine_handle<>
         {
+            // called when paused (waiter = paused coroutine)
+
             m_handle.promise().waiter = waiter;
             return m_handle;
         }
         auto await_resume() -> T
         {
+            // called after the task completes to produce the result of co_await
+
             if (m_handle.promise().exception) {
                 std::rethrow_exception(m_handle.promise().exception);
             }
@@ -105,12 +119,32 @@ namespace tlink::coro
         {
             auto get_return_object() -> DetachedTask
             {
+                // create the coroutine (DetachedTask)
+
                 return { DetachedTask::handle_type::from_promise(*this) };
             }
-            auto initial_suspend() -> std::suspend_always { return {}; }
-            auto final_suspend() noexcept -> std::suspend_never { return {}; /* suspends when done */ }
-            auto unhandled_exception() -> void { std::abort(); }
-            auto return_void() -> void {}
+            auto initial_suspend() -> std::suspend_always
+            {
+                // coroutine execution not started -> caller has to manually resume
+
+                return std::suspend_always{};
+            }
+            auto final_suspend() noexcept -> std::suspend_never
+            {
+                // destroy coroutine when its finished (fire-and-forget)
+
+                return std::suspend_never{};
+            }
+            auto unhandled_exception() -> void
+            {
+                // crash program on unhandled exception
+
+                std::abort();
+            }
+            auto return_void() -> void
+            {
+                // co_return with no value
+            }
         };
 
         template<typename T>
@@ -134,11 +168,25 @@ namespace tlink::coro
 
             auto get_return_object() -> Task<T>
             {
+                // create the coroutine (Task)
+
                 return Task<T>::handle_type::from_promise(static_cast<TaskPromise<T>&>(*this));
             }
-            auto initial_suspend() -> std::suspend_always { return {}; }
+            auto initial_suspend() -> std::suspend_always
+            {
+                // coroutine execution not started -> caller has to manually resume
+
+                return std::suspend_always{};
+            }
             auto final_suspend() noexcept
             {
+                // coroutine has finished executing its body
+                // suspend here (returning false in await_ready) to prevent the coroutine frame from being
+                // destroyed immediately -> allow the consumer (waiter) to retrieve the result (value or
+                // exception) stored in this promise
+                // await_suspend performs a symmetric control transfer to the waiter coroutine if one is
+                // registered
+
                 struct
                 {
                     auto await_ready() noexcept -> bool { return false; }
@@ -150,11 +198,18 @@ namespace tlink::coro
                 } awaiter{};
                 return awaiter;
             }
-            auto unhandled_exception() -> void { exception = std::current_exception(); }
+            auto unhandled_exception() -> void
+            {
+                // store unhandled exception for later rethrow
+
+                exception = std::current_exception();
+            }
             template<typename U>
             auto await_transform(Task<U>&& childTask) -> Task<U>&&
             {
-                // propagate execution context to child
+                // handle co_await another task inside the coroutine
+                // -> propagate execution context to the child
+
                 if (childTask.getHandle()) {
                     if (executor) {
                         childTask.getHandle().promise().executor = executor;
@@ -175,7 +230,12 @@ namespace tlink::coro
             using TaskPromiseBase<T>::TaskPromiseBase;
 
             std::optional<T> value{};
-            auto return_value(T val) -> void { value.emplace(std::move(val)); }
+            auto return_value(T val) -> void
+            {
+                // store the value provided by co_return
+
+                value.emplace(std::move(val));
+            }
         };
 
         template<>
@@ -183,7 +243,10 @@ namespace tlink::coro
         {
             using TaskPromiseBase<void>::TaskPromiseBase;
 
-            auto return_void() -> void {}
+            auto return_void() -> void
+            {
+                // co_return with no value
+            }
         };
     }
 }

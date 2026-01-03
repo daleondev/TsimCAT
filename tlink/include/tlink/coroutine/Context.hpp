@@ -36,12 +36,10 @@ namespace tlink::coro
             while (m_running) {
                 std::unique_lock lock(m_mutex);
 
-                while (!m_queue.empty()) {
-                    auto handle{ utils::pop(m_queue) };
-
+                while (auto handle{ utils::pop(m_queue) }) {
                     lock.unlock();
-                    if (handle && !handle.done()) {
-                        handle.resume();
+                    if (handle && !handle->done()) {
+                        handle->resume();
                     }
                     lock.lock();
                 }

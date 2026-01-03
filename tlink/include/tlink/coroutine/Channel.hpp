@@ -96,7 +96,7 @@ namespace tlink::coro
             }
 
             T val{};
-            utils::memmv(val, result.value());
+            utils::memcpy(val, result.value());
             co_return val;
         }
 
@@ -131,8 +131,8 @@ namespace tlink::coro
                     return true;
                 }
 
-                if (!state->queue.empty()) {
-                    dest.emplace(utils::pop(state->queue));
+                if (auto raw{ utils::pop(state->queue) }) {
+                    dest.emplace(raw.value());
                     return true;
                 }
                 return false;
