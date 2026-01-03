@@ -13,7 +13,7 @@ namespace tlink
     struct RawSubscription
     {
         const uint64_t id;
-        coro::RawAsyncChannel stream;
+        coro::RawBinaryChannel stream;
         RawSubscription(uint64_t i)
           : id(i)
         {
@@ -28,14 +28,14 @@ namespace tlink
           : raw(std::move(sub))
         {
             if (raw) {
-                stream = coro::AsyncChannel<T>(raw->stream);
+                stream = coro::BinaryChannel<T>(raw->stream);
             }
         }
 
         auto isValid() const noexcept -> bool { return raw != nullptr; }
         auto id() const noexcept -> uint64_t { return raw ? raw->id : 0; }
 
-        coro::AsyncChannel<T> stream;
+        coro::BinaryChannel<T> stream;
         std::shared_ptr<RawSubscription> raw;
     };
 } // namespace tlink

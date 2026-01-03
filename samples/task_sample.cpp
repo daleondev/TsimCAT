@@ -244,7 +244,7 @@ class CoroContext : public IExecutor
 };
 
 template<typename T>
-class AsyncChannel
+class Channel
 {
     struct NextAwaiter;
 
@@ -279,7 +279,7 @@ class AsyncChannel
 
     struct NextAwaiter
     {
-        AsyncChannel& channel;
+        Channel& channel;
 
         bool await_ready()
         {
@@ -317,7 +317,7 @@ class AsyncChannel
     };
 };
 
-static AsyncChannel<int> g_channel;
+static Channel<int> g_channel;
 
 template<typename Ex, typename Coro>
 DetachedTask co_spawn_impl(Ex& ex, Coro coro)

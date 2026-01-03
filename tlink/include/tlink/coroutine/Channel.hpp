@@ -10,7 +10,7 @@ namespace tlink::coro
 {
     namespace detail
     {
-        struct RawAsyncAwaiter;
+        struct RawBinaryAwaiter;
     }
 
     enum class ChannelMode
@@ -19,7 +19,7 @@ namespace tlink::coro
         LoadBalancer
     };
 
-    class RawAsyncChannel
+    class RawBinaryChannel
     {
       public:
         using Bytes = std::vector<std::byte>;
@@ -33,7 +33,7 @@ namespace tlink::coro
         auto push(Bytes raw) -> void;
         auto close() -> void;
 
-        auto next(std::optional<Bytes>& dest) -> detail::RawAsyncAwaiter;
+        auto next(std::optional<Bytes>& dest) -> detail::RawBinaryAwaiter;
 
       protected:
         struct Waiter
@@ -43,7 +43,7 @@ namespace tlink::coro
             // For broadcast, we need a place to put the result
             std::optional<Bytes>* resultDest{ nullptr };
             std::weak_ptr<void> lifeToken{};
-            detail::RawAsyncAwaiter* awaiterPtr{ nullptr };
+            detail::RawBinaryAwaiter* awaiterPtr{ nullptr };
         };
 
         struct State
@@ -57,19 +57,19 @@ namespace tlink::coro
 
         std::shared_ptr<State> m_state{ std::make_shared<State>() };
 
-        friend class detail::RawAsyncAwaiter;
+        friend class detail::RawBinaryAwaiter;
         template<typename T>
             requires std::is_trivially_copyable_v<T>
-        friend class AsyncChannel;
+        friend class BinaryChannel;
     };
 
     template<typename T>
         requires std::is_trivially_copyable_v<T>
-    class AsyncChannel
+    class BinaryChannel
     {
       public:
-        AsyncChannel() = default;
-        AsyncChannel(const RawAsyncChannel& raw)
+        BinaryChannel() = default;
+        BinaryChannel(const RawBinaryChannel& raw)
           : m_state(raw.m_state)
         {
         }
@@ -84,10 +84,10 @@ namespace tlink::coro
 
         auto next() -> Task<std::optional<T>>
         {
-            RawAsyncChannel raw{};
+            RawBinaryChannel raw{};
             raw.m_state = m_state;
 
-            std::optional<RawAsyncChannel::Bytes> result{};
+            std::optional<RawBinaryChannel::Bytes> result{};
             co_await raw.next(result);
 
             if (!result || result->size() != sizeof(T)) {
@@ -100,18 +100,144 @@ namespace tlink::coro
         }
 
       private:
-        std::shared_ptr<RawAsyncChannel::State> m_state;
+        std::shared_ptr<RawBinaryChannel::State> m_state;
+    };
+
+    template<typename T>
+    class Channel
+    {
+      private:
+        struct Waiter
+        {
+            std::coroutine_handle<> handle{};
+            IExecutor* executor{ nullptr };
+            std::optional<T>* dest{ nullptr };
+            std::weak_ptr<void> lifeToken{};
+        };
+
+        struct State
+        {
+            std::mutex mutex{};
+            std::deque<T> queue{};
+            std::list<Waiter> waiters{};
+            bool closed{ false };
+        };
+
+        struct Awaiter
+        {
+            std::shared_ptr<State> state;
+            std::optional<T> result;
+
+            auto await_ready() -> bool
+            {
+                std::scoped_lock lock(state->mutex);
+                if (state->closed) {
+                    return true;
+                }
+                if (!state->queue.empty()) {
+                    result = std::move(state->queue.front());
+                    state->queue.pop_front();
+                    return true;
+                }
+                return false;
+            }
+
+            template<typename P>
+            auto await_suspend(std::coroutine_handle<P> h) -> bool
+            {
+                std::scoped_lock lock(state->mutex);
+                if (state->closed || !state->queue.empty()) {
+                    return false;
+                }
+
+                IExecutor* ex = nullptr;
+                std::weak_ptr<void> token;
+                if constexpr (requires { h.promise().executor; }) {
+                    ex = h.promise().executor;
+                    if (ex) {
+                        token = ex->getLifeToken();
+                    }
+                }
+
+                state->waiters.push_back({ h, ex, &result, token });
+                return true;
+            }
+
+            auto await_resume() -> std::optional<T> { return std::move(result); }
+        };
+
+      public:
+        auto push(T val) -> void
+        {
+            std::unique_lock lock(m_state->mutex);
+            if (m_state->closed) {
+                return;
+            }
+
+            if (m_state->waiters.empty()) {
+                m_state->queue.push_back(std::move(val));
+                return;
+            }
+
+            auto waiter = std::move(m_state->waiters.front());
+            m_state->waiters.pop_front();
+
+            if (waiter.dest) {
+                *waiter.dest = std::move(val);
+            }
+
+            lock.unlock();
+
+            if (waiter.executor) {
+                if (auto token = waiter.lifeToken.lock()) {
+                    waiter.executor->schedule(waiter.handle);
+                }
+            }
+            else {
+                waiter.handle.resume();
+            }
+        }
+
+        auto close() -> void
+        {
+            std::unique_lock lock(m_state->mutex);
+            if (m_state->closed) {
+                return;
+            }
+            m_state->closed = true;
+            auto waiters = std::move(m_state->waiters);
+            lock.unlock();
+
+            for (auto& w : waiters) {
+                if (w.executor) {
+                    if (auto token = w.lifeToken.lock()) {
+                        w.executor->schedule(w.handle);
+                    }
+                }
+                else {
+                    w.handle.resume();
+                }
+            }
+        }
+
+        auto next() -> Task<std::optional<T>>
+        {
+            co_return co_await Awaiter{ m_state };
+        }
+
+      private:
+        std::shared_ptr<State> m_state{ std::make_shared<State>() };
     };
 
     namespace detail
     {
-        struct RawAsyncAwaiter
+        struct RawBinaryAwaiter
         {
-            std::shared_ptr<RawAsyncChannel::State> state{};
-            std::optional<RawAsyncChannel::Bytes>& dest;
-            std::optional<std::list<RawAsyncChannel::Waiter>::iterator> m_iterator{};
+            std::shared_ptr<RawBinaryChannel::State> state{};
+            std::optional<RawBinaryChannel::Bytes>& dest;
+            std::optional<std::list<RawBinaryChannel::Waiter>::iterator> m_iterator{};
 
-            ~RawAsyncAwaiter()
+            ~RawBinaryAwaiter()
             {
                 if (m_iterator) {
                     std::scoped_lock lock(state->mutex);
@@ -181,12 +307,12 @@ namespace tlink::coro
         }
     }
 
-    inline auto RawAsyncChannel::next(std::optional<Bytes>& dest) -> detail::RawAsyncAwaiter
+    inline auto RawBinaryChannel::next(std::optional<Bytes>& dest) -> detail::RawBinaryAwaiter
     {
-        return detail::RawAsyncAwaiter{ m_state, dest };
+        return detail::RawBinaryAwaiter{ m_state, dest };
     }
 
-    inline auto RawAsyncChannel::push(Bytes raw) -> void
+    inline auto RawBinaryChannel::push(Bytes raw) -> void
     {
         std::unique_lock lock(m_state->mutex);
         if (m_state->closed) {
@@ -237,7 +363,7 @@ namespace tlink::coro
         }
     }
 
-    inline auto RawAsyncChannel::close() -> void
+    inline auto RawBinaryChannel::close() -> void
     {
         std::list<Waiter> toResume;
         {

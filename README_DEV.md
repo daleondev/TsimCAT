@@ -26,10 +26,11 @@ The core philosophy is to abstract the underlying driver mechanics (callbacks, t
     *   **`tlink::coro::Task<T>`**: A lazy-start coroutine return type (C++20).
     *   **`tlink::coro::Context`**: A thread-safe scheduler/event loop.
     *   **`tlink::Result<T>`**: Error handling wrapper (`std::expected` equivalent).
-    *   **`tlink::coro::AsyncChannel<T>`**: A robust, thread-safe, awaitable channel for streams.
+    *   **`tlink::coro::BinaryChannel<T>`**: A robust, thread-safe, awaitable channel for byte-stream to type conversion.
+    *   **`tlink::coro::Channel<T>`**: A generic, object-passing channel.
 2.  **ADS Driver (`AdsDriver`):**
     *   **Functional:** Connect/Disconnect, Read/Write (span-based), and Subscribe.
-    *   **Integration:** Wraps `AdsLib` callbacks into `AsyncChannel` streams.
+    *   **Integration:** Wraps `AdsLib` callbacks into `BinaryChannel` streams.
     *   **Subscription:** Supports `OnChange` and `Cyclic` modes.
 3.  **Drivers Infrastructure:**
     *   `IDriver` interface is stable.
@@ -66,38 +67,44 @@ TLink relies heavily on C++20 coroutines to flatten asynchronous control flow. T
 *   **Event Loop:** The `run()` method executes a loop that pops handles from the queue and calls `.resume()`. It uses a `std::condition_variable` to sleep when the queue is empty.
 *   **Scheduling:** The `schedule(handle)` method pushes a handle onto the queue and notifies the loop. This is crucial for bridging asynchronous callbacks (like ADS notifications) back into the coroutine world.
 
-### 3. `AsyncChannel<T>` (`Channel.hpp`)
-This is the communication backbone for subscriptions and event streams. It abstracts the producer-consumer pattern in a coroutine-friendly way.
+### 3. `BinaryChannel<T>` & `Channel<T>` (`Channel.hpp`)
+These are the communication backbones for subscriptions and event streams.
 
-#### Internal Structure
-*   **`RawAsyncChannel`:** The type-erased implementation handling `std::vector<std::byte>`. This avoids template bloat for the complex logic.
+#### `BinaryChannel<T>`
+Used by drivers to convert raw byte streams into typed values.
+*   **`RawBinaryChannel`:** The type-erased implementation handling `std::vector<std::byte>`.
+*   **Mechanism:** Uses `memcpy` to copy bytes into the target POD type `T`.
+
+#### `Channel<T>`
+Used for general-purpose object passing (e.g., Logging).
+*   **Mechanism:** Moves full C++ objects (`T`) via a `std::deque<T>`.
+
+#### Internal Structure (Shared)
 *   **State Sharing:** Uses a `std::shared_ptr<State>` containing:
-    *   `std::deque<Bytes> queue`: Buffer for data when no waiters are present (or for LoadBalancer mode).
-    *   `std::deque<Waiter> waiters`: List of suspended coroutine handles waiting for data.
+    *   `std::deque` (Bytes or T): Buffer for data.
+    *   `std::deque<Waiter> waiters`: List of suspended coroutine handles.
     *   `std::mutex`: Protects all state access.
 
 #### Operation Modes
-The channel supports two distinct modes (`ChannelMode`):
+The channels support two distinct modes (`ChannelMode`):
 1.  **`Broadcast` (Pub/Sub):**
     *   **Default Behavior.**
     *   When data is `push`ed, **ALL** currently waiting coroutines receive a copy of the data.
     *   Waiters are immediately removed from the wait list and scheduled for resumption.
-    *   Ideal for scenarios where multiple independent tasks need to react to the same PLC variable change.
 2.  **`LoadBalancer` (Work Queue):**
     *   When data is `push`ed, only **ONE** waiter (the one at the front of the queue) receives the data.
-    *   Ideal for distributing work among a pool of worker tasks.
 
 #### The `next()` Awaitable
 Calling `co_await channel.next()` returns a `std::optional<T>`.
-*   **Suspending:** If the channel is empty, the coroutine suspends. Its handle is added to the `waiters` list inside the channel state.
+*   **Suspending:** If the channel is empty, the coroutine suspends.
 *   **Resuming:** When a producer calls `push()`, the handle is retrieved and scheduled onto the `Context`.
-*   **Closing:** If the channel is closed, `next()` returns `std::nullopt`, allowing the consumer loop to terminate gracefully.
+*   **Closing:** If the channel is closed, `next()` returns `std::nullopt`.
 
 ### 4. Integration Example
 When the ADS driver receives a notification callback (on a background thread):
 1.  It locates the relevant `SubscriptionContext`.
 2.  It calls `stream->push(data)`.
-3.  The `AsyncChannel` locks its state.
+3.  The `BinaryChannel` locks its state.
 4.  It identifies all waiting coroutines (consumers).
 5.  It moves their handles to the `Context`'s queue via `executor->schedule()`.
-6.  The `Context::run()` loop (on the main thread or worker thread) picks up the handle and resumes the coroutine, which then receives the data from the `co_await`.
+6.  The `Context::run()` loop (on the main thread or worker thread) picks up the handle and resumes the coroutine.
