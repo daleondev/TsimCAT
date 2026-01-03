@@ -80,6 +80,7 @@ namespace tlink::log
             }
 
             // parameter list
+            auto parameter_part{ name_part };
             if (!name_token.contains("()")) {
                 if (name_token.contains(')')) {
                     info.parameter_list = name_token.substr(name_end + 1, name_token.size() - name_end - 2);
@@ -87,7 +88,7 @@ namespace tlink::log
                 else {
                     auto first_parameter{ name_token.substr(name_end + 1, name_token.size() - name_end - 1) };
 
-                    auto parameter_part{ find_part_with(')') };
+                    parameter_part = find_part_with(')');
                     auto parameter_token{ std::string_view((*parameter_part).begin(),
                                                            (*parameter_part).end()) };
                     auto parameter_end{ parameter_token.find(')') };
@@ -131,10 +132,48 @@ namespace tlink::log
             auto return_type_token{ std::string_view((*current_part).begin(), (*current_part).end()) };
             auto start_ptr{ return_type_token.data() };
             auto end_ptr{ name_token.data() };
-            info.return_type = std::string_view(start_ptr, end_ptr - start_ptr - 1);
+            info.return_type =
+              end_ptr > start_ptr ? std::string_view(start_ptr, end_ptr - start_ptr - 1) : "";
+
+            // const qualifier
+            current_part = std::ranges::next(parameter_part, 1, parts.end());
+            if (current_part != parts.end()) {
+                auto const_qualifier_token{ std::string_view((*current_part).begin(),
+                                                             (*current_part).end()) };
+                if (const_qualifier_token == "const") {
+                    info.const_qualifier = const_qualifier_token;
+                    std::ranges::advance(current_part, 1, parts.end());
+                }
+            }
+
+            // ref qualifier
+            if (current_part != parts.end()) {
+                auto ref_qualifier_token{ std::string_view((*current_part).begin(), (*current_part).end()) };
+                if (ref_qualifier_token.contains("&")) {
+                    info.ref_qualifier = ref_qualifier_token;
+                }
+            }
+
+            // template parameters
+            if (function_name.contains("with")) {
+                using namespace std::literals;
+                auto template_start{ function_name.find_last_of('[') + ("[with "sv).size() };
+                info.template_arguments =
+                  function_name.substr(template_start, function_name.size() - template_start - 1);
+            }
 
             return info;
         }
+
+        static_assert(parseFunctionName("void test()").full_name == "test");
+        static_assert(parseFunctionName("void test()").return_type == "void");
+        static_assert(parseFunctionName("void MyClass::test() const &").const_qualifier == "const");
+        static_assert(parseFunctionName("void MyClass::test() const &").ref_qualifier == "&");
+        static_assert(parseFunctionName("void MyClass::test() &&").ref_qualifier == "&&");
+        static_assert(parseFunctionName("static void test()").storage_specifier == "static");
+        static_assert(parseFunctionName("static constexpr void test()").constexpr_specifier == "constexpr");
+        static_assert(parseFunctionName("MyClass()").return_type == "");
+        static_assert(parseFunctionName("MyClass()").full_name == "MyClass");
     }
 
     enum class Level
@@ -196,14 +235,16 @@ namespace tlink::log
         Logger()
           : m_thread([this]() { m_ctx.run(); })
         {
-            coro::co_spawn(m_ctx, [this](coro::IExecutor& ex) -> coro::Task<void> { return process(); });
+            coro::co_spawn(m_ctx, [this](coro::IExecutor&) -> coro::Task<void> { return process(); });
         }
 
         ~Logger()
         {
             m_channel.close();
             m_ctx.stop();
-            m_thread.join();
+            if (m_thread.joinable()) {
+                m_thread.join();
+            }
         }
 
         auto setConfig(LoggerConfig config) -> void { m_config = std::move(config); }
@@ -211,7 +252,7 @@ namespace tlink::log
         template<typename... Args>
         auto log(Level level,
                  std::source_location loc,
-                 FunctionInfo function,
+                 const FunctionInfo& function,
                  std::format_string<Args...> fmt,
                  Args&&... args) -> void
         {
@@ -277,7 +318,7 @@ namespace tlink::log
                 if (m_config.showFunction) {
                     if (!first)
                         std::print(" ");
-                    std::print("{}", entry.function);
+                    std::print("in {}", entry.function);
                 }
                 std::print("] ");
             }
@@ -288,7 +329,7 @@ namespace tlink::log
         LoggerConfig m_config{};
         coro::Channel<LogEntry> m_channel{};
         coro::Context m_ctx{};
-        std::jthread m_thread;
+        std::thread m_thread;
     };
 
     template<typename... Args>
