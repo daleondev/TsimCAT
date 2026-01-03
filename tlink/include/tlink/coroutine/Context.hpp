@@ -33,8 +33,13 @@ namespace tlink::coro
 
         auto run() -> void override
         {
-            while (m_running) {
+            while (true) {
                 std::unique_lock lock(m_mutex);
+                m_cv.wait(lock, [this] { return !m_queue.empty() || !m_running; });
+
+                if (!m_running && m_queue.empty()) {
+                    break;
+                }
 
                 while (auto handle{ utils::pop(m_queue) }) {
                     lock.unlock();
@@ -43,8 +48,6 @@ namespace tlink::coro
                     }
                     lock.lock();
                 }
-
-                m_cv.wait(lock, [this] { return !m_queue.empty() || !m_running; });
             }
         }
 

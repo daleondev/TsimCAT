@@ -5,6 +5,8 @@
 #include "Task.hpp"
 #include "utils.hpp"
 
+#include <functional>
+
 namespace tlink::coro
 {
     namespace detail

@@ -131,15 +131,12 @@ namespace tlink::coro
             auto await_ready() -> bool
             {
                 std::scoped_lock lock(state->mutex);
-                if (state->closed) {
-                    return true;
-                }
                 if (!state->queue.empty()) {
                     result = std::move(state->queue.front());
                     state->queue.pop_front();
                     return true;
                 }
-                return false;
+                return state->closed;
             }
 
             template<typename P>
@@ -252,15 +249,11 @@ namespace tlink::coro
             auto await_ready() -> bool
             {
                 std::scoped_lock lock(state->mutex);
-                if (state->closed) {
-                    return true;
-                }
-
                 if (auto raw{ utils::pop(state->queue) }) {
                     dest.emplace(raw.value());
                     return true;
                 }
-                return false;
+                return state->closed;
             }
 
             template<typename P>

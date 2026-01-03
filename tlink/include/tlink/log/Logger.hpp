@@ -1,7 +1,6 @@
 #pragma once
 
-#include "tlink/coroutine/Channel.hpp"
-#include "tlink/coroutine/Task.hpp"
+#include "tlink/coroutine/coroutine.hpp"
 #include "tlink/log/format.hpp"
 
 #include <chrono>
@@ -108,12 +107,17 @@ namespace tlink::log
         }
 
         Logger()
-          : m_worker{ process() }
+          : m_thread([this]() { m_ctx.run(); })
         {
-            m_worker.getHandle().resume();
+            coro::co_spawn(m_ctx, [this](coro::IExecutor& ex) -> coro::Task<void> { return process(); });
         }
 
-        ~Logger() { m_channel.close(); }
+        ~Logger()
+        {
+            m_channel.close();
+            m_ctx.stop();
+            m_thread.join();
+        }
 
         auto setConfig(LoggerConfig config) -> void { m_config = std::move(config); }
 
@@ -138,7 +142,7 @@ namespace tlink::log
         }
 
       private:
-        auto process() -> coro::DetachedTask
+        auto process() -> coro::Task<void>
         {
             while (true) {
                 auto entry = co_await m_channel.next();
@@ -194,9 +198,10 @@ namespace tlink::log
             std::println("{}", entry.message);
         }
 
-        coro::Channel<LogEntry> m_channel;
-        coro::DetachedTask m_worker;
-        LoggerConfig m_config;
+        LoggerConfig m_config{};
+        coro::Channel<LogEntry> m_channel{};
+        coro::Context m_ctx{};
+        std::jthread m_thread;
     };
 
     template<typename... Args>
