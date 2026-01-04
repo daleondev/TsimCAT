@@ -35,10 +35,27 @@ namespace tlink::log::format
         return namespace_name<T>().starts_with("std::");
     }
 
+    template<reflect::fixed_string N, auto A>
+    struct Field
+    {
+        static constexpr std::string_view NAME = N;
+        static constexpr auto ACCESS = A;
+    };
+
+    template<typename T>
+    struct Adapter
+    {
+        using Fields = std::tuple<>;
+    };
+
+    template<typename T>
+    concept HasAdapter =
+      std::is_class_v<std::remove_cvref_t<T>> && (std::tuple_size_v<typename Adapter<T>::Fields> > 0);
+
     template<typename T>
     concept Reflectable =
       std::is_class_v<std::remove_cvref_t<T>> && std::is_aggregate_v<std::remove_cvref_t<T>> &&
-      !is_std_type<std::remove_cvref_t<T>>();
+      !is_std_type<std::remove_cvref_t<T>>() && !HasAdapter<T>;
 
     template<typename T>
     concept ScopedEnum = std::is_scoped_enum_v<std::remove_cvref_t<T>>;
