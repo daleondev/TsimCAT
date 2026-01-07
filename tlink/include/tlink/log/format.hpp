@@ -376,15 +376,8 @@ struct std::formatter<T>
     auto format(const T& t, Ctx& ctx) const -> Ctx::iterator
     {
         auto check_arg = [&]<typename Field>() -> decltype(auto) {
-            using Type = Field::Type;
-            Type val;
-            if constexpr (std::is_member_function_pointer_v<decltype(Field::VALUE)>) {
-                val = std::invoke(Field::VALUE, t);
-            }
-            else {
-                val = t.*Field::VALUE;
-            }
-            if constexpr (!std::formattable<Type, char>) {
+            auto val{ std::invoke(Field::VALUE, t) };
+            if constexpr (!std::formattable<decltype(val), char>) {
                 return "-";
             }
             else {
@@ -397,7 +390,9 @@ struct std::formatter<T>
         }
         else {
             auto args = [&]<size_t... Is>(std::index_sequence<Is...>) {
-                return std::make_tuple(check_arg<std::tuple_element_t<Is, typename Adapter<T>::Fields>>()...);
+                return std::make_tuple(
+                  check_arg.template
+                  operator()<std::tuple_element_t<Is, typename tlink::log::format::Adapter<T>::Fields>>()...);
             }(std::make_index_sequence<Info::MEMBER_NAMES.size()>{});
 
             static constexpr auto fmt{ tlink::log::format::detail::class_format<Info>() };
