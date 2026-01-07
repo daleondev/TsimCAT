@@ -102,6 +102,8 @@ extern void externTest(int i) { tlink::log::info("Test"); }
 
 struct Data
 {
+    int ii;
+    float ff;
     std::string text = "Heavy String";
 
     // 1. L-value overload: The object is alive, so we must COPY the data.
@@ -121,13 +123,76 @@ struct Data
     }
 };
 
+class MyClass
+{
+  public:
+    int getI() const { return m_i; }
+
+    int m_j = 10;
+
+  private:
+    int m_i = 5;
+};
+
+struct Inner
+{
+    std::string s = "lol";
+    double d = 2346.347;
+};
+
+struct TestStruct
+{
+    int i = 1;
+    float f = 5.5f;
+    Inner inner{};
+    const char* str = "Test";
+};
+
+template<>
+struct tlink::log::format::Adapter<MyClass>
+{
+    using Fields = std::tuple<Field<"i", &MyClass::getI>, Field<"j", &MyClass::m_j>>;
+};
+
 int main(int argc, char* argv[])
 {
-    tlink::log::LoggerConfig config;
-    config.showFile = false;
-    config.showLine = false;
-    config.showFunction = true;
-    tlink::log::Logger::instance().setConfig(config);
+    std::println("{}", TestStruct{});
+    std::println("{}", MyClass{});
+    // constexpr auto Names = get_names<TestStruct>();
+
+    // auto args = [&]<size_t... Is>(std::index_sequence<Is...>) {
+    //     return std::tuple_cat(make_flat_tuple_args(reflect::get<Is>(t))...);
+    // }(std::make_index_sequence<reflect::size<T>()>{});
+
+    // using A = decltype(&MyClass::getI);
+    // using B = get_class_type_t<A>;
+
+    // using C = decltype(&MyClass::m_j);
+    // using D = remove_member_pointer_t<C>;
+
+    // std::println("{}", Data{});
+
+    // using Fields = std::tuple<tlink::log::format::Field<"i", &MyClass::getI>,
+    //                           tlink::log::format::Field<"j", &MyClass::m_j>>;
+    // static_assert(std::is_same_v<tlink::log::format::Field<"i", &MyClass::getI>::Type, int>);
+    // static_assert(std::is_same_v<tlink::log::format::Field<"j", &MyClass::m_j>::Type, int>);
+
+    // auto arr = [&]<size_t... Is>(std::index_sequence<Is...>) {
+    //     return std::array<std::string_view, sizeof...(Is)>{ std::tuple_element_t<Is, Fields>::NAME... };
+    // }(std::make_index_sequence<std::tuple_size_v<Fields>>{});
+    // std::println("{}", arr);
+
+    // constexpr auto d = tlink::log::format::reflectMemberNames<Data>();
+    // // std::println("{}", d);
+
+    // constexpr auto fmt = tlink::log::format::class_format_test<tlink::log::format::ClassInfo<Data>>();
+    // std::println("{}", (std::string_view)fmt);
+
+    // tlink::log::LoggerConfig config;
+    // config.showFile = false;
+    // config.showLine = false;
+    // config.showFunction = true;
+    // tlink::log::Logger::instance().setConfig(config);
 
     // tlink::log::info("Starting complex multi-threaded logger test...");
 
@@ -148,30 +213,30 @@ int main(int argc, char* argv[])
     // tlink::log::info("All threads joined. Waiting a moment for logs to flush...");
     // std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-    test::detail::MyClass c(100);
-    c.print();
-    c.print2<const float>();
-    c.print3(5);
-    test::detail::MyClass::print4();
-    test::detail::MyClass::myFunction<int>(1);
-    c.myFunction2<uint64_t>();
-    test::test();
-    test1();
-    test2();
-    externTest(1);
+    // test::detail::MyClass c(100);
+    // c.print();
+    // c.print2<const float>();
+    // c.print3(5);
+    // test::detail::MyClass::print4();
+    // test::detail::MyClass::myFunction<int>(1);
+    // c.myFunction2<uint64_t>();
+    // test::test();
+    // test1();
+    // test2();
+    // externTest(1);
 
-    auto l = []<typename T, typename U>(T t, U u) -> int {
-        tlink::log::info("Test");
-        return t + u;
-    };
-    l(2.4f, 1uz);
+    // auto l = []<typename T, typename U>(T t, U u) -> int {
+    //     tlink::log::info("Test");
+    //     return t + u;
+    // };
+    // l(2.4f, 1uz);
 
-    Data d;
+    // Data d;
 
-    std::string s1 = d.get(); // Calls version 1 (L-value) -> Copies
-    std::string s2 = Data().get();
+    // std::string s1 = d.get(); // Calls version 1 (L-value) -> Copies
+    // std::string s2 = Data().get();
 
-    tlink::log::info("Test complete. Exiting.");
+    // tlink::log::info("Test complete. Exiting.");
     return 0;
 }
 
