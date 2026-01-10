@@ -259,7 +259,8 @@ namespace tlink::log::format
             }
 
             [&]<size_t... Is>(std::index_sequence<Is...>) {
-                ([&]<size_t I>() {
+                ([&](auto i) {
+                    constexpr size_t I = i;
                     using MemberType = std::tuple_element_t<I, typename Info::MemberTypes>;
 
                     size += (Level + 1) * PRETTY_INDENT.size();
@@ -279,7 +280,7 @@ namespace tlink::log::format
                         size += 1; // ","
                     }
                     size += 1; // "\n"
-                }.template operator()<Is>(), ...);
+                }(std::integral_constant<size_t, Is>{}), ...);
             }(std::make_index_sequence<Info::MEMBER_NAMES.size()>{});
 
             size += Level * PRETTY_INDENT.size();
@@ -309,7 +310,8 @@ namespace tlink::log::format
             }
 
             [&]<size_t... Is>(std::index_sequence<Is...>) {
-                ([&]<size_t I>() {
+                ([&](auto i) {
+                    constexpr size_t I = i;
                     using MemberType = std::tuple_element_t<I, typename Info::MemberTypes>;
 
                     for (auto i{ 0uz }; i < (Level + 1); ++i) {
@@ -333,7 +335,7 @@ namespace tlink::log::format
                         append(",");
                     }
                     append("\n");
-                }.template operator()<Is>(), ...);
+                }(std::integral_constant<size_t, Is>{}), ...);
             }(std::make_index_sequence<Info::MEMBER_NAMES.size()>{});
 
             for (auto i{ 0uz }; i < Level; ++i) {
@@ -376,17 +378,54 @@ struct std::formatter<T>
     auto format(const T& t, Ctx& ctx) const -> Ctx::iterator
     {
         auto check_arg = [&]<typename Field>() -> decltype(auto) {
-            auto val{ std::invoke(Field::VALUE, t) };
-            if constexpr (!std::formattable<decltype(val), char>) {
-                return "-";
+            if constexpr (std::formattable<typename Field::Type, char>) {
+                return std::invoke(Field::VALUE, t);
             }
             else {
-                return val;
+                return "-";
             }
         };
 
         if (pretty) {
-            // todo
+            auto make_tuple_args = []<typename... Args>(Args&&... args) {
+                using Tuple = std::tuple<
+                  std::conditional_t<std::is_lvalue_reference_v<Args>, Args, std::remove_reference_t<Args>>...>;
+                return Tuple(std::forward<Args>(args)...);
+            };
+
+            auto check_arg_value = []<typename Val>(Val&& val) -> decltype(auto) {
+                if constexpr (std::formattable<Val, char>) {
+                    return std::forward<Val>(val);
+                }
+                else {
+                    return "-";
+                }
+            };
+
+            auto flatten = [check_arg_value, make_tuple_args]<typename Val>(this auto&& self, Val&& val) {
+                using Type = std::remove_cvref_t<Val>;
+                if constexpr (tlink::log::format::detail::HasAdapter<Type>) {
+                    using Adapter = tlink::log::format::Adapter<Type>;
+                    using Fields = typename Adapter::Fields;
+                    return [&]<size_t... Is>(std::index_sequence<Is...>) {
+                        return std::tuple_cat(self(std::invoke(std::tuple_element_t<Is, Fields>::VALUE, val))...);
+                    }(std::make_index_sequence<std::tuple_size_v<Fields>>{});
+                }
+                else if constexpr (tlink::log::format::detail::Reflectable<Type>) {
+                    return [&]<size_t... Is>(std::index_sequence<Is...>) {
+                        return std::tuple_cat(self(reflect::get<Is>(val))...);
+                    }(std::make_index_sequence<reflect::size<Type>()>{});
+                }
+                else {
+                    return make_tuple_args(check_arg_value(std::forward<Val>(val)));
+                }
+            };
+
+            auto args = flatten(t);
+
+            static constexpr auto fmt{ tlink::log::format::detail::class_pretty_format<Info>() };
+            return std::apply([&ctx](const auto&... args) { return std::format_to(ctx.out(), fmt, args...); },
+                              args);
         }
         else {
             auto args = [&]<size_t... Is>(std::index_sequence<Is...>) {
@@ -439,11 +478,11 @@ struct std::formatter<T>
     auto format(const T& t, Ctx& ctx) const -> Ctx::iterator
     {
         auto check_arg = []<typename Field>(Field&& field) -> decltype(auto) {
-            if constexpr (!std::formattable<Field, char>) {
-                return "-";
+            if constexpr (std::formattable<Field, char>) {
+                return std::forward<Field>(field);
             }
             else {
-                return std::forward<Field>(field);
+                return "-";
             }
         };
 
@@ -457,8 +496,16 @@ struct std::formatter<T>
             auto make_flat_tuple_args = [check_arg = std::move(check_arg),
                                          make_tuple_args = std::move(make_tuple_args)]<typename Field>(
                                           this auto&& make_flat_tuple_args, Field&& field) {
-                if constexpr (tlink::log::format::detail::Reflectable<Field>) {
-                    using Type = std::remove_cvref_t<Field>;
+                using Type = std::remove_cvref_t<Field>;
+                if constexpr (tlink::log::format::detail::HasAdapter<Type>) {
+                    using Adapter = tlink::log::format::Adapter<Type>;
+                    using Fields = typename Adapter::Fields;
+                    return [&]<size_t... Is>(std::index_sequence<Is...>) {
+                        return std::tuple_cat(
+                          make_flat_tuple_args(std::invoke(std::tuple_element_t<Is, Fields>::VALUE, field))...);
+                    }(std::make_index_sequence<std::tuple_size_v<Fields>>{});
+                }
+                else if constexpr (tlink::log::format::detail::Reflectable<Type>) {
                     return [&]<size_t... Is>(std::index_sequence<Is...>) {
                         return std::tuple_cat(make_flat_tuple_args(reflect::get<Is>(field))...);
                     }(std::make_index_sequence<reflect::size<Type>()>{});

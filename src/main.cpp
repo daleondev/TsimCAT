@@ -123,15 +123,15 @@ struct Data
     }
 };
 
-class MyClass
+class MyClassInner
 {
   public:
-    int getI() const { return m_i; }
+    int getX() const { return m_x; }
 
-    int m_j = 10;
+    int m_y = 10;
 
   private:
-    int m_i = 5;
+    int m_x = 5;
 };
 
 struct Inner
@@ -140,18 +140,41 @@ struct Inner
     double d = 2346.347;
 };
 
+class MyClass
+{
+  public:
+    int getI() const { return m_i; }
+
+    MyClassInner m_inner{};
+    Inner m_innerReflectable{};
+    int m_j = 10;
+
+  private:
+    int m_i = 5;
+};
+
 struct TestStruct
 {
     int i = 1;
     float f = 5.5f;
     Inner inner{};
     const char* str = "Test";
+    MyClassInner innerClass{};
+};
+
+template<>
+struct tlink::log::format::Adapter<MyClassInner>
+{
+    using Fields = std::tuple<Field<"x", &MyClassInner::getX>, Field<"y", &MyClassInner::m_y>>;
 };
 
 template<>
 struct tlink::log::format::Adapter<MyClass>
 {
-    using Fields = std::tuple<Field<"i", &MyClass::getI>, Field<"j", &MyClass::m_j>>;
+    using Fields = std::tuple<Field<"i", &MyClass::getI>,
+                              Field<"inner", &MyClass::m_inner>,
+                              Field<"innerReflectable", &MyClass::m_innerReflectable>,
+                              Field<"j", &MyClass::m_j>>;
 };
 
 int main(int argc, char* argv[])
