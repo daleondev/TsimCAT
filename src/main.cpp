@@ -53,7 +53,7 @@ namespace test
         {
           public:
             explicit MyClass(int i) { tlink::log::info("Test"); }
-            static volatile void print() { tlink::log::info("Test"); }
+            static void print() { tlink::log::info("Test"); }
             template<typename T>
             bool print2() const
             {
@@ -144,12 +144,14 @@ class MyClass
 {
   public:
     int getI() const { return m_i; }
+    const MyClassInner& getInner() const { return m_inner; }
+    const Inner& getInnerReflectable() const { return m_innerReflectable; }
 
-    MyClassInner m_inner{};
-    Inner m_innerReflectable{};
     int m_j = 10;
 
   private:
+    MyClassInner m_inner{};
+    Inner m_innerReflectable{};
     int m_i = 5;
 };
 
@@ -160,6 +162,7 @@ struct TestStruct
     Inner inner{};
     const char* str = "Test";
     MyClassInner innerClass{};
+    std::mutex m;
 };
 
 template<>
@@ -172,15 +175,16 @@ template<>
 struct tlink::log::format::Adapter<MyClass>
 {
     using Fields = std::tuple<Field<"i", &MyClass::getI>,
-                              Field<"inner", &MyClass::m_inner>,
-                              Field<"innerReflectable", &MyClass::m_innerReflectable>,
+                              //   Field<"inner", &MyClass::getInner>,
+                              Field<"innerReflectable", &MyClass::getInnerReflectable>,
                               Field<"j", &MyClass::m_j>>;
 };
 
 int main(int argc, char* argv[])
 {
-    std::println("{}", TestStruct{});
-    std::println("{}", MyClass{});
+    std::println("{:p}", MyClass{});
+    std::println("{:p}", TestStruct{});
+
     // constexpr auto Names = get_names<TestStruct>();
 
     // auto args = [&]<size_t... Is>(std::index_sequence<Is...>) {
