@@ -1,9 +1,0 @@
-module TsimCAT
-linktarget TsimCATplugin
-optional plugin TsimCATplugin
-classname TsimCATPlugin
-typeinfo TsimCAT.qmltypes
-prefer :/qt/qml/TsimCAT/
-Main 1.0 Main.qml
-depends QtQuick
-

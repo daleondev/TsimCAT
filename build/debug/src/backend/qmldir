@@ -1,8 +1,0 @@
-module TsimCAT.Backend
-linktarget TsimCAT_Backendplugin
-optional plugin TsimCAT_Backendplugin
-classname TsimCAT_BackendPlugin
-typeinfo TsimCAT_Backend.qmltypes
-prefer :/qt/qml/TsimCAT/Backend/
-depends QtQuick
-

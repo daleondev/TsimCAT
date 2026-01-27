@@ -1,6 +1,0 @@
-<RCC>
-  <qresource prefix="/">
-    <file alias="/qt/qml/TsimCAT/Backend">C:/Users/Dev.Windows-Desktop/Desktop/TwinCAT/TsimCAT/build/debug/src/backend</file>
-
-  </qresource>
-</RCC>
