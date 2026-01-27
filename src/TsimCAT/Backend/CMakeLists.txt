@@ -1,7 +1,12 @@
 qt_add_library(TsimCAT_Backend STATIC)
 
 target_compile_features(TsimCAT_Backend PUBLIC cxx_std_23)
-target_link_libraries(TsimCAT_Backend PUBLIC Qt6::Quick)
+target_link_libraries(TsimCAT_Backend 
+    PUBLIC 
+        Qt6::Quick
+        QCoro6::Core
+        QCoro6::Quick
+)
 
 qt_add_qml_module(TsimCAT_Backend
     URI "TsimCAT.Backend"

@@ -2,10 +2,21 @@ cmake_minimum_required(VERSION 3.16)
 
 project(TsimCAT VERSION 0.1 LANGUAGES CXX)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick)
+find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2)
 
 qt_policy(SET QTP0001 NEW)
+qt_policy(SET QTP0004 NEW)
+set(QT_NO_PRIVATE_MODULE_WARNING ON)
 
 qt_standard_project_setup()
+
+# External Libraries
+set(QCORO_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(QCORO_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+set(QCORO_WITH_QTWEBSOCKETS OFF CACHE BOOL "" FORCE)
+set(QCORO_WITH_QTNETWORK OFF CACHE BOOL "" FORCE)
+set(QCORO_WITH_QTDBUS OFF CACHE BOOL "" FORCE)
+add_subdirectory(extern/qcoro)
 
 add_subdirectory(src)

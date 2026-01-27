@@ -9,4 +9,12 @@ qt_add_qml_module(TsimCAT_UI
     RESOURCE_PREFIX "/qt/qml"
     QML_FILES
         Main.qml
+        subscreens/PlantOverview.qml
+        subscreens/RobotStatus.qml
+        subscreens/CameraStatus.qml
+        subscreens/LaserStatus.qml
+        subscreens/GantryStatus.qml
+        subscreens/ProcessData.qml
+    RESOURCES
+        qtquickcontrols2.conf
 )

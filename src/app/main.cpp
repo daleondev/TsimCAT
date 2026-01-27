@@ -1,5 +1,6 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QQuickStyle>
 #include <QtPlugin>
 
 Q_IMPORT_PLUGIN(TsimCAT_UIPlugin)
@@ -8,6 +9,7 @@ Q_IMPORT_PLUGIN(TsimCAT_BackendPlugin)
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
+    QQuickStyle::setStyle("Material");
 
     QQmlApplicationEngine engine;
     

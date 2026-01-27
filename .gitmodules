@@ -1,0 +1,3 @@
+[submodule "extern/qcoro"]
+	path = extern/qcoro
+	url = https://github.com/qcoro/qcoro.git
