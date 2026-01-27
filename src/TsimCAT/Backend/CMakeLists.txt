@@ -1,14 +1,12 @@
-qt_add_library(TsimCAT_Backend STATIC
-    Backend.h
-    Backend.cpp
-)
+qt_add_library(TsimCAT_Backend STATIC)
 
+target_compile_features(TsimCAT_Backend PUBLIC cxx_std_23)
 target_link_libraries(TsimCAT_Backend PUBLIC Qt6::Quick)
 
-# Define the module URI for QML
 qt_add_qml_module(TsimCAT_Backend
     URI "TsimCAT.Backend"
     VERSION 1.0
+    RESOURCE_PREFIX "/qt/qml"
     SOURCES
         Backend.h
         Backend.cpp

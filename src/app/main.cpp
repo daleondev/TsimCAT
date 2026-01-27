@@ -2,7 +2,7 @@
 #include <QQmlApplicationEngine>
 #include <QtPlugin>
 
-Q_IMPORT_PLUGIN(TsimCATPlugin)
+Q_IMPORT_PLUGIN(TsimCAT_UIPlugin)
 Q_IMPORT_PLUGIN(TsimCAT_BackendPlugin)
 
 int main(int argc, char *argv[])
@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
     
     using namespace Qt::StringLiterals;
-    const QUrl url(u"qrc:/qt/qml/TsimCAT/Main.qml"_s);
+    const QUrl url(u"qrc:/qt/qml/TsimCAT/UI/Main.qml"_s);
 
     QObject::connect(
         &engine,

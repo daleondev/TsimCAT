@@ -1,0 +1,16 @@
+{
+  "name": "tsimcat",
+  "version-string": "0.1.0",
+  "dependencies": [
+    {
+      "name": "qt-base",
+      "features": [
+        "gui",
+        "widgets"
+      ]
+    },
+    {
+      "name": "qt-declarative"
+    }
+  ]
+}
