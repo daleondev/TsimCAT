@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/qt/qml/TsimCAT/">
+    <file alias="Main.qml">C:/Users/Dev.Windows-Desktop/Desktop/TwinCAT/TsimCAT/src/frontend/Main.qml</file>
+  </qresource>
+</RCC>
+

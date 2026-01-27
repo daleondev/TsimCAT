@@ -1,0 +1,5 @@
+--resource
+C:/Users/Dev.Windows-Desktop/Desktop/TwinCAT/TsimCAT/build/debug/src/frontend/.qt/rcc/qmake_TsimCAT.qrc
+--resource
+C:/Users/Dev.Windows-Desktop/Desktop/TwinCAT/TsimCAT/build/debug/src/frontend/.qt/rcc/TsimCAT_raw_qml_0.qrc
+/qt/qml/TsimCAT/Main.qml

@@ -1,0 +1,11 @@
+{
+	"InstallScripts" : 
+	[
+		"C:/Users/Dev.Windows-Desktop/Desktop/TwinCAT/TsimCAT/build/debug/cmake_install.cmake",
+		"C:/Users/Dev.Windows-Desktop/Desktop/TwinCAT/TsimCAT/build/debug/src/cmake_install.cmake",
+		"C:/Users/Dev.Windows-Desktop/Desktop/TwinCAT/TsimCAT/build/debug/src/backend/cmake_install.cmake",
+		"C:/Users/Dev.Windows-Desktop/Desktop/TwinCAT/TsimCAT/build/debug/src/frontend/cmake_install.cmake",
+		"C:/Users/Dev.Windows-Desktop/Desktop/TwinCAT/TsimCAT/build/debug/src/app/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

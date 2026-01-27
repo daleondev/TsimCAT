@@ -1,0 +1,8 @@
+--bare
+-I
+D:/Qt/6.10.1/mingw_64/qml
+--resource
+C:/Users/Dev.Windows-Desktop/Desktop/TwinCAT/TsimCAT/build/debug/src/frontend/.qt/rcc/qmake_TsimCAT.qrc
+--resource
+C:/Users/Dev.Windows-Desktop/Desktop/TwinCAT/TsimCAT/build/debug/src/frontend/.qt/rcc/TsimCAT_raw_qml_0.qrc
+C:/Users/Dev.Windows-Desktop/Desktop/TwinCAT/TsimCAT/src/frontend/Main.qml

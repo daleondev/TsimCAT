@@ -1,0 +1,9 @@
+-rootPath
+C:/Users/Dev.Windows-Desktop/Desktop/TwinCAT/TsimCAT/src/app
+-cmake-output
+-output-file
+C:/Users/Dev.Windows-Desktop/Desktop/TwinCAT/TsimCAT/build/debug/src/app/.qt/qml_imports/appTsimCAT_conf.cmake
+-importPath
+C:/Users/Dev.Windows-Desktop/Desktop/TwinCAT/TsimCAT/build/debug/src/app
+-importPath
+D:/Qt/6.10.1/mingw_64/qml
