@@ -9,6 +9,13 @@ qt_add_qml_module(TsimCAT_UI
     RESOURCE_PREFIX "/qt/qml"
     QML_FILES
         Main.qml
+        controls/NavigationSidebar.qml
+        icons/DashboardIcon.qml
+        icons/RobotIcon.qml
+        icons/CameraIcon.qml
+        icons/LaserIcon.qml
+        icons/GantryIcon.qml
+        icons/AnalyticsIcon.qml
         subscreens/PlantOverview.qml
         subscreens/RobotStatus.qml
         subscreens/CameraStatus.qml
