@@ -1,3 +1,9 @@
 [submodule "extern/qcoro"]
 	path = extern/qcoro
 	url = https://github.com/qcoro/qcoro.git
+[submodule "extern/ADS"]
+	path = extern/ADS
+	url = https://github.com/Beckhoff/ADS.git
+[submodule "extern/format_utils"]
+	path = extern/format_utils
+	url = https://github.com/daleondev/format_utils.git
