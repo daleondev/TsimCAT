@@ -14,6 +14,7 @@ target_sources(
 target_link_libraries(
     core_simulators
     INTERFACE
+    core::common
     core::coroutines
     core::drivers
 )

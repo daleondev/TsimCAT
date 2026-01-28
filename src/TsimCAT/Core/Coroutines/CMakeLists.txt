@@ -16,6 +16,7 @@ target_sources(
 target_link_libraries(
     core_coroutines
     INTERFACE
+    core::common
     core::utils
 )
 

@@ -7,11 +7,12 @@ target_sources(
     FILE_SET HEADERS
     BASE_DIRS ${CMAKE_CURRENT_LIST_DIR}/..
     FILES 
-        utils.hpp
+        memory_utils.hpp
+        queue_utils.hpp
 )
 
 target_compile_features(
     core_utils 
-    INTERFACE 
+    INTERFACE
     cxx_std_23
 )

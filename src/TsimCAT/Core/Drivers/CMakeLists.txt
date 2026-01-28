@@ -15,6 +15,7 @@ target_sources(
 target_link_libraries(
     core_drivers
     INTERFACE
+    core::common
     core::coroutines
 )
 
