@@ -6,7 +6,7 @@
 #include <ranges>
 #include <span>
 
-namespace coro::utils
+namespace utils
 {
     namespace detail
     {
@@ -90,9 +90,9 @@ namespace coro::utils
         return true;
     }
 
-    auto memcpy(detail::Serializable auto& dest, const std::ranges::range auto& src) -> bool
+    auto memcpy(detail::Serializable auto& dest, const std::ranges::contiguous_range auto& src) -> bool
     {
-        auto srcBytes = std::as_bytes(std::span{ src });
+        auto srcBytes{ std::as_bytes(std::span{ src }) };
         auto destBytes{ std::as_writable_bytes(std::span{ &dest, 1 }) };
         if (srcBytes.size() != destBytes.size()) {
             return false;
@@ -101,9 +101,21 @@ namespace coro::utils
         return true;
     }
 
-    auto memcpy(std::ranges::range auto& dest, const detail::Serializable auto& src) -> bool
+    auto memcpy(std::ranges::contiguous_range auto& dest, const detail::Serializable auto& src) -> bool
     {
         auto srcBytes{ std::as_bytes(std::span{ &src, 1 }) };
+        auto destBytes{ std::as_writable_bytes(std::span{ dest }) };
+        if (srcBytes.size() != destBytes.size()) {
+            return false;
+        }
+        std::ranges::copy(srcBytes, destBytes.begin());
+        return true;
+    }
+
+    auto memcpy(std::ranges::contiguous_range auto& dest, const std::ranges::contiguous_range auto& src)
+      -> bool
+    {
+        auto srcBytes{ std::as_bytes(std::span{ src }) };
         auto destBytes{ std::as_writable_bytes(std::span{ dest }) };
         if (srcBytes.size() != destBytes.size()) {
             return false;

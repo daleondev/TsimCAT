@@ -1,15 +1,13 @@
 qt_add_library(TsimCAT_Backend STATIC)
 
-add_subdirectory(coroutine)
-add_subdirectory(network)
-
 target_link_libraries(TsimCAT_Backend 
     PUBLIC 
     Qt6::Quick
     QCoro6::Core
     QCoro6::Quick
-    coroutine::coroutine
-    network::network
+    core::coroutines
+    core::drivers
+    core::simulators
 )
 
 target_compile_features(

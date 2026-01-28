@@ -1,7 +1,7 @@
 #ifndef BACKEND_H
 #define BACKEND_H
 
-#include "coroutine.hpp"
+#include "../Core/Coroutines/coroutine.hpp"
 
 #include <QCoroTask>
 #include <QObject>
