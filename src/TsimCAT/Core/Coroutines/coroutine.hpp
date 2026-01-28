@@ -4,11 +4,9 @@
 #include "Context.hpp"
 #include "Task.hpp"
 
-#include "Utils/utils.hpp"
-
 #include <functional>
 
-namespace coro
+namespace core::coro
 {
     namespace detail
     {

@@ -5,7 +5,7 @@
 #include <exception>
 #include <utility>
 
-namespace coro
+namespace core::coro
 {
     namespace detail
     {

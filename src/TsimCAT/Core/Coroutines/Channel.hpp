@@ -3,10 +3,13 @@
 #include "Context.hpp"
 #include "Task.hpp"
 
+#include "Utils/memory_utils.hpp"
+#include "Utils/queue_utils.hpp"
+
 #include <list>
 #include <vector>
 
-namespace coro
+namespace core::coro
 {
     namespace detail
     {
@@ -95,7 +98,7 @@ namespace coro
             }
 
             T val{};
-            utils::memcpy(val, result.value());
+            utils::memory::memcpy(val, result.value());
             co_return val;
         }
 
@@ -246,7 +249,7 @@ namespace coro
             auto await_ready() -> bool
             {
                 std::scoped_lock lock(state->mutex);
-                if (auto raw{ utils::pop(state->queue) }) {
+                if (auto raw{ utils::queue::pop(state->queue) }) {
                     dest.emplace(raw.value());
                     return true;
                 }

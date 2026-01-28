@@ -1,12 +1,12 @@
 #pragma once
 
-#include "Utils/utils.hpp"
+#include "Utils/queue_utils.hpp"
 
 #include <condition_variable>
 #include <coroutine>
 #include <deque>
 
-namespace coro
+namespace core::coro
 {
     class IExecutor
     {
@@ -41,7 +41,7 @@ namespace coro
                     break;
                 }
 
-                while (auto handle{ utils::pop(m_queue) }) {
+                while (auto handle{ utils::queue::pop(m_queue) }) {
                     lock.unlock();
                     if (handle && !handle->done()) {
                         handle->resume();
@@ -59,7 +59,7 @@ namespace coro
 
         auto schedule(std::coroutine_handle<> handle) -> void override
         {
-            utils::push(m_queue, handle, m_mutex);
+            utils::queue::push(m_queue, handle, m_mutex);
             m_cv.notify_one();
         }
 

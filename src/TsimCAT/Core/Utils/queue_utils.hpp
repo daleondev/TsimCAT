@@ -64,7 +64,7 @@ namespace core::utils::queue
             return std::nullopt;
         }
 
-        if constexpr (requires { queue.dequeue() }) {
+        if constexpr (requires { queue.dequeue(); }) {
             return queue.dequeue();
         }
         else {
@@ -87,7 +87,7 @@ namespace core::utils::queue
         if constexpr (requires { queue.push(value); }) {
             queue.push(std::move(value));
         }
-        else if (requires { queue.push_back(value); }) {
+        else if constexpr (requires { queue.push_back(value); }) {
             queue.push_back(std::move(value));
         }
         else {
