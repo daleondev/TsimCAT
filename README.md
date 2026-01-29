@@ -1,28 +1,40 @@
 # TsimCAT - Industrial Control Center
 
-TsimCAT is a modern industrial control and simulation interface built with **Qt 6.10.1**, **C++23**, and **QCoro**. It follows a strictly decoupled architecture separating high-performance C++ backend logic from a responsive, Material Design frontend.
+TsimCAT is a modern industrial control and simulation interface built with **Qt 6.10.1**, **C++23**, **Asio**, and **QCoro**. It follows a strictly decoupled architecture separating high-performance C++ backend logic from a responsive, Material Design frontend.
 
 ## 🚀 Key Features
-- **Modern UI**: 16:9 responsive layout with a persistent navigation sidebar.
-- **Async by Design**: Full integration of C++23 coroutines via QCoro for non-blocking I/O and UI.
-- **Procedural Graphics**: Icons are rendered using QML Shapes (no external image assets required).
+- **Modern UI**: 16:9 responsive layout with a persistent navigation sidebar using QtQuick Controls.
+- **Async by Design**: 
+    - **Core Logic**: Custom C++23 coroutine system (`core::coro`) for high-performance, non-blocking operations.
+    - **UI Glue**: Integration with **QCoro** for seamless Qt event loop interoperability.
+- **Multi-Protocol Connectivity**:
+    - **ADS**: Native integration with Beckhoff TwinCAT via `AdsLib`.
+    - **OPC UA**: Client support via `open62541`.
+    - **Raw TCP**: Asynchronous TCP server/client implementation using `Asio`.
+- **Procedural Graphics**: Icons and visuals rendered using QML Shapes (asset-free).
 - **Clean Architecture**: 
-    - **Logic**: Pure C++23 header-only libraries (Network, Coroutine).
-    - **Glue**: Qt-based Backend classes bridging Logic to QML.
-    - **UI**: Modular QML components organized by responsibility.
+    - **Core**: Pure C++23 header-only/static libraries (Coroutines, Links, Simulators). independent of Qt.
+    - **Backend**: Qt-based "Glue" layer bridging Core logic to QML.
+    - **UI**: Modular QML components.
 
 ## 📁 Project Structure
 ```text
 TsimCAT/
 ├── extern/               # Third-party dependencies (Git Submodules)
+│   ├── ADS/              # Beckhoff ADS library
+│   ├── asio/             # Asynchronous I/O (Networking)
+│   ├── open62541/        # OPC UA implementation
 │   └── qcoro/            # Coroutine support for Qt
 ├── src/
 │   ├── app/              # Application entry point (main.cpp)
 │   └── TsimCAT/
-│       ├── Backend/      # C++ Backend & Glue Logic
-│       │   ├── coroutine/ # [Logic] Pure C++ Coroutine Task system
-│       │   └── network/   # [Logic] Pure C++ Network Driver abstractions
-│       └── UI/           # QML Frontend Module (TsimCAT.UI)
+│       ├── Core/         # [Logic] Pure C++23 Domain Layer
+│       │   ├── Common/   # Shared types (Result, etc.)
+│       │   ├── Coroutines/ # Custom Task/Context system
+│       │   ├── Link/     # Communication Drivers (ADS, Tcp, OpcUa)
+│       │   └── Simulators/ # Simulation logic
+│       ├── Backend/      # [Glue] Qt/C++ Bridge (QObject, Q_PROPERTY)
+│       └── UI/           # [View] QML Frontend Module (TsimCAT.UI)
 │           ├── controls/ # Custom reusable QML controls
 │           ├── icons/    # Procedural icon components
 │           └── subscreens/ # Main application views
@@ -57,6 +69,7 @@ TsimCAT/
 
 4. **Run**:
    ```powershell
+   # Ensure Qt binaries are in PATH
    $env:PATH = "D:\Qt\6.10.1\mingw_64\bin;" + $env:PATH
    .\build\debug\appTsimCAT.exe
    ```
@@ -64,32 +77,33 @@ TsimCAT/
 ### VS Code Integration
 The project is pre-configured for VS Code:
 - **IntelliSense**: Powered by `compile_commands.json` (auto-generated).
-- **Styles**: Defaulted to Material Light via `qtquickcontrols2.conf`.
 - **Extension**: Recommended to use "CMake Tools" and "C/C++" extension.
 
 ## 💡 Development Patterns
 
-### Adding a New Icon
-1. Create `NewIcon.qml` in `src/TsimCAT/UI/icons/`.
-2. Define the icon using `Shape` and `ShapePath`.
-3. Add the file to `src/TsimCAT/UI/CMakeLists.txt`.
-4. Use it in the sidebar model in `Main.qml`.
+### Core Logic (Pure C++)
+Implement business logic in `src/TsimCAT/Core`. Use `core::coro::Task` for async operations.
+```cpp
+// Example: src/TsimCAT/Core/Link/Raw/TcpServer.cpp
+auto TcpServer::accept(std::chrono::milliseconds timeout) -> coro::Task<result::Result<void>>
+{
+    // Implementation using Asio bridge
+    co_await m_acceptor.async_accept(m_socket, asio::use_awaitable);
+    co_return result::success();
+}
+```
 
 ### Bridging Logic to UI
 Always follow the "Glue" pattern:
-1. Implement heavy logic in `Backend/network/` or `Backend/coroutine/` as pure C++.
-2. Expose the logic to QML in `Backend.h` using `Q_PROPERTY` and `Q_INVOKABLE`.
-3. Use `QCoro::Task` to run logic asynchronously:
-   ```cpp
-   QCoro::Task<void> Backend::runAsyncLogic() {
-       auto result = co_await m_driver.getData();
-       this->setStatus(result);
-   }
-   ```
+1. Implement heavy logic in `Core/`.
+2. Expose the logic to QML in `Backend/Backend.h` using `Q_PROPERTY` and `Q_INVOKABLE`.
+3. Use `QCoro::Task` to await Core tasks if necessary, or manage them via the Core Context.
 
 ## 📌 Current Status
-- [x] Hierarchical folder structure.
-- [x] QCoro integration & verification test.
-- [x] Navigation sidebar with 6 subscreens.
-- [x] Procedural icons for all subsystems.
-- [x] VS Code IntelliSense fixed.
+- [x] Hierarchical folder structure refactored (`Core`, `Backend`, `UI`).
+- [x] **Core**: Custom Coroutine system implemented.
+- [x] **Core**: Asio-based TCP Server with coroutine bridge (`AsioAwaiter`).
+- [x] **Core**: ADS Link and OPC UA Client skeletons/implementations.
+- [x] **UI**: Navigation sidebar with 6 subscreens.
+- [x] **UI**: Procedural icons for all subsystems.
+- [x] Build system fully configured with CMake Presets.

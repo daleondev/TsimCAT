@@ -17,6 +17,19 @@ namespace core::link
         Faulty
     };
 
+    class IServer
+    {
+      public:
+        virtual ~IServer() = default;
+
+        virtual auto start() -> result::Result<void> = 0;
+        virtual auto stop() -> result::Result<void> = 0;
+        virtual auto accept(std::chrono::milliseconds timeout = NO_TIMEOUT)
+          -> coro::Task<result::Result<void>> = 0;
+
+        virtual auto status() const -> Status = 0;
+    };
+
     class IClient
     {
       public:
@@ -24,7 +37,9 @@ namespace core::link
 
         virtual auto connect(std::chrono::milliseconds timeout = NO_TIMEOUT)
           -> coro::Task<result::Result<void>> = 0;
-        virtual auto disconnect() -> coro::Task<result::Result<void>> = 0;
+        virtual auto disconnect(std::chrono::milliseconds timeout = NO_TIMEOUT)
+          -> coro::Task<result::Result<void>> = 0;
+
         virtual auto status() const -> Status = 0;
     };
 }

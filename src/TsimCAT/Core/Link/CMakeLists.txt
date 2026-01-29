@@ -4,6 +4,7 @@ add_library(core::link ALIAS core_link)
 target_sources(
     core_link
     PRIVATE
+    Raw/TcpServer.cpp
     Symbolic/AdsClient.cpp
     Symbolic/OpcUaClient.cpp
 
@@ -11,9 +12,11 @@ target_sources(
     FILE_SET HEADERS
     BASE_DIRS ${CMAKE_CURRENT_LIST_DIR}/..
     FILES 
-        IClient.hpp
+        ILink.hpp
         Subscription.hpp
-        Symbolic/ISymbolicClient.hpp
+        Raw/IRawLink.hpp
+        Raw/TcpServer.hpp
+        Symbolic/ISymbolicLink.hpp
         Symbolic/AdsClient.hpp
         Symbolic/OpcUaClient.hpp
 )

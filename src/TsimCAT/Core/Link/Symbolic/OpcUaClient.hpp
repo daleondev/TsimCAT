@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ISymbolicClient.hpp"
+#include "ISymbolicLink.hpp"
 
 #include "Utils/memory_utils.hpp"
 
@@ -11,7 +11,9 @@
 
 namespace core::link::symbolic
 {
-    class OpcUaClient : public ISymbolicClient
+    class OpcUaClient
+      : public IClient
+      , public ISymbolicLink
     {
       public:
         explicit OpcUaClient(std::string endpointUrl);

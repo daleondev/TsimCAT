@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ISymbolicClient.hpp"
+#include "ISymbolicLink.hpp"
 
 #include <AdsLib/AdsDevice.h>
 #include <AdsLib/AdsLib.h>
@@ -12,7 +12,9 @@
 
 namespace core::link::symbolic
 {
-    class AdsClient : public ISymbolicClient
+    class AdsClient
+      : public IClient
+      , public ISymbolicLink
     {
       public:
         AdsClient(std::string_view remoteNetId,
