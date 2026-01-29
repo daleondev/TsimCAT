@@ -55,4 +55,17 @@ namespace core::utils::memory
         std::ranges::copy(srcBytes, destBytes.begin());
         return true;
     }
+
+    template<auto DeleteFn>
+    struct Deleter
+    {
+        void operator()(auto* ptr) const
+        {
+            static_assert(std::invocable<decltype(DeleteFn), decltype(ptr)>,
+                          "The provided function signature does not match the object type.");
+            if (ptr) {
+                DeleteFn(ptr);
+            }
+        }
+    };
 }

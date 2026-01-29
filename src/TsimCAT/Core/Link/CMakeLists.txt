@@ -5,6 +5,7 @@ target_sources(
     core_link
     PRIVATE
     Symbolic/AdsLink.cpp
+    Symbolic/OpcUaLink.cpp
 
     PUBLIC
     FILE_SET HEADERS
@@ -14,12 +15,14 @@ target_sources(
         Subscription.hpp
         Symbolic/ISymbolicLink.hpp
         Symbolic/AdsLink.hpp
+        Symbolic/OpcUaLink.hpp
 )
 
 target_link_libraries(
     core_link
     PRIVATE
     ads::ads
+    open62541::open62541
 
     PUBLIC
     core::common
