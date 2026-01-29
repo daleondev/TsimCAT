@@ -19,4 +19,11 @@ set(QCORO_WITH_QTNETWORK OFF CACHE BOOL "" FORCE)
 set(QCORO_WITH_QTDBUS OFF CACHE BOOL "" FORCE)
 add_subdirectory(extern/qcoro)
 
+add_subdirectory(extern/format_utils)
+
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+add_subdirectory(extern/ADS/AdsLib)
+set_target_properties(ads PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/extern/ADS")
+target_compile_definitions(ads PRIVATE CONFIG_DEFAULT_LOGLEVEL=1)
+
 add_subdirectory(src)

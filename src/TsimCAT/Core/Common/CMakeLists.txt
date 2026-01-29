@@ -13,6 +13,7 @@ target_sources(
 target_link_libraries(
     core_common
     INTERFACE
+    format_utils::format_utils
     stdc++exp
 )
 

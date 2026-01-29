@@ -58,7 +58,7 @@ namespace core::utils::queue
     auto pop(detail::Queue auto& queue, L&& lockable = detail::NotLocked{})
       -> std::optional<typename std::remove_reference_t<decltype(queue)>::value_type>
     {
-        std::scoped_lock lock(lockable);
+        std::scoped_lock lock{ lockable };
 
         if (queue.empty()) {
             return std::nullopt;
@@ -82,7 +82,7 @@ namespace core::utils::queue
     template<detail::Lockable L = detail::NotLocked>
     auto push(detail::Queue auto& queue, auto value, L&& lockable = detail::NotLocked{}) -> void
     {
-        std::scoped_lock lock(lockable);
+        std::scoped_lock lock{ lockable };
 
         if constexpr (requires { queue.push(value); }) {
             queue.push(std::move(value));

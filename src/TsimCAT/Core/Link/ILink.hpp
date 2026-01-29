@@ -1,13 +1,14 @@
 #pragma once
 
+#include "Common/Result.hpp"
 #include "Coroutines/Task.hpp"
 
 #include <chrono>
-#include <expected>
-#include <system_error>
 
-namespace core::comm
+namespace core::link
 {
+    static constexpr std::chrono::milliseconds NO_TIMEOUT{ std::chrono::milliseconds(0) };
+
     enum class Status
     {
         Disconnected,
@@ -16,12 +17,12 @@ namespace core::comm
         Faulty
     };
 
-    class IDriver
+    class ILink
     {
       public:
-        virtual ~IDriver() = default;
+        virtual ~ILink() = default;
 
-        virtual auto connect(std::chrono::milliseconds timeout = std::chrono::milliseconds(0))
+        virtual auto connect(std::chrono::milliseconds timeout = NO_TIMEOUT)
           -> coro::Task<result::Result<void>> = 0;
         virtual auto disconnect() -> coro::Task<result::Result<void>> = 0;
         virtual auto status() const -> Status = 0;
