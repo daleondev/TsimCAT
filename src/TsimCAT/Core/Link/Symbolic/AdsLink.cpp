@@ -5,13 +5,9 @@
 
 #include <atomic>
 #include <cassert>
-#include <iostream>
 #include <mutex>
 #include <print>
-#include <ranges>
-#include <thread>
 #include <unordered_map>
-#include <unordered_set>
 
 namespace
 {
@@ -21,7 +17,7 @@ namespace
         AmsNetId netId{};
 
         auto i{ 0uz };
-        for (auto&& part : parts) {
+        for (const auto& part : parts) {
             assert(i < 6 && "Invalid NetId string");
             std::from_chars(part.data(), part.data() + part.size(), netId.b[i]);
             ++i;
@@ -110,7 +106,7 @@ namespace
       public:
         const char* name() const noexcept override { return "AdsError"; }
 
-        std::string message(int ev) const override { return std::format("{:v}", ev); }
+        std::string message(int ev) const override { return std::format("{:v}", static_cast<AdsError>(ev)); }
     };
 
     const std::error_category& ads_category()
@@ -392,4 +388,4 @@ namespace core::link::symbolic
         m_route->SetTimeout(ms ? ms : m_defaultTimeout.count());
     }
 
-} // namespace tlink
+}
