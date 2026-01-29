@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ISymbolicLink.hpp"
+#include "ISymbolicClient.hpp"
 
 #include "Utils/memory_utils.hpp"
 
@@ -11,11 +11,11 @@
 
 namespace core::link::symbolic
 {
-    class OpcUaLink : public ISymbolicLink
+    class OpcUaClient : public ISymbolicClient
     {
       public:
-        explicit OpcUaLink(std::string endpointUrl);
-        ~OpcUaLink() override;
+        explicit OpcUaClient(std::string endpointUrl);
+        ~OpcUaClient() override;
 
         // clang-format off
         auto connect(std::chrono::milliseconds timeout = NO_TIMEOUT) -> coro::Task<result::Result<void>> override;
@@ -36,6 +36,8 @@ namespace core::link::symbolic
         auto unsubscribeRawSync(uint64_t id) -> void override;
         // clang-format on
 
+        inline operator UA_Client*() { return m_client.get(); }
+
       private:
         auto handleChannelState(UA_SecureChannelState state) -> void;
         auto handleSessionState(UA_SessionState state) -> void;
@@ -49,9 +51,6 @@ namespace core::link::symbolic
                                                    UA_DataValue* value);
         void handleDataChange(UA_UInt32 monId, UA_DataValue* value);
 
-        std::string m_endpointUrl;
-        bool m_connected{ false };
-        bool m_sessionActive{ false };
         struct MonitoredItemInfo
         {
             uint32_t subscriptionId;
@@ -61,16 +60,21 @@ namespace core::link::symbolic
             std::chrono::milliseconds interval;
             std::chrono::steady_clock::time_point nextPoll;
         };
+
+        auto doPoll(MonitoredItemInfo& info) -> void;
+
+        std::string m_endpointUrl;
+        bool m_connected{ false };
+        bool m_sessionActive{ false };
+
         std::unordered_map<uint32_t, MonitoredItemInfo> m_monitoredItems;
         std::unordered_map<int64_t, uint32_t> m_subscriptionMap;
 
         std::unique_ptr<UA_Client, utils::memory::Deleter<UA_Client_delete>> m_client;
-
-        auto doPoll(MonitoredItemInfo& info) -> void;
 
         std::recursive_mutex m_mutex;
         std::atomic<bool> m_workerRunning{ false };
         std::jthread m_worker;
     };
 
-} // namespace tlink::drivers
+}

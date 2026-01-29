@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Link/ILink.hpp"
+#include "Link/IClient.hpp"
 #include "Link/Subscription.hpp"
 
 #include "Common/Result.hpp"
@@ -12,10 +12,10 @@
 
 namespace core::link::symbolic
 {
-    class ISymbolicLink : public ILink
+    class ISymbolicClient : public IClient
     {
       public:
-        virtual ~ISymbolicLink() = default;
+        virtual ~ISymbolicClient() = default;
 
         // clang-format off
         virtual auto connect(std::chrono::milliseconds timeout = NO_TIMEOUT) -> coro::Task<result::Result<void>> = 0;

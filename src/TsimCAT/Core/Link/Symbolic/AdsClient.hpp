@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ISymbolicLink.hpp"
+#include "ISymbolicClient.hpp"
 
 #include <AdsLib/AdsDevice.h>
 #include <AdsLib/AdsLib.h>
@@ -12,14 +12,14 @@
 
 namespace core::link::symbolic
 {
-    class AdsDriver : public ISymbolicLink
+    class AdsClient : public ISymbolicClient
     {
       public:
-        AdsDriver(std::string_view remoteNetId,
+        AdsClient(std::string_view remoteNetId,
                   std::string ipAddress,
                   uint16_t port = AMSPORT_R0_PLC_TC3,
                   std::string_view localNetId = "");
-        ~AdsDriver() override;
+        ~AdsClient() override;
 
         // clang-format off
         auto connect(std::chrono::milliseconds timeout = NO_TIMEOUT) -> coro::Task<result::Result<void>> override;

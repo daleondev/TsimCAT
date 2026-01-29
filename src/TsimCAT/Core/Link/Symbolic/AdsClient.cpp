@@ -1,4 +1,4 @@
-#include "AdsLink.hpp"
+#include "AdsClient.hpp"
 #include "Coroutines/Context.hpp"
 
 #include "format_utils.hpp"
@@ -133,7 +133,7 @@ namespace
 
     // Registry for safe 64-bit -> 32-bit callback handling
     static std::mutex s_registryMutex;
-    static std::unordered_map<uint32_t, core::link::symbolic::AdsDriver*> s_registry;
+    static std::unordered_map<uint32_t, core::link::symbolic::AdsClient*> s_registry;
     static std::atomic<uint32_t> s_nextDriverId{ 1 };
 }
 
@@ -148,7 +148,7 @@ namespace std
 namespace core::link::symbolic
 {
 
-    AdsDriver::AdsDriver(std::string_view remoteNetId,
+    AdsClient::AdsClient(std::string_view remoteNetId,
                          std::string ipAddress,
                          uint16_t port,
                          std::string_view localNetId)
@@ -169,7 +169,7 @@ namespace core::link::symbolic
         }
     }
 
-    AdsDriver::~AdsDriver()
+    AdsClient::~AdsClient()
     {
         (void)disconnect(std::chrono::milliseconds(0));
 
@@ -179,7 +179,7 @@ namespace core::link::symbolic
         }
     }
 
-    auto AdsDriver::connect(std::chrono::milliseconds timeout) -> coro::Task<result::Result<void>>
+    auto AdsClient::connect(std::chrono::milliseconds timeout) -> coro::Task<result::Result<void>>
     {
         auto err{ AdsError::None };
         try {
@@ -196,7 +196,7 @@ namespace core::link::symbolic
         co_return err == AdsError::None ? result::success() : std::unexpected(make_error_code(err));
     }
 
-    auto AdsDriver::disconnect(std::chrono::milliseconds timeout) -> coro::Task<result::Result<void>>
+    auto AdsClient::disconnect(std::chrono::milliseconds timeout) -> coro::Task<result::Result<void>>
     {
         if (!m_route) {
             co_return result::success();
@@ -224,7 +224,7 @@ namespace core::link::symbolic
         co_return err == AdsError::None ? result::success() : std::unexpected(make_error_code(err));
     }
 
-    auto AdsDriver::readInto(std::string_view path,
+    auto AdsClient::readInto(std::string_view path,
                              std::span<std::byte> dest,
                              std::chrono::milliseconds timeout) -> coro::Task<result::Result<size_t>>
     {
@@ -251,7 +251,7 @@ namespace core::link::symbolic
         co_return bytesRead;
     }
 
-    auto AdsDriver::writeFrom(std::string_view path,
+    auto AdsClient::writeFrom(std::string_view path,
                               std::span<const std::byte> src,
                               std::chrono::milliseconds timeout) -> coro::Task<result::Result<void>>
     {
@@ -269,14 +269,14 @@ namespace core::link::symbolic
         co_return err == AdsError::None ? result::success() : std::unexpected(make_error_code(err));
     }
 
-    void AdsDriver::NotificationCallback(const AmsAddr* pAddr,
+    void AdsClient::NotificationCallback(const AmsAddr* pAddr,
                                          const AdsNotificationHeader* pNotification,
                                          uint32_t hUser)
     {
         if (!hUser)
             return;
 
-        AdsDriver* driver = nullptr;
+        AdsClient* driver = nullptr;
         {
             std::scoped_lock lock(s_registryMutex);
             if (auto it = s_registry.find(hUser); it != s_registry.end()) {
@@ -289,7 +289,7 @@ namespace core::link::symbolic
         }
     }
 
-    void AdsDriver::OnNotification(const AdsNotificationHeader* pNotification)
+    void AdsClient::OnNotification(const AdsNotificationHeader* pNotification)
     {
         std::shared_ptr<RawSubscription> stream;
         std::vector<std::byte> data;
@@ -309,7 +309,7 @@ namespace core::link::symbolic
         }
     }
 
-    auto AdsDriver::subscribeRaw(std::string_view path,
+    auto AdsClient::subscribeRaw(std::string_view path,
                                  size_t size,
                                  SubscriptionType type,
                                  std::chrono::milliseconds interval)
@@ -328,7 +328,7 @@ namespace core::link::symbolic
         try {
             auto symbolHandle{ m_route->GetHandle(std::string(path)) };
             auto notificationHandle{ m_route->GetHandle(
-              ADSIGRP_SYM_VALBYHND, *symbolHandle, attrib, &AdsDriver::NotificationCallback, m_driverId) };
+              ADSIGRP_SYM_VALBYHND, *symbolHandle, attrib, &AdsClient::NotificationCallback, m_driverId) };
             auto id{ *notificationHandle };
 
             std::scoped_lock lock(m_mutex);
@@ -353,7 +353,7 @@ namespace core::link::symbolic
         co_return std::unexpected(make_error_code(err));
     }
 
-    auto AdsDriver::unsubscribeRaw(std::shared_ptr<RawSubscription> subscription)
+    auto AdsClient::unsubscribeRaw(std::shared_ptr<RawSubscription> subscription)
       -> coro::Task<result::Result<void>>
     {
         if (!subscription) {
@@ -365,7 +365,7 @@ namespace core::link::symbolic
         co_return result::success();
     }
 
-    auto AdsDriver::unsubscribeRawSync(uint64_t id) -> void
+    auto AdsClient::unsubscribeRawSync(uint64_t id) -> void
     {
         std::scoped_lock lock(m_mutex);
         if (auto it = m_subscriptionContexts.find(static_cast<uint32_t>(id));
@@ -377,12 +377,12 @@ namespace core::link::symbolic
         }
     }
 
-    auto AdsDriver::getTimeout() -> std::chrono::milliseconds
+    auto AdsClient::getTimeout() -> std::chrono::milliseconds
     {
         return std::chrono::milliseconds(m_route->GetTimeout());
     }
 
-    auto AdsDriver::setTimeout(std::chrono::milliseconds timeout) -> void
+    auto AdsClient::setTimeout(std::chrono::milliseconds timeout) -> void
     {
         auto ms{ timeout.count() };
         m_route->SetTimeout(ms ? ms : m_defaultTimeout.count());

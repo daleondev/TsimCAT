@@ -1,4 +1,4 @@
-#include "OpcUaLink.hpp"
+#include "OpcUaClient.hpp"
 #include "Coroutines/Context.hpp"
 
 #include "format_utils.hpp"
@@ -356,7 +356,7 @@ namespace
 namespace core::link::symbolic
 {
 
-    OpcUaLink::OpcUaLink(std::string endpointUrl)
+    OpcUaClient::OpcUaClient(std::string endpointUrl)
       : m_endpointUrl(std::move(endpointUrl))
     {
         m_client.reset(UA_Client_new());
@@ -367,13 +367,13 @@ namespace core::link::symbolic
                                    UA_SecureChannelState channelState,
                                    UA_SessionState sessionState,
                                    UA_StatusCode connectStatus) -> void {
-            auto* self{ reinterpret_cast<OpcUaLink*>(UA_Client_getConfig(client)->clientContext) };
+            auto* self{ reinterpret_cast<OpcUaClient*>(UA_Client_getConfig(client)->clientContext) };
             self->handleChannelState(channelState);
             self->handleSessionState(sessionState);
         };
     }
 
-    OpcUaLink::~OpcUaLink()
+    OpcUaClient::~OpcUaClient()
     {
         // Ensure we stop the worker before destroying the client
         m_workerRunning = false;
@@ -386,7 +386,7 @@ namespace core::link::symbolic
         }
     }
 
-    auto OpcUaLink::connect(std::chrono::milliseconds timeout) -> coro::Task<result::Result<void>>
+    auto OpcUaClient::connect(std::chrono::milliseconds timeout) -> coro::Task<result::Result<void>>
     {
         if (!m_client) {
             co_return std::unexpected(make_error_code(UaStatus::Bad));
@@ -411,7 +411,7 @@ namespace core::link::symbolic
         co_return result::success();
     }
 
-    auto OpcUaLink::disconnect(std::chrono::milliseconds timeout) -> coro::Task<result::Result<void>>
+    auto OpcUaClient::disconnect(std::chrono::milliseconds timeout) -> coro::Task<result::Result<void>>
     {
         m_workerRunning = false;
         if (m_worker.joinable()) {
@@ -437,9 +437,9 @@ namespace core::link::symbolic
         co_return result::success();
     }
 
-    auto OpcUaLink::readInto(std::string_view path,
-                             std::span<std::byte> dest,
-                             std::chrono::milliseconds timeout) -> coro::Task<result::Result<size_t>>
+    auto OpcUaClient::readInto(std::string_view path,
+                               std::span<std::byte> dest,
+                               std::chrono::milliseconds timeout) -> coro::Task<result::Result<size_t>>
     {
         // TODO: use async
 
@@ -485,9 +485,9 @@ namespace core::link::symbolic
         co_return bytesRead;
     };
 
-    auto OpcUaLink::writeFrom(std::string_view path,
-                              std::span<const std::byte> src,
-                              std::chrono::milliseconds timeout) -> coro::Task<result::Result<void>>
+    auto OpcUaClient::writeFrom(std::string_view path,
+                                std::span<const std::byte> src,
+                                std::chrono::milliseconds timeout) -> coro::Task<result::Result<void>>
     {
         // TODO: use async
 
@@ -549,10 +549,10 @@ namespace core::link::symbolic
         co_return result::success();
     }
 
-    auto OpcUaLink::subscribeRaw(std::string_view path,
-                                 size_t size,
-                                 SubscriptionType type,
-                                 std::chrono::milliseconds interval)
+    auto OpcUaClient::subscribeRaw(std::string_view path,
+                                   size_t size,
+                                   SubscriptionType type,
+                                   std::chrono::milliseconds interval)
       -> coro::Task<result::Result<std::shared_ptr<RawSubscription>>>
     {
         std::scoped_lock lock(m_mutex);
@@ -639,7 +639,7 @@ namespace core::link::symbolic
         co_return subStream;
     }
 
-    auto OpcUaLink::unsubscribeRaw(std::shared_ptr<RawSubscription> subscription)
+    auto OpcUaClient::unsubscribeRaw(std::shared_ptr<RawSubscription> subscription)
       -> coro::Task<result::Result<void>>
     {
         if (subscription) {
@@ -648,7 +648,7 @@ namespace core::link::symbolic
         co_return result::success();
     }
 
-    auto OpcUaLink::unsubscribeRawSync(uint64_t id) -> void
+    auto OpcUaClient::unsubscribeRawSync(uint64_t id) -> void
     {
         std::scoped_lock lock(m_mutex);
         if (auto it = m_monitoredItems.find(static_cast<uint32_t>(id)); it != m_monitoredItems.end()) {
@@ -663,7 +663,7 @@ namespace core::link::symbolic
         }
     }
 
-    auto OpcUaLink::handleChannelState(UA_SecureChannelState state) -> void
+    auto OpcUaClient::handleChannelState(UA_SecureChannelState state) -> void
     {
         switch (state) {
             case UA_SECURECHANNELSTATE_CLOSED:
@@ -688,7 +688,7 @@ namespace core::link::symbolic
         }
     }
 
-    auto OpcUaLink::handleSessionState(UA_SessionState state) -> void
+    auto OpcUaClient::handleSessionState(UA_SessionState state) -> void
     {
         switch (state) {
             case UA_SESSIONSTATE_CLOSED:
@@ -706,7 +706,7 @@ namespace core::link::symbolic
         }
     }
 
-    void OpcUaLink::worker()
+    void OpcUaClient::worker()
     {
         while (m_workerRunning) {
             auto now = std::chrono::steady_clock::now();
@@ -729,7 +729,7 @@ namespace core::link::symbolic
         }
     }
 
-    void OpcUaLink::doPoll(MonitoredItemInfo& info)
+    void OpcUaClient::doPoll(MonitoredItemInfo& info)
     {
         auto node{ strToNode(info.path) };
         if (!node)
@@ -756,21 +756,21 @@ namespace core::link::symbolic
         UA_Variant_clear(&value);
     }
 
-    void OpcUaLink::dataChangeNotificationCallback(UA_Client* client,
-                                                   UA_UInt32 subId,
-                                                   void* subContext,
-                                                   UA_UInt32 monId,
-                                                   void* monContext,
-                                                   UA_DataValue* value)
+    void OpcUaClient::dataChangeNotificationCallback(UA_Client* client,
+                                                     UA_UInt32 subId,
+                                                     void* subContext,
+                                                     UA_UInt32 monId,
+                                                     void* monContext,
+                                                     UA_DataValue* value)
     {
-        // clientContext points to OpcUaLink
-        auto* driver = reinterpret_cast<OpcUaLink*>(UA_Client_getConfig(client)->clientContext);
+        // clientContext points to OpcUaClient
+        auto* driver = reinterpret_cast<OpcUaClient*>(UA_Client_getConfig(client)->clientContext);
         if (driver) {
             driver->handleDataChange(monId, value);
         }
     }
 
-    void OpcUaLink::handleDataChange(UA_UInt32 monId, UA_DataValue* value)
+    void OpcUaClient::handleDataChange(UA_UInt32 monId, UA_DataValue* value)
     {
         std::shared_ptr<RawSubscription> sub;
         {

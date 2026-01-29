@@ -4,18 +4,18 @@ add_library(core::link ALIAS core_link)
 target_sources(
     core_link
     PRIVATE
-    Symbolic/AdsLink.cpp
-    Symbolic/OpcUaLink.cpp
+    Symbolic/AdsClient.cpp
+    Symbolic/OpcUaClient.cpp
 
     PUBLIC
     FILE_SET HEADERS
     BASE_DIRS ${CMAKE_CURRENT_LIST_DIR}/..
     FILES 
-        ILink.hpp
+        IClient.hpp
         Subscription.hpp
-        Symbolic/ISymbolicLink.hpp
-        Symbolic/AdsLink.hpp
-        Symbolic/OpcUaLink.hpp
+        Symbolic/ISymbolicClient.hpp
+        Symbolic/AdsClient.hpp
+        Symbolic/OpcUaClient.hpp
 )
 
 target_link_libraries(
@@ -23,6 +23,7 @@ target_link_libraries(
     PRIVATE
     ads::ads
     open62541::open62541
+    asio::asio
 
     PUBLIC
     core::common

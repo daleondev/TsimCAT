@@ -17,10 +17,10 @@ namespace core::link
         Faulty
     };
 
-    class ILink
+    class IClient
     {
       public:
-        virtual ~ILink() = default;
+        virtual ~IClient() = default;
 
         virtual auto connect(std::chrono::milliseconds timeout = NO_TIMEOUT)
           -> coro::Task<result::Result<void>> = 0;

@@ -25,3 +25,12 @@ set(UA_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(UA_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 set(UA_BUILD_UNIT_TESTS OFF CACHE BOOL "" FORCE)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/open62541)
+
+# asio
+add_library(asio INTERFACE)
+add_library(asio::asio ALIAS asio)
+target_include_directories(
+    asio
+    INTERFACE
+    ${CMAKE_CURRENT_LIST_DIR}/asio/asio/include
+)
