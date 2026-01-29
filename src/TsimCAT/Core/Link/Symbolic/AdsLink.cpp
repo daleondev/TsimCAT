@@ -137,7 +137,7 @@ namespace
 
     // Registry for safe 64-bit -> 32-bit callback handling
     static std::mutex s_registryMutex;
-    static std::unordered_map<uint32_t, tlink::drivers::AdsDriver*> s_registry;
+    static std::unordered_map<uint32_t, core::link::symbolic::AdsDriver*> s_registry;
     static std::atomic<uint32_t> s_nextDriverId{ 1 };
 }
 
@@ -183,7 +183,7 @@ namespace core::link::symbolic
         }
     }
 
-    auto AdsDriver::connect(std::chrono::milliseconds timeout) -> coro::Task<Result<void>>
+    auto AdsDriver::connect(std::chrono::milliseconds timeout) -> coro::Task<result::Result<void>>
     {
         auto err{ AdsError::None };
         try {
@@ -197,13 +197,13 @@ namespace core::link::symbolic
             err = handleException(ex);
         }
 
-        co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
+        co_return err == AdsError::None ? result::success() : std::unexpected(make_error_code(err));
     }
 
-    auto AdsDriver::disconnect(std::chrono::milliseconds timeout) -> coro::Task<Result<void>>
+    auto AdsDriver::disconnect(std::chrono::milliseconds timeout) -> coro::Task<result::Result<void>>
     {
         if (!m_route) {
-            co_return success();
+            co_return result::success();
         }
 
         auto err{ AdsError::None };
@@ -225,12 +225,12 @@ namespace core::link::symbolic
             err = handleException(ex);
         }
 
-        co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
+        co_return err == AdsError::None ? result::success() : std::unexpected(make_error_code(err));
     }
 
     auto AdsDriver::readInto(std::string_view path,
                              std::span<std::byte> dest,
-                             std::chrono::milliseconds timeout) -> coro::Task<Result<size_t>>
+                             std::chrono::milliseconds timeout) -> coro::Task<result::Result<size_t>>
     {
         uint32_t bytesRead = 0;
         auto err{ AdsError::None };
@@ -257,7 +257,7 @@ namespace core::link::symbolic
 
     auto AdsDriver::writeFrom(std::string_view path,
                               std::span<const std::byte> src,
-                              std::chrono::milliseconds timeout) -> coro::Task<Result<void>>
+                              std::chrono::milliseconds timeout) -> coro::Task<result::Result<void>>
     {
         auto err{ AdsError::None };
         try {
@@ -270,7 +270,7 @@ namespace core::link::symbolic
             err = handleException(ex);
         }
 
-        co_return err == AdsError::None ? success() : std::unexpected(make_error_code(err));
+        co_return err == AdsError::None ? result::success() : std::unexpected(make_error_code(err));
     }
 
     void AdsDriver::NotificationCallback(const AmsAddr* pAddr,
@@ -317,7 +317,7 @@ namespace core::link::symbolic
                                  size_t size,
                                  SubscriptionType type,
                                  std::chrono::milliseconds interval)
-      -> coro::Task<Result<std::shared_ptr<RawSubscription>>>
+      -> coro::Task<result::Result<std::shared_ptr<RawSubscription>>>
     {
         uint32_t transMode{ (type == SubscriptionType::OnChange) ? ADSTRANS_SERVERONCHA
                                                                  : ADSTRANS_SERVERCYCLE };
@@ -357,15 +357,16 @@ namespace core::link::symbolic
         co_return std::unexpected(make_error_code(err));
     }
 
-    auto AdsDriver::unsubscribeRaw(std::shared_ptr<RawSubscription> subscription) -> coro::Task<Result<void>>
+    auto AdsDriver::unsubscribeRaw(std::shared_ptr<RawSubscription> subscription)
+      -> coro::Task<result::Result<void>>
     {
         if (!subscription) {
-            co_return success();
+            co_return result::success();
         }
         // Just clearing our internal reference is enough, the deleter handles the rest
         // when the user's reference also goes away.
         unsubscribeRawSync(subscription->id);
-        co_return success();
+        co_return result::success();
     }
 
     auto AdsDriver::unsubscribeRawSync(uint64_t id) -> void

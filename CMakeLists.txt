@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(TsimCAT VERSION 0.1 LANGUAGES CXX)
 
+set(CMAKE_DISABLE_FIND_PACKAGE_WrapVulkanHeaders ON)
 find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2)
 
 qt_policy(SET QTP0001 NEW)

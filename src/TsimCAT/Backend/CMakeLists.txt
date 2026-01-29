@@ -6,7 +6,7 @@ target_link_libraries(TsimCAT_Backend
     QCoro6::Core
     QCoro6::Quick
     core::coroutines
-    core::drivers
+    core::link
     core::simulators
 )
 

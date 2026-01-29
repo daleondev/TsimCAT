@@ -19,7 +19,7 @@ target_link_libraries(
     PUBLIC
     core::common
     core::coroutines
-    core::drivers
+    core::link
 )
 
 target_compile_features(
