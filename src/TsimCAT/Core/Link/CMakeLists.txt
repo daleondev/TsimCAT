@@ -23,14 +23,23 @@ target_sources(
 
 target_link_libraries(
     core_link
-    PRIVATE
+    PUBLIC
     ads::ads
     open62541::open62541
     asio::asio
-
-    PUBLIC
     core::common
     core::coroutines
+)
+
+if(WIN32)
+    target_link_libraries(core_link PUBLIC ws2_32 mswsock)
+endif()
+
+target_compile_definitions(
+    core_link
+    PUBLIC
+    ASIO_STANDALONE
+    ASIO_DISABLE_IOCP
 )
 
 target_compile_features(

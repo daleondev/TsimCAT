@@ -84,6 +84,11 @@ namespace core::link::raw
 
     auto TcpServer::accept(std::chrono::milliseconds timeout) -> coro::Task<result::Result<void>>
     {
+        if (m_socket.is_open()) {
+            asio::error_code ec;
+            m_socket.close(ec);
+        }
+
         m_status = Status::Connecting;
         auto res = co_await AsioAwaiter<result::Result<void>>{
             m_context,
@@ -143,18 +148,22 @@ namespace core::link::raw
         co_return co_await AsioAwaiter<result::Result<size_t>>{
             m_context,
             [&]() -> asio::awaitable<result::Result<size_t>> {
-                asio::steady_timer timer(co_await asio::this_coro::executor);
-                timer.expires_after(timeout);
+                if (timeout != NO_TIMEOUT) {
+                    asio::steady_timer timer(co_await asio::this_coro::executor);
+                    timer.expires_after(timeout);
 
-                using namespace asio::experimental::awaitable_operators;
-                auto result = co_await (asio::async_read(m_socket, asio::buffer(dest), asio::use_awaitable) ||
-                                        timer.async_wait(asio::use_awaitable));
+                    using namespace asio::experimental::awaitable_operators;
+                    auto result = co_await (m_socket.async_read_some(asio::buffer(dest), asio::use_awaitable) ||
+                                            timer.async_wait(asio::use_awaitable));
 
-                if (result.index() == 0) {
-                    co_return std::get<0>(result);
+                    if (result.index() == 0) {
+                        co_return std::get<0>(result);
+                    }
+                    co_return std::unexpected(make_error_code(asio::error::timed_out));
+                } else {
+                    auto result = co_await m_socket.async_read_some(asio::buffer(dest), asio::use_awaitable);
+                    co_return result;
                 }
-
-                co_return std::unexpected(make_error_code(asio::error::timed_out));
             }()
         };
     }
@@ -170,16 +179,20 @@ namespace core::link::raw
         co_return co_await AsioAwaiter<result::Result<void>>{
             m_context,
             [&]() -> asio::awaitable<result::Result<void>> {
-                asio::steady_timer timer(co_await asio::this_coro::executor);
-                timer.expires_after(timeout);
-                using namespace asio::experimental::awaitable_operators;
-                auto result = co_await (asio::async_write(m_socket, asio::buffer(src), asio::use_awaitable) ||
-                                        timer.async_wait(asio::use_awaitable));
-                if (result.index() == 0) {
+                if (timeout != NO_TIMEOUT) {
+                    asio::steady_timer timer(co_await asio::this_coro::executor);
+                    timer.expires_after(timeout);
+                    using namespace asio::experimental::awaitable_operators;
+                    auto result = co_await (asio::async_write(m_socket, asio::buffer(src), asio::use_awaitable) ||
+                                            timer.async_wait(asio::use_awaitable));
+                    if (result.index() == 0) {
+                        co_return result::success();
+                    }
+                    co_return std::unexpected(make_error_code(asio::error::timed_out));
+                } else {
+                    co_await asio::async_write(m_socket, asio::buffer(src), asio::use_awaitable);
                     co_return result::success();
                 }
-
-                co_return std::unexpected(make_error_code(asio::error::timed_out));
             }()
         };
     }

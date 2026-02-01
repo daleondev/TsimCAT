@@ -47,7 +47,9 @@ ApplicationWindow {
             Subscreens.PlantOverview {}
             Subscreens.RobotStatus {}
             Subscreens.CameraStatus {}
-            Subscreens.LaserStatus {}
+            Subscreens.LaserStatus {
+                backend: backend
+            }
             Subscreens.GantryStatus {}
             Subscreens.ProcessData {}
         }
