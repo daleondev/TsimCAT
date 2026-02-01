@@ -148,21 +148,27 @@ namespace core::link::raw
         co_return co_await AsioAwaiter<result::Result<size_t>>{
             m_context,
             [&]() -> asio::awaitable<result::Result<size_t>> {
-                if (timeout != NO_TIMEOUT) {
-                    asio::steady_timer timer(co_await asio::this_coro::executor);
-                    timer.expires_after(timeout);
+                try {
+                    if (timeout != NO_TIMEOUT) {
+                        asio::steady_timer timer(co_await asio::this_coro::executor);
+                        timer.expires_after(timeout);
 
-                    using namespace asio::experimental::awaitable_operators;
-                    auto result = co_await (m_socket.async_read_some(asio::buffer(dest), asio::use_awaitable) ||
-                                            timer.async_wait(asio::use_awaitable));
+                        using namespace asio::experimental::awaitable_operators;
+                        auto result = co_await (m_socket.async_read_some(asio::buffer(dest), asio::use_awaitable) ||
+                                                timer.async_wait(asio::use_awaitable));
 
-                    if (result.index() == 0) {
-                        co_return std::get<0>(result);
+                        if (result.index() == 0) {
+                            co_return std::get<0>(result);
+                        }
+                        co_return std::unexpected(make_error_code(asio::error::timed_out));
+                    } else {
+                        auto result = co_await m_socket.async_read_some(asio::buffer(dest), asio::use_awaitable);
+                        co_return result;
                     }
-                    co_return std::unexpected(make_error_code(asio::error::timed_out));
-                } else {
-                    auto result = co_await m_socket.async_read_some(asio::buffer(dest), asio::use_awaitable);
-                    co_return result;
+                } catch (const asio::system_error& ex) {
+                    co_return std::unexpected(ex.code());
+                } catch (...) {
+                    co_return std::unexpected(make_error_code(asio::error::basic_errors::network_down));
                 }
             }()
         };
@@ -179,19 +185,25 @@ namespace core::link::raw
         co_return co_await AsioAwaiter<result::Result<void>>{
             m_context,
             [&]() -> asio::awaitable<result::Result<void>> {
-                if (timeout != NO_TIMEOUT) {
-                    asio::steady_timer timer(co_await asio::this_coro::executor);
-                    timer.expires_after(timeout);
-                    using namespace asio::experimental::awaitable_operators;
-                    auto result = co_await (asio::async_write(m_socket, asio::buffer(src), asio::use_awaitable) ||
-                                            timer.async_wait(asio::use_awaitable));
-                    if (result.index() == 0) {
+                try {
+                    if (timeout != NO_TIMEOUT) {
+                        asio::steady_timer timer(co_await asio::this_coro::executor);
+                        timer.expires_after(timeout);
+                        using namespace asio::experimental::awaitable_operators;
+                        auto result = co_await (asio::async_write(m_socket, asio::buffer(src), asio::use_awaitable) ||
+                                                timer.async_wait(asio::use_awaitable));
+                        if (result.index() == 0) {
+                            co_return result::success();
+                        }
+                        co_return std::unexpected(make_error_code(asio::error::timed_out));
+                    } else {
+                        co_await asio::async_write(m_socket, asio::buffer(src), asio::use_awaitable);
                         co_return result::success();
                     }
-                    co_return std::unexpected(make_error_code(asio::error::timed_out));
-                } else {
-                    co_await asio::async_write(m_socket, asio::buffer(src), asio::use_awaitable);
-                    co_return result::success();
+                } catch (const asio::system_error& ex) {
+                    co_return std::unexpected(ex.code());
+                } catch (...) {
+                    co_return std::unexpected(make_error_code(asio::error::basic_errors::network_down));
                 }
             }()
         };

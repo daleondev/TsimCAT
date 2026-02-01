@@ -1,0 +1,35 @@
+15:18:24 INF [Backend.cpp:18] Backend initialized
+15:18:27 INF [Backend.cpp:95] Starting TCP Server loop
+15:18:27 INF [Backend.cpp:106] TCP Server listening on port 12345
+15:18:43 INF [Backend.cpp:119] Client connected
+15:18:43 DBG [Backend.cpp:123] Waiting for data...
+15:18:43 DBG [Backend.cpp:139] Raw RX (8 bytes): [ 53 65 73 73 69 6F 6E 31 ] Text: 'Session1'
+15:18:43 DBG [Backend.cpp:123] Waiting for data...
+15:18:43 DBG [Backend.cpp:160] Update Request - Old: 'No messages' New: 'Session1'
+15:18:43 INF [Backend.cpp:165] Property 'lastMessage' updated
+15:20:40 INF [Backend.cpp:18] Backend initialized
+15:20:44 INF [Backend.cpp:95] Starting TCP Server loop
+15:20:44 INF [Backend.cpp:106] TCP Server listening on port 12345
+15:20:59 INF [Backend.cpp:119] Client connected
+15:20:59 DBG [Backend.cpp:123] Waiting for data...
+15:20:59 DBG [Backend.cpp:139] Raw RX (8 bytes): [ 53 65 73 73 69 6F 6E 31 ] Text: 'Session1'
+15:20:59 DBG [Backend.cpp:123] Waiting for data...
+15:20:59 DBG [Backend.cpp:160] Update Request - Old: 'No messages' New: 'Session1'
+15:20:59 INF [Backend.cpp:165] Property 'lastMessage' updated
+15:23:23 INF [Backend.cpp:18] Backend initialized
+15:23:26 INF [Backend.cpp:95] Starting TCP Server loop
+15:23:26 INF [Backend.cpp:106] TCP Server listening on port 12345
+15:23:41 INF [Backend.cpp:119] Client connected
+15:23:41 DBG [Backend.cpp:123] Waiting for data...
+15:23:41 DBG [Backend.cpp:139] Raw RX (8 bytes): [ 53 65 73 73 69 6F 6E 31 ] Text: 'Session1'
+15:23:41 DBG [Backend.cpp:123] Waiting for data...
+15:23:41 DBG [Backend.cpp:160] Update Request - Old: 'No messages' New: 'Session1'
+15:23:41 INF [Backend.cpp:165] Property 'lastMessage' updated
+15:23:41 INF [Backend.cpp:128] Client disconnected
+15:23:43 INF [Backend.cpp:119] Client connected
+15:23:43 DBG [Backend.cpp:123] Waiting for data...
+15:23:43 DBG [Backend.cpp:139] Raw RX (8 bytes): [ 53 65 73 73 69 6F 6E 32 ] Text: 'Session2'
+15:23:43 DBG [Backend.cpp:123] Waiting for data...
+15:23:43 DBG [Backend.cpp:160] Update Request - Old: 'Session1' New: 'Session2'
+15:23:43 INF [Backend.cpp:128] Client disconnected
+15:23:43 INF [Backend.cpp:165] Property 'lastMessage' updated

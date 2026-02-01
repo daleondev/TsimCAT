@@ -58,6 +58,12 @@ Control {
             onClicked: root.backend.startTcpServer()
         }
 
+        Button {
+            text: "Screenshot"
+            anchors.horizontalCenter: parent.horizontalCenter
+            onClicked: root.backend.captureScreenshot(root)
+        }
+
         Switch {
             text: "Laser Armed"
             anchors.horizontalCenter: parent.horizontalCenter

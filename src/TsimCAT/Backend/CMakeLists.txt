@@ -8,6 +8,7 @@ target_link_libraries(TsimCAT_Backend
     core::coroutines
     core::link
     core::simulators
+    core::logger
 )
 
 target_compile_features(

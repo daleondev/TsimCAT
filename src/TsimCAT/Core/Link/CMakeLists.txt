@@ -39,7 +39,6 @@ target_compile_definitions(
     core_link
     PUBLIC
     ASIO_STANDALONE
-    ASIO_DISABLE_IOCP
 )
 
 target_compile_features(

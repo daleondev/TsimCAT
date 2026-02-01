@@ -31,6 +31,7 @@ class Backend : public QObject
 
     Q_INVOKABLE void runAsyncTest();
     Q_INVOKABLE void startTcpServer();
+    Q_INVOKABLE void captureScreenshot(QObject* item);
 
   signals:
     void asyncTestStatusChanged();
