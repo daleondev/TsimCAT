@@ -10,12 +10,21 @@ namespace backend::controllers
       : QObject(parent)
       , m_simulator(std::move(simulator))
     {
-        // Polling loop to sync simulator state to UI properties
+        // Polling loop to sync simulator state to UI properties and drive physics
         [] (LaserController* self) -> QCoro::Task<void> {
+            auto lastTime = std::chrono::steady_clock::now();
             while (true) {
+                auto now = std::chrono::steady_clock::now();
+                double dt = std::chrono::duration<double>(now - lastTime).count();
+                lastTime = now;
+
+                if (self->m_simulator) {
+                    self->m_simulator->update(dt);
+                }
+
                 emit self->tcpStatusChanged();
                 emit self->lastMessageChanged();
-                co_await QCoro::sleepFor(200ms);
+                co_await QCoro::sleepFor(50ms);
             }
         }(this);
     }

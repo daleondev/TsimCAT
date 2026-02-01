@@ -134,6 +134,9 @@ namespace core::link::raw
 
     auto TcpServer::status() const -> Status
     {
+        if (!m_socket.is_open()) {
+            return Status::Disconnected;
+        }
         return m_status;
     }
 

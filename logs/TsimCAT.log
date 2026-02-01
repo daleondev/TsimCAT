@@ -1,69 +1,24 @@
-15:18:24 INF [Backend.cpp:18] Backend initialized
-15:18:27 INF [Backend.cpp:95] Starting TCP Server loop
-15:18:27 INF [Backend.cpp:106] TCP Server listening on port 12345
-15:18:43 INF [Backend.cpp:119] Client connected
-15:18:43 DBG [Backend.cpp:123] Waiting for data...
-15:18:43 DBG [Backend.cpp:139] Raw RX (8 bytes): [ 53 65 73 73 69 6F 6E 31 ] Text: 'Session1'
-15:18:43 DBG [Backend.cpp:123] Waiting for data...
-15:18:43 DBG [Backend.cpp:160] Update Request - Old: 'No messages' New: 'Session1'
-15:18:43 INF [Backend.cpp:165] Property 'lastMessage' updated
-15:20:40 INF [Backend.cpp:18] Backend initialized
-15:20:44 INF [Backend.cpp:95] Starting TCP Server loop
-15:20:44 INF [Backend.cpp:106] TCP Server listening on port 12345
-15:20:59 INF [Backend.cpp:119] Client connected
-15:20:59 DBG [Backend.cpp:123] Waiting for data...
-15:20:59 DBG [Backend.cpp:139] Raw RX (8 bytes): [ 53 65 73 73 69 6F 6E 31 ] Text: 'Session1'
-15:20:59 DBG [Backend.cpp:123] Waiting for data...
-15:20:59 DBG [Backend.cpp:160] Update Request - Old: 'No messages' New: 'Session1'
-15:20:59 INF [Backend.cpp:165] Property 'lastMessage' updated
-15:23:23 INF [Backend.cpp:18] Backend initialized
-15:23:26 INF [Backend.cpp:95] Starting TCP Server loop
-15:23:26 INF [Backend.cpp:106] TCP Server listening on port 12345
-15:23:41 INF [Backend.cpp:119] Client connected
-15:23:41 DBG [Backend.cpp:123] Waiting for data...
-15:23:41 DBG [Backend.cpp:139] Raw RX (8 bytes): [ 53 65 73 73 69 6F 6E 31 ] Text: 'Session1'
-15:23:41 DBG [Backend.cpp:123] Waiting for data...
-15:23:41 DBG [Backend.cpp:160] Update Request - Old: 'No messages' New: 'Session1'
-15:23:41 INF [Backend.cpp:165] Property 'lastMessage' updated
-15:23:41 INF [Backend.cpp:128] Client disconnected
-15:23:43 INF [Backend.cpp:119] Client connected
-15:23:43 DBG [Backend.cpp:123] Waiting for data...
-15:23:43 DBG [Backend.cpp:139] Raw RX (8 bytes): [ 53 65 73 73 69 6F 6E 32 ] Text: 'Session2'
-15:23:43 DBG [Backend.cpp:123] Waiting for data...
-15:23:43 DBG [Backend.cpp:160] Update Request - Old: 'Session1' New: 'Session2'
-15:23:43 INF [Backend.cpp:128] Client disconnected
-15:23:43 INF [Backend.cpp:165] Property 'lastMessage' updated
-15:31:22 INF [Backend.cpp:17] Backend initialized
-15:31:25 INF [LaserController.cpp:34] Starting TCP Server loop
-15:31:25 INF [LaserController.cpp:45] TCP Server listening on port 12345
-15:31:57 INF [LaserController.cpp:58] Client connected
-15:31:57 DBG [LaserController.cpp:62] Waiting for data...
-15:31:57 DBG [LaserController.cpp:77] Raw RX (12 bytes): [ 52 65 66 61 63 74 6F 72 54 65 73 74 ] Text: 'RefactorTest'
-15:31:57 DBG [LaserController.cpp:62] Waiting for data...
-15:31:57 DBG [LaserController.cpp:98] Update Request - Old: 'No messages' New: 'RefactorTest'
-15:31:57 INF [LaserController.cpp:103] Property 'lastMessage' updated
-15:31:57 INF [LaserController.cpp:67] Client disconnected
-15:40:54 INF [Backend.cpp:19] Backend initialized
-15:40:57 INF [LaserController.cpp:34] Starting TCP Server loop
-15:40:57 INF [LaserController.cpp:45] TCP Server listening on port 12345
-15:41:18 INF [LaserController.cpp:58] Client connected
-15:41:18 DBG [LaserController.cpp:62] Waiting for data...
-15:41:18 DBG [LaserController.cpp:77] Raw RX (11 bytes): [ 48 65 6C 6C 6F 20 57 6F 72 6C 64 ] Text: 'Hello World'
-15:41:18 DBG [LaserController.cpp:62] Waiting for data...
-15:41:18 DBG [LaserController.cpp:98] Update Request - Old: 'No messages' New: 'Hello World'
-15:41:18 INF [LaserController.cpp:103] Property 'lastMessage' updated
-15:41:18 INF [LaserController.cpp:67] Client disconnected
-15:41:21 INF [LaserController.cpp:58] Client connected
-15:41:21 DBG [LaserController.cpp:62] Waiting for data...
-15:41:21 DBG [LaserController.cpp:77] Raw RX (12 bytes): [ 48 65 6C 6C 6F 20 57 6F 72 6C 64 32 ] Text: 'Hello World2'
-15:41:21 DBG [LaserController.cpp:62] Waiting for data...
-15:41:21 DBG [LaserController.cpp:98] Update Request - Old: 'Hello World' New: 'Hello World2'
-15:41:21 INF [LaserController.cpp:103] Property 'lastMessage' updated
-15:41:22 INF [LaserController.cpp:67] Client disconnected
-15:41:25 INF [LaserController.cpp:58] Client connected
-15:41:25 DBG [LaserController.cpp:62] Waiting for data...
-15:41:25 DBG [LaserController.cpp:77] Raw RX (12 bytes): [ 48 65 6C 6C 6F 20 57 6F 72 6C 64 33 ] Text: 'Hello World3'
-15:41:25 DBG [LaserController.cpp:62] Waiting for data...
-15:41:25 DBG [LaserController.cpp:98] Update Request - Old: 'Hello World2' New: 'Hello World3'
-15:41:25 INF [LaserController.cpp:103] Property 'lastMessage' updated
-15:41:25 INF [LaserController.cpp:67] Client disconnected
+17:59:45 INF [Backend.cpp:21] Backend initialized
+17:59:48 INF [LaserSimulator.cpp:26] LaserSimulator: Server started
+18:01:43 INF [LaserSimulator.cpp:109] LaserSimulator: PLC connected
+18:01:43 DBG [LaserSimulator.cpp:145] LaserSimulator Command: [open shutter]
+18:01:43 DBG [LaserSimulator.cpp:179] LaserSimulator TX: [ready]
+18:01:44 INF [LaserSimulator.cpp:128] LaserSimulator: PLC disconnected
+18:03:07 INF [Backend.cpp:21] Backend initialized
+18:03:12 INF [LaserSimulator.cpp:26] LaserSimulator: Server started
+18:03:37 INF [LaserSimulator.cpp:109] LaserSimulator: PLC connected
+18:03:37 DBG [LaserSimulator.cpp:148] LaserSimulator Command: [open shutter]
+18:03:37 DBG [LaserSimulator.cpp:182] LaserSimulator TX: [ready]
+18:03:37 INF [LaserSimulator.cpp:131] LaserSimulator: PLC disconnected (Error: Ein Verbindungsversuch ist fehlgeschlagen, da die Gegenstelle nach einer bestimmten Zeitspanne nicht richtig reagiert hat, oder die hergestellte Verbindung war fehlerhaft, da der verbundene Host nicht reagiert hat.)
+18:06:39 INF [Backend.cpp:21] Backend initialized
+18:06:42 INF [LaserSimulator.cpp:26] LaserSimulator: Server started
+18:07:06 INF [LaserSimulator.cpp:108] LaserSimulator: PLC connected
+18:07:07 DBG [LaserSimulator.cpp:150] LaserSimulator Command: [open shutter]
+18:07:07 DBG [LaserSimulator.cpp:184] LaserSimulator TX: [ready]
+18:07:08 DBG [LaserSimulator.cpp:150] LaserSimulator Command: [laser on]
+18:07:08 DBG [LaserSimulator.cpp:184] LaserSimulator TX: [laser busy]
+18:07:10 INF [LaserSimulator.cpp:53] LaserSimulator: Job finished
+18:07:11 DBG [LaserSimulator.cpp:150] LaserSimulator Command: [ack done]
+18:07:11 DBG [LaserSimulator.cpp:184] LaserSimulator TX: [state <idle>]
+18:07:11 DBG [LaserSimulator.cpp:184] LaserSimulator TX: [laser done]
+18:07:16 INF [LaserSimulator.cpp:130] LaserSimulator: PLC disconnected (Error: Ein Verbindungsversuch ist fehlgeschlagen, da die Gegenstelle nach einer bestimmten Zeitspanne nicht richtig reagiert hat, oder die hergestellte Verbindung war fehlerhaft, da der verbundene Host nicht reagiert hat.)
