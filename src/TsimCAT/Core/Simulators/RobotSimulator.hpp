@@ -63,7 +63,7 @@ namespace core::sim
         ~RobotSimulator() override;
 
         auto name() const -> std::string override { return "Robot"; }
-        auto initialize() -> coro::Task<void> override;
+        auto initialize() -> coro::Task<result::Result<void>> override;
         auto start() -> void override;
         auto stop() -> void override;
         auto update(double deltaTimeSeconds) -> void override;
@@ -82,6 +82,6 @@ namespace core::sim
         RobotStatus m_status{};
         
         mutable std::mutex m_mutex;
-        bool m_running{ false };
+        std::atomic<bool> m_running{ false };
     };
 }

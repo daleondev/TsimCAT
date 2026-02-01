@@ -30,6 +30,28 @@ namespace
     {
         None = 0x00, // ADSERR_NOERR
 
+        // ADSSTATE
+        AdsStateInvalid = 0,
+        AdsStateIdle = 1,
+        AdsStateReset = 2,
+        AdsStateInit = 3,
+        AdsStateStart = 4,
+        AdsStateRun = 5,
+        AdsStateStop = 6,
+        AdsStateSavecfg = 7,
+        AdsStateLoadcfg = 8,
+        AdsStatePowerfailur = 9,
+        AdsStatePowergood = 10,
+        AdsStateError = 11,
+        AdsStateShutdown = 12,
+        AdsStateSuspend = 13,
+        AdsStateResume = 14,
+        AdsStateConfig = 15,
+        AdsStateReconfig = 16,
+        AdsStateStopping = 17,
+        AdsStateIncompatible = 18,
+        AdsStateException = 19,
+
         // --- Device Errors (Base: 0x0700) ---
         DeviceError = 0x700,                /**< Error class < device error > */
         DeviceServiceNotSupported = 0x701,  /**< Service is not supported by server */
@@ -106,7 +128,14 @@ namespace
       public:
         const char* name() const noexcept override { return "AdsError"; }
 
-        std::string message(int ev) const override { return std::format("{:v}", static_cast<AdsError>(ev)); }
+        std::string message(int ev) const override
+        {
+            static constexpr auto enums{ fmtu::detail::underlying_enumerators<AdsError>() };
+            if (!std::ranges::contains(enums, ev)) {
+                return "Unknown";
+            }
+            return std::format("{:v}", static_cast<AdsError>(ev));
+        }
     };
 
     const std::error_category& ads_category()
@@ -181,25 +210,25 @@ namespace core::link::symbolic
 
     auto AdsClient::connect(std::chrono::milliseconds timeout) -> coro::Task<result::Result<void>>
     {
-        auto err{ AdsError::None };
-        try {
-            m_route = std::make_unique<AdsDevice>(m_ipAddress, m_remoteNetId, m_port);
+        co_return co_await coro::runAsync<result::Result<void>>([this, timeout]() {
+            auto err{ AdsError::None };
+            try {
+                m_route = std::make_unique<AdsDevice>(m_ipAddress, m_remoteNetId, m_port);
 
-            m_defaultTimeout = getTimeout();
-            setTimeout(timeout);
+                m_defaultTimeout = getTimeout();
+                m_route->SetTimeout(timeout.count());
 
-            (void)m_route->GetDeviceInfo();
-        } catch (const std::exception& ex) {
-            err = handleException(ex);
-        }
+                (void)m_route->GetDeviceInfo();
+            } catch (const std::exception& ex) {
+                err = handleException(ex);
+                m_route.reset();
+            }
 
-        co_return err == AdsError::None ? result::success() : std::unexpected(make_error_code(err));
+            return err == AdsError::None ? result::success() : std::unexpected(make_error_code(err));
+        });
     }
 
-    auto AdsClient::status() const -> Status
-    {
-        return m_route ? Status::Connected : Status::Disconnected;
-    }
+    auto AdsClient::status() const -> Status { return m_route ? Status::Connected : Status::Disconnected; }
 
     auto AdsClient::disconnect(std::chrono::milliseconds timeout) -> coro::Task<result::Result<void>>
     {

@@ -338,7 +338,14 @@ namespace
       public:
         const char* name() const noexcept override { return "AdsError"; }
 
-        std::string message(int ev) const override { return std::format("{:v}", static_cast<UaStatus>(ev)); }
+        std::string message(int ev) const override
+        {
+            static constexpr auto enums{ fmtu::detail::underlying_enumerators<UaStatus>() };
+            if (!std::ranges::contains(enums, ev)) {
+                return "Unknown";
+            }
+            return std::format("{:v}", static_cast<UaStatus>(ev));
+        }
     };
 
     const std::error_category& ua_category()

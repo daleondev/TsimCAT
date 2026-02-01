@@ -1,14 +1,14 @@
 #include "RobotSimulator.hpp"
 #include "Logger/Logger.hpp"
 #include "Link/Symbolic/ISymbolicLink.hpp"
-#include <thread>
+#include "Coroutines/Task.hpp"
 
 namespace core::sim
 {
     RobotSimulator::RobotSimulator(std::shared_ptr<link::ILink> link)
         : m_link(std::move(link))
     {
-        // Initial state
+        // Initial hardware-like state
         m_status.bInHome = 1;
         m_status.bEnabled = 1;
         m_status.bInAut = 1;
@@ -21,18 +21,19 @@ namespace core::sim
         stop();
     }
 
-    auto RobotSimulator::initialize() -> coro::Task<void>
+    auto RobotSimulator::initialize() -> coro::Task<result::Result<void>>
     {
         if (auto* client = m_link->asClient()) {
             logger::info("RobotSimulator: Connecting to ADS...");
             auto res = co_await client->connect();
             if (!res) {
                 logger::error("RobotSimulator: ADS Connection failed: {}", res.error().message());
+                co_return std::unexpected(res.error());
             } else {
                 logger::info("RobotSimulator: ADS Connected");
             }
         }
-        co_return;
+        co_return result::success();
     }
 
     auto RobotSimulator::start() -> void
@@ -47,14 +48,12 @@ namespace core::sim
 
     auto RobotSimulator::update(double deltaTimeSeconds) -> void
     {
-        // Simple logic simulation
+        // Logic Simulation
         std::scoped_lock lock(m_mutex);
         
-        // Mirror part type as per protocol
         m_status.nPartTypeMirrored = m_control.nPartType;
         
-        // Simulate motion if enable is on
-        if (m_control.bMoveEnable) {
+        if (m_control.bMoveEnable && !m_status.bError) {
             m_status.bInMotion = 1;
             m_status.bInHome = 0;
         } else {
@@ -62,7 +61,6 @@ namespace core::sim
             if (m_control.nJobId == 0) m_status.bInHome = 1;
         }
 
-        // Job Feedback
         m_status.nJobIdFeedback = m_control.nJobId;
     }
 
@@ -96,26 +94,29 @@ namespace core::sim
         if (!symbolic) co_return;
 
         while (m_running) {
+            // Only communicate if actually connected to avoid floods
             if (m_link->status() == link::Status::Connected) {
-                // Read control struct from PLC
+                // 1. Read Commands
                 auto ctrlRes = co_await symbolic->read<RobotControl>("MAIN.stRobotControl");
                 if (ctrlRes) {
                     std::scoped_lock lock(m_mutex);
                     m_control = *ctrlRes;
                 }
 
-                // Write status struct back to PLC
-                RobotStatus currentStatus;
+                // 2. Write Status
+                RobotStatus s;
                 {
                     std::scoped_lock lock(m_mutex);
-                    currentStatus = m_status;
+                    s = m_status;
                 }
-                (void)co_await symbolic->write("MAIN.stRobotStatus", currentStatus);
+                (void)co_await symbolic->write("MAIN.stRobotStatus", s);
+            } else {
+                // Throttled wait when disconnected
+                co_await coro::sleep(std::chrono::milliseconds(500));
             }
             
-            // Throttle loop
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            // Standard loop throttle
+            co_await coro::sleep(std::chrono::milliseconds(50));
         }
-        co_return;
     }
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Coroutines/Task.hpp"
+#include "../Common/Result.hpp"
 #include <string>
 
 namespace core::sim
@@ -12,7 +13,7 @@ namespace core::sim
 
         virtual auto name() const -> std::string = 0;
         
-        virtual auto initialize() -> coro::Task<void> = 0;
+        virtual auto initialize() -> coro::Task<result::Result<void>> = 0;
         virtual auto start() -> void = 0;
         virtual auto stop() -> void = 0;
         

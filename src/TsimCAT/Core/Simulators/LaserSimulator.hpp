@@ -25,7 +25,7 @@ namespace core::sim
         ~LaserSimulator() override;
 
         auto name() const -> std::string override { return "Laser"; }
-        auto initialize() -> coro::Task<void> override;
+        auto initialize() -> coro::Task<result::Result<void>> override;
         auto start() -> void override;
         auto stop() -> void override;
         auto update(double deltaTimeSeconds) -> void override;

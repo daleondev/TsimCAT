@@ -16,21 +16,55 @@ namespace backend::controllers
         QML_ELEMENT
         QML_UNCREATABLE("Managed by Backend")
         
-        Q_PROPERTY(uint16_t jobId READ jobId NOTIFY stateChanged)
-        Q_PROPERTY(uint8_t partType READ partType NOTIFY stateChanged)
+        // Status from Robot (Read-only for UI)
+        Q_PROPERTY(uint16_t jobIdFeedback READ jobIdFeedback NOTIFY stateChanged)
+        Q_PROPERTY(uint8_t partTypeMirrored READ partTypeMirrored NOTIFY stateChanged)
         Q_PROPERTY(bool inMotion READ inMotion NOTIFY stateChanged)
         Q_PROPERTY(bool inHome READ inHome NOTIFY stateChanged)
         Q_PROPERTY(bool enabled READ enabled NOTIFY stateChanged)
+        Q_PROPERTY(bool error READ error NOTIFY stateChanged)
+        Q_PROPERTY(bool brakeTestOk READ brakeTestOk NOTIFY stateChanged)
+        Q_PROPERTY(bool masteringOk READ masteringOk NOTIFY stateChanged)
+        Q_PROPERTY(bool inT1 READ inT1 NOTIFY stateChanged)
+        Q_PROPERTY(bool inT2 READ inT2 NOTIFY stateChanged)
+        Q_PROPERTY(bool inAut READ inAut NOTIFY stateChanged)
+        Q_PROPERTY(bool inExt READ inExt NOTIFY stateChanged)
+        Q_PROPERTY(uint8_t areaFreeRobot READ areaFreeRobot NOTIFY stateChanged)
+        Q_PROPERTY(uint32_t errorCode READ errorCode NOTIFY stateChanged)
+
+        // Control from PLC (Observing what PLC sends)
+        Q_PROPERTY(uint16_t controlJobId READ controlJobId NOTIFY stateChanged)
+        Q_PROPERTY(uint8_t controlPartType READ controlPartType NOTIFY stateChanged)
+        Q_PROPERTY(bool controlMoveEnable READ controlMoveEnable NOTIFY stateChanged)
+        Q_PROPERTY(bool controlReset READ controlReset NOTIFY stateChanged)
+        Q_PROPERTY(uint8_t areaFreePlc READ areaFreePlc NOTIFY stateChanged)
+
         Q_PROPERTY(QString adsStatus READ adsStatus NOTIFY adsStatusChanged)
 
       public:
         explicit RobotController(std::shared_ptr<core::sim::RobotSimulator> simulator, QObject* parent = nullptr);
         
-        uint16_t jobId() const;
-        uint8_t partType() const;
+        uint16_t jobIdFeedback() const;
+        uint8_t partTypeMirrored() const;
         bool inMotion() const;
         bool inHome() const;
         bool enabled() const;
+        bool error() const;
+        bool brakeTestOk() const;
+        bool masteringOk() const;
+        bool inT1() const;
+        bool inT2() const;
+        bool inAut() const;
+        bool inExt() const;
+        uint8_t areaFreeRobot() const;
+        uint32_t errorCode() const;
+
+        uint16_t controlJobId() const;
+        uint8_t controlPartType() const;
+        bool controlMoveEnable() const;
+        bool controlReset() const;
+        uint8_t areaFreePlc() const;
+
         QString adsStatus() const;
 
         Q_INVOKABLE void connectAds();

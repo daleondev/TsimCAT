@@ -16,17 +16,18 @@ namespace core::sim
         stop();
     }
 
-    auto LaserSimulator::initialize() -> coro::Task<void>
+    auto LaserSimulator::initialize() -> coro::Task<result::Result<void>>
     {
         if (auto* server = m_link->asServer()) {
             auto res = server->start();
             if (!res) {
                 logger::error("LaserSimulator: Failed to start server: {}", res.error().message());
+                co_return std::unexpected(res.error());
             } else {
                 logger::info("LaserSimulator: Server started");
             }
         }
-        co_return;
+        co_return result::success();
     }
 
     auto LaserSimulator::start() -> void

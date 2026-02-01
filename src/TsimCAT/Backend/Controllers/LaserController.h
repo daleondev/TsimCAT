@@ -16,6 +16,7 @@ namespace backend::controllers
     {
         Q_OBJECT
         QML_ELEMENT
+        QML_UNCREATABLE("Managed by Backend")
         Q_PROPERTY(QString tcpStatus READ tcpStatus NOTIFY tcpStatusChanged)
         Q_PROPERTY(QString lastMessage READ lastMessage NOTIFY lastMessageChanged)
 
