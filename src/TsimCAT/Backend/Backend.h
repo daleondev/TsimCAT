@@ -3,6 +3,7 @@
 
 #include "../Core/Coroutines/coroutine.hpp"
 #include "Controllers/LaserController.h"
+#include "Controllers/RobotController.h"
 
 #include <QCoroTask>
 #include <QObject>
@@ -11,10 +12,7 @@
 #include <memory>
 
 namespace core::link { class ILink; }
-namespace core::sim { class LaserSimulator; }
-
-namespace backend
-{ namespace controllers { class LaserController; } }
+namespace core::sim { class LaserSimulator; class RobotSimulator; }
 
 namespace backend
 {
@@ -25,6 +23,7 @@ namespace backend
         Q_PROPERTY(QString welcomeMessage READ welcomeMessage CONSTANT)
         Q_PROPERTY(QString asyncTestStatus READ asyncTestStatus NOTIFY asyncTestStatusChanged)
         Q_PROPERTY(backend::controllers::LaserController* laser READ laser CONSTANT)
+        Q_PROPERTY(backend::controllers::RobotController* robot READ robot CONSTANT)
 
       public:
         explicit Backend(QObject* parent = nullptr);
@@ -33,6 +32,7 @@ namespace backend
         QString welcomeMessage() const;
         QString asyncTestStatus() const;
         backend::controllers::LaserController* laser() const;
+        backend::controllers::RobotController* robot() const;
 
         Q_INVOKABLE void runAsyncTest();
         Q_INVOKABLE void captureScreenshot(QObject* item);
@@ -45,8 +45,13 @@ namespace backend
 
         QString m_asyncTestStatus = "Ready";
         std::shared_ptr<core::link::ILink> m_tcpLink;
+        std::shared_ptr<core::link::ILink> m_adsLink;
+
         std::shared_ptr<core::sim::LaserSimulator> m_laserSim;
+        std::shared_ptr<core::sim::RobotSimulator> m_robotSim;
+
         std::unique_ptr<backend::controllers::LaserController> m_laserController;
+        std::unique_ptr<backend::controllers::RobotController> m_robotController;
     };
 }
 

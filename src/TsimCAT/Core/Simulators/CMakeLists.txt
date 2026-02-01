@@ -5,6 +5,7 @@ target_sources(
     core_simulators
     PRIVATE
     LaserSimulator.cpp
+    RobotSimulator.cpp
 
     PUBLIC
     FILE_SET HEADERS
@@ -12,6 +13,7 @@ target_sources(
     FILES 
         ISimulator.hpp
         LaserSimulator.hpp
+        RobotSimulator.hpp
         Components/IComponent.hpp
 )
 

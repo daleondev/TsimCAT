@@ -26,4 +26,6 @@ qt_add_qml_module(TsimCAT_Backend
         Backend.cpp
         Controllers/LaserController.h
         Controllers/LaserController.cpp
+        Controllers/RobotController.h
+        Controllers/RobotController.cpp
 )

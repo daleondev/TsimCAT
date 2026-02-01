@@ -45,7 +45,9 @@ ApplicationWindow {
             currentIndex: sidebar.currentIndex
 
             Subscreens.PlantOverview {}
-            Subscreens.RobotStatus {}
+            Subscreens.RobotStatus {
+                backend: backend
+            }
             Subscreens.CameraStatus {}
             Subscreens.LaserStatus {
                 backend: backend

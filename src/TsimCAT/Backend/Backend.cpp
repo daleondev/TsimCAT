@@ -1,7 +1,9 @@
 #include "Backend.h"
 #include "Controllers/LaserController.h"
+#include "Controllers/RobotController.h"
 #include "Link/LinkFactory.hpp"
 #include "Simulators/LaserSimulator.hpp"
+#include "Simulators/RobotSimulator.hpp"
 #include "Logger/Logger.hpp"
 #include <QCoroTimer>
 #include <chrono>
@@ -30,11 +32,23 @@ namespace backend
             core::logger::error("Failed to create shared TCP link: {}", tcpRes.error().message());
         }
 
+        core::link::LinkConfig adsConfig{};
+        adsConfig.ip = "127.0.0.1";
+        adsConfig.remoteNetId = "127.0.0.1.1.1";
+        auto adsRes = core::link::create(core::link::Role::Client, core::link::Mode::Symbolic, core::link::Protocol::Ads, adsConfig);
+        if (adsRes) {
+            m_adsLink = std::move(*adsRes);
+        } else {
+            core::logger::error("Failed to create shared ADS link: {}", adsRes.error().message());
+        }
+
         // 2. Create Simulators
         m_laserSim = std::make_shared<core::sim::LaserSimulator>(m_tcpLink);
+        m_robotSim = std::make_shared<core::sim::RobotSimulator>(m_adsLink);
 
         // 3. Inject into Controllers
         m_laserController = std::make_unique<backend::controllers::LaserController>(m_laserSim, this);
+        m_robotController = std::make_unique<backend::controllers::RobotController>(m_robotSim, this);
     }
 
     Backend::~Backend() = default;
@@ -52,6 +66,11 @@ namespace backend
     backend::controllers::LaserController* Backend::laser() const
     {
         return m_laserController.get();
+    }
+
+    backend::controllers::RobotController* Backend::robot() const
+    {
+        return m_robotController.get();
     }
 
     void Backend::runAsyncTest()
