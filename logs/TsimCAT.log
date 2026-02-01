@@ -33,3 +33,16 @@
 15:23:43 DBG [Backend.cpp:160] Update Request - Old: 'Session1' New: 'Session2'
 15:23:43 INF [Backend.cpp:128] Client disconnected
 15:23:43 INF [Backend.cpp:165] Property 'lastMessage' updated
+15:31:22 INF [Backend.cpp:17] Backend initialized
+15:31:25 INF [LaserController.cpp:34] Starting TCP Server loop
+15:31:25 INF [LaserController.cpp:45] TCP Server listening on port 12345
+15:31:57 INF [LaserController.cpp:58] Client connected
+15:31:57 DBG [LaserController.cpp:62] Waiting for data...
+15:31:57 DBG [LaserController.cpp:77] Raw RX (12 bytes): [ 52 65 66 61 63 74 6F 72 54 65 73 74 ] Text: 'RefactorTest'
+15:31:57 DBG [LaserController.cpp:62] Waiting for data...
+15:31:57 DBG [LaserController.cpp:98] Update Request - Old: 'No messages' New: 'RefactorTest'
+15:31:57 INF [LaserController.cpp:103] Property 'lastMessage' updated
+15:31:57 INF [LaserController.cpp:67] Client disconnected
+15:40:54 INF [Backend.cpp:19] Backend initialized
+15:40:57 INF [LaserController.cpp:34] Starting TCP Server loop
+15:40:57 INF [LaserController.cpp:45] TCP Server listening on port 12345

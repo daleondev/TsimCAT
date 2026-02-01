@@ -33,8 +33,8 @@ Control {
                     font.bold: true
                 }
                 Text {
-                    text: root.backend.tcpStatus
-                    color: root.backend.tcpStatus.includes("Connected") ? "green" : "red"
+                    text: root.backend.laser.tcpStatus
+                    color: root.backend.laser.tcpStatus.includes("Connected") ? "green" : "red"
                     font.pixelSize: 16
                 }
                 
@@ -44,7 +44,7 @@ Control {
                     topPadding: 10
                 }
                 Text {
-                    text: root.backend.lastMessage
+                    text: root.backend.laser.lastMessage
                     font.family: "Monospace"
                     color: "blue"
                 }
@@ -54,8 +54,8 @@ Control {
         Button {
             text: "Start TCP Server"
             anchors.horizontalCenter: parent.horizontalCenter
-            enabled: root.backend.tcpStatus === "Disconnected" || root.backend.tcpStatus.startsWith("Start Failed")
-            onClicked: root.backend.startTcpServer()
+            enabled: root.backend.laser.tcpStatus === "Disconnected" || root.backend.laser.tcpStatus.startsWith("Start Failed")
+            onClicked: root.backend.laser.startTcpServer()
         }
 
         Button {

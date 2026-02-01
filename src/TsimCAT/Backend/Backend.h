@@ -2,6 +2,7 @@
 #define BACKEND_H
 
 #include "../Core/Coroutines/coroutine.hpp"
+#include "Controllers/LaserController.h"
 
 #include <QCoroTask>
 #include <QObject>
@@ -9,46 +10,38 @@
 #include <QtQml/qqmlregistration.h>
 #include <memory>
 
-namespace core::link::raw { class TcpServer; }
+namespace backend { namespace controllers { class LaserController; } }
 
-class Backend : public QObject
+namespace backend
 {
-    Q_OBJECT
-    QML_ELEMENT
-    Q_PROPERTY(QString welcomeMessage READ welcomeMessage CONSTANT)
-    Q_PROPERTY(QString asyncTestStatus READ asyncTestStatus NOTIFY asyncTestStatusChanged)
-    Q_PROPERTY(QString tcpStatus READ tcpStatus NOTIFY tcpStatusChanged)
-    Q_PROPERTY(QString lastMessage READ lastMessage NOTIFY lastMessageChanged)
+    class Backend : public QObject
+    {
+        Q_OBJECT
+        QML_ELEMENT
+        Q_PROPERTY(QString welcomeMessage READ welcomeMessage CONSTANT)
+        Q_PROPERTY(QString asyncTestStatus READ asyncTestStatus NOTIFY asyncTestStatusChanged)
+        Q_PROPERTY(backend::controllers::LaserController* laser READ laser CONSTANT)
 
-  public:
-    explicit Backend(QObject* parent = nullptr);
-    ~Backend();
+      public:
+        explicit Backend(QObject* parent = nullptr);
+        ~Backend();
 
-    QString welcomeMessage() const;
-    QString asyncTestStatus() const;
-    QString tcpStatus() const;
-    QString lastMessage() const;
+        QString welcomeMessage() const;
+        QString asyncTestStatus() const;
+        backend::controllers::LaserController* laser() const;
 
-    Q_INVOKABLE void runAsyncTest();
-    Q_INVOKABLE void startTcpServer();
-    Q_INVOKABLE void captureScreenshot(QObject* item);
+        Q_INVOKABLE void runAsyncTest();
+        Q_INVOKABLE void captureScreenshot(QObject* item);
 
-  signals:
-    void asyncTestStatusChanged();
-    void tcpStatusChanged();
-    void lastMessageChanged();
+      signals:
+        void asyncTestStatusChanged();
 
-  private:
-    QCoro::Task<void> doAsyncTest();
-    QCoro::Task<void> runTcpServerLoop();
-    void setTcpStatus(const QString& status);
-    void setLastMessage(const QString& msg);
+      private:
+        QCoro::Task<void> doAsyncTest();
 
-    QString m_asyncTestStatus = "Ready";
-    QString m_tcpStatus = "Disconnected";
-    QString m_lastMessage = "No messages";
-
-    std::unique_ptr<core::link::raw::TcpServer> m_server;
-};
+        QString m_asyncTestStatus = "Ready";
+        std::unique_ptr<backend::controllers::LaserController> m_laserController;
+    };
+}
 
 #endif // BACKEND_H

@@ -24,4 +24,6 @@ qt_add_qml_module(TsimCAT_Backend
     SOURCES
         Backend.h
         Backend.cpp
+        Controllers/LaserController.h
+        Controllers/LaserController.cpp
 )
