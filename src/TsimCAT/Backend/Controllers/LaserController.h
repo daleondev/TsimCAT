@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Link/Raw/TcpServer.hpp"
 #include "../../Core/Coroutines/coroutine.hpp"
 
 #include <QObject>
@@ -8,6 +7,8 @@
 #include <QtQml/qqmlregistration.h>
 #include <QCoroTask>
 #include <memory>
+
+namespace core::link { class ILink; }
 
 namespace backend::controllers
 {
@@ -39,6 +40,6 @@ namespace backend::controllers
         QString m_tcpStatus = "Disconnected";
         QString m_lastMessage = "No messages";
 
-        std::unique_ptr<core::link::raw::TcpServer> m_server;
+        std::unique_ptr<core::link::ILink> m_link;
     };
 }

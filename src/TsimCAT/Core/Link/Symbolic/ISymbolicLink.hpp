@@ -10,12 +10,13 @@
 #include <span>
 #include <string_view>
 
-namespace core::link::symbolic
+namespace core::link
 {
-    class ISymbolicLink
+    class ISymbolicLink : virtual public ILink
     {
       public:
-        virtual ~ISymbolicLink() = default;
+        auto asSymbolic() -> ISymbolicLink* override { return this; }
+        auto getMode() const -> Mode override { return Mode::Symbolic; }
 
         // clang-format off
         virtual auto readInto(std::string_view path,

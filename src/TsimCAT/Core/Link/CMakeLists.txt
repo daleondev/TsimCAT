@@ -4,6 +4,7 @@ add_library(core::link ALIAS core_link)
 target_sources(
     core_link
     PRIVATE
+    LinkFactory.cpp
     Raw/TcpServer.cpp
     Symbolic/AdsClient.cpp
     Symbolic/OpcUaClient.cpp
@@ -13,20 +14,20 @@ target_sources(
     BASE_DIRS ${CMAKE_CURRENT_LIST_DIR}/..
     FILES 
         ILink.hpp
+        LinkFactory.hpp
         Subscription.hpp
         Raw/IRawLink.hpp
-        Raw/TcpServer.hpp
         Symbolic/ISymbolicLink.hpp
-        Symbolic/AdsClient.hpp
-        Symbolic/OpcUaClient.hpp
 )
 
 target_link_libraries(
     core_link
-    PUBLIC
+    PRIVATE
+    asio::asio
     ads::ads
     open62541::open62541
-    asio::asio
+
+    PUBLIC
     core::common
     core::coroutines
 )

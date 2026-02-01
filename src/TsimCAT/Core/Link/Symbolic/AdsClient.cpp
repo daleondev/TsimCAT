@@ -196,6 +196,11 @@ namespace core::link::symbolic
         co_return err == AdsError::None ? result::success() : std::unexpected(make_error_code(err));
     }
 
+    auto AdsClient::status() const -> Status
+    {
+        return m_route ? Status::Connected : Status::Disconnected;
+    }
+
     auto AdsClient::disconnect(std::chrono::milliseconds timeout) -> coro::Task<result::Result<void>>
     {
         if (!m_route) {

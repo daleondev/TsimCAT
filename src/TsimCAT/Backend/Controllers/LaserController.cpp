@@ -1,4 +1,6 @@
 #include "LaserController.h"
+#include "Link/LinkFactory.hpp"
+#include "Link/Raw/IRawLink.hpp"
 #include "Logger/Logger.hpp"
 #include <QCoroTimer>
 #include <array>
@@ -32,8 +34,26 @@ namespace backend::controllers
     QCoro::Task<void> LaserController::runTcpServerLoop()
     {
         core::logger::info("Starting TCP Server loop");
-        m_server = std::make_unique<core::link::raw::TcpServer>(12345);
-        auto startRes = m_server->start();
+        
+        core::link::LinkConfig config{};
+        config.port = 12345;
+        auto createRes = core::link::create(core::link::Role::Server, core::link::Mode::Raw, core::link::Protocol::Tcp, config);
+
+        if (!createRes) {
+            setTcpStatus("Create Failed");
+            core::logger::error("Failed to create TCP Server link: {}", createRes.error().message());
+            co_return;
+        }
+
+        m_link = std::move(*createRes);
+
+        auto* server = m_link->asServer();
+        if (!server) {
+            setTcpStatus("Invalid Link Type");
+            co_return;
+        }
+
+        auto startRes = server->start();
         if (!startRes) {
             auto err = QStringLiteral("Start Failed: %1").arg(startRes.error().value());
             setTcpStatus(err);
@@ -45,7 +65,7 @@ namespace backend::controllers
         core::logger::info("TCP Server listening on port 12345");
 
         while(true) {
-            auto acceptRes = co_await m_server->accept();
+            auto acceptRes = co_await server->accept();
             if (!acceptRes) {
                 auto msg = acceptRes.error().message();
                 setTcpStatus(QStringLiteral("Accept Failed: %1").arg(QString::fromStdString(msg)));
@@ -60,7 +80,11 @@ namespace backend::controllers
             while(true) {
                 std::array<std::byte, 1024> buffer;
                 core::logger::debug("Waiting for data...");
-                auto readRes = co_await m_server->receiveInto("", buffer);
+                
+                auto* rawLink = m_link->asRaw();
+                if (!rawLink) break;
+
+                auto readRes = co_await rawLink->receiveInto("", buffer);
                 
                 if (!readRes) {
                     setTcpStatus("Client Disconnected");

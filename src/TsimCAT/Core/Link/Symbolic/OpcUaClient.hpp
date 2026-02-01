@@ -38,6 +38,8 @@ namespace core::link::symbolic
         auto unsubscribeRawSync(uint64_t id) -> void override;
         // clang-format on
 
+        auto status() const -> Status override;
+
         inline operator UA_Client*() { return m_client.get(); }
 
       private:

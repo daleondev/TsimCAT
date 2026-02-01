@@ -411,6 +411,11 @@ namespace core::link::symbolic
         co_return result::success();
     }
 
+    auto OpcUaClient::status() const -> Status
+    {
+        return m_connected ? Status::Connected : Status::Disconnected;
+    }
+
     auto OpcUaClient::disconnect(std::chrono::milliseconds timeout) -> coro::Task<result::Result<void>>
     {
         m_workerRunning = false;
