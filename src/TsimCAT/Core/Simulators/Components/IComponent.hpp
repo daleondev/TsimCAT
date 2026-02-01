@@ -9,11 +9,11 @@ namespace core::sim
      */
     class IComponent
     {
-    public:
+      public:
         virtual ~IComponent() = default;
         virtual auto name() const -> std::string = 0;
-        
-        // Components are usually fast and synchronous, 
+
+        // Components are usually fast and synchronous,
         // but we keep the option for state updates.
         virtual auto update(double deltaTimeSeconds) -> void = 0;
     };

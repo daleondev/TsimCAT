@@ -8,7 +8,7 @@
 #include <QCoroTask>
 #include <memory>
 
-namespace core::link { class ILink; }
+namespace core::sim { class LaserSimulator; }
 
 namespace backend::controllers
 {
@@ -20,7 +20,7 @@ namespace backend::controllers
         Q_PROPERTY(QString lastMessage READ lastMessage NOTIFY lastMessageChanged)
 
       public:
-        explicit LaserController(QObject* parent = nullptr);
+        explicit LaserController(std::shared_ptr<core::sim::LaserSimulator> simulator, QObject* parent = nullptr);
         ~LaserController();
 
         QString tcpStatus() const;
@@ -33,13 +33,6 @@ namespace backend::controllers
         void lastMessageChanged();
 
       private:
-        QCoro::Task<void> runTcpServerLoop();
-        void setTcpStatus(const QString& status);
-        void setLastMessage(const QString& msg);
-
-        QString m_tcpStatus = "Disconnected";
-        QString m_lastMessage = "No messages";
-
-        std::unique_ptr<core::link::ILink> m_link;
+        std::shared_ptr<core::sim::LaserSimulator> m_simulator;
     };
 }

@@ -1,5 +1,7 @@
 #include "Backend.h"
 #include "Controllers/LaserController.h"
+#include "Link/LinkFactory.hpp"
+#include "Simulators/LaserSimulator.hpp"
 #include "Logger/Logger.hpp"
 #include <QCoroTimer>
 #include <chrono>
@@ -18,7 +20,21 @@ namespace backend
         core::logger::Logger::instance().init("logs/TsimCAT.log");
         core::logger::info("Backend initialized");
 
-        m_laserController = std::make_unique<backend::controllers::LaserController>(this);
+        // 1. Create Shared Links
+        core::link::LinkConfig tcpConfig{};
+        tcpConfig.port = 12345;
+        auto tcpRes = core::link::create(core::link::Role::Server, core::link::Mode::Raw, core::link::Protocol::Tcp, tcpConfig);
+        if (tcpRes) {
+            m_tcpLink = std::move(*tcpRes);
+        } else {
+            core::logger::error("Failed to create shared TCP link: {}", tcpRes.error().message());
+        }
+
+        // 2. Create Simulators
+        m_laserSim = std::make_shared<core::sim::LaserSimulator>(m_tcpLink);
+
+        // 3. Inject into Controllers
+        m_laserController = std::make_unique<backend::controllers::LaserController>(m_laserSim, this);
     }
 
     Backend::~Backend() = default;

@@ -4,13 +4,14 @@ add_library(core::simulators ALIAS core_simulators)
 target_sources(
     core_simulators
     PRIVATE
-    Simulators.cpp
+    LaserSimulator.cpp
 
     PUBLIC
     FILE_SET HEADERS
     BASE_DIRS ${CMAKE_CURRENT_LIST_DIR}/..
     FILES 
         ISimulator.hpp
+        LaserSimulator.hpp
         Components/IComponent.hpp
 )
 

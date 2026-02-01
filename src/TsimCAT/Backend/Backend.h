@@ -10,7 +10,11 @@
 #include <QtQml/qqmlregistration.h>
 #include <memory>
 
-namespace backend { namespace controllers { class LaserController; } }
+namespace core::link { class ILink; }
+namespace core::sim { class LaserSimulator; }
+
+namespace backend
+{ namespace controllers { class LaserController; } }
 
 namespace backend
 {
@@ -40,6 +44,8 @@ namespace backend
         QCoro::Task<void> doAsyncTest();
 
         QString m_asyncTestStatus = "Ready";
+        std::shared_ptr<core::link::ILink> m_tcpLink;
+        std::shared_ptr<core::sim::LaserSimulator> m_laserSim;
         std::unique_ptr<backend::controllers::LaserController> m_laserController;
     };
 }
