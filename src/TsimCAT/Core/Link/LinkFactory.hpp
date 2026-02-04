@@ -15,5 +15,6 @@ namespace core::link
         std::string remoteNetId;
     };
 
-    auto create(Role role, Mode mode, Protocol proto, const LinkConfig& config) -> result::Result<std::unique_ptr<ILink>>;
+    auto create(Role role, Mode mode, Protocol proto, const LinkConfig& config)
+      -> result::Result<std::unique_ptr<ILink>>;
 }

@@ -131,7 +131,7 @@ namespace
         std::string message(int ev) const override
         {
             static constexpr auto enums{ fmtu::detail::underlying_enumerators<AdsError>() };
-            if (!std::ranges::contains(enums, ev)) {
+            if (!std::ranges::contains(enums, static_cast<AdsErrorType>(ev))) {
                 return "Unknown";
             }
             return std::format("{:v}", static_cast<AdsError>(ev));

@@ -341,7 +341,7 @@ namespace
         std::string message(int ev) const override
         {
             static constexpr auto enums{ fmtu::detail::underlying_enumerators<UaStatus>() };
-            if (!std::ranges::contains(enums, ev)) {
+            if (!std::ranges::contains(enums, static_cast<UaStatusType>(ev))) {
                 return "Unknown";
             }
             return std::format("{:v}", static_cast<UaStatus>(ev));

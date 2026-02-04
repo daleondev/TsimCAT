@@ -2,21 +2,22 @@
 #include "Controllers/LaserController.h"
 #include "Controllers/RobotController.h"
 #include "Link/LinkFactory.hpp"
+#include "Logger/Logger.hpp"
 #include "Simulators/LaserSimulator.hpp"
 #include "Simulators/RobotSimulator.hpp"
-#include "Logger/Logger.hpp"
 #include <QCoroTimer>
-#include <chrono>
+#include <QDateTime>
+#include <QDir>
 #include <QQuickItem>
 #include <QQuickItemGrabResult>
-#include <QDir>
-#include <QDateTime>
+#include <chrono>
 
 using namespace std::chrono_literals;
 
 namespace backend
 {
-    Backend::Backend(QObject *parent) : QObject(parent)
+    Backend::Backend(QObject* parent)
+      : QObject(parent)
     {
         // Initialize logger
         core::logger::Logger::instance().init("logs/TsimCAT.log");
@@ -25,20 +26,26 @@ namespace backend
         // 1. Create Shared Links
         core::link::LinkConfig tcpConfig{};
         tcpConfig.port = 12345;
-        auto tcpRes = core::link::create(core::link::Role::Server, core::link::Mode::Raw, core::link::Protocol::Tcp, tcpConfig);
+        auto tcpRes = core::link::create(
+          core::link::Role::Server, core::link::Mode::Raw, core::link::Protocol::Tcp, tcpConfig);
         if (tcpRes) {
             m_tcpLink = std::move(*tcpRes);
-        } else {
+        }
+        else {
             core::logger::error("Failed to create shared TCP link: {}", tcpRes.error().message());
         }
 
         core::link::LinkConfig adsConfig{};
         adsConfig.ip = "127.0.0.1";
-        adsConfig.remoteNetId = "127.0.0.1.1.1";
-        auto adsRes = core::link::create(core::link::Role::Client, core::link::Mode::Symbolic, core::link::Protocol::Ads, adsConfig);
+        adsConfig.remoteNetId = "192.168.167.100.1.1";
+        adsConfig.port = 851;
+        adsConfig.localNetId = "192.168.167.100.1.20";
+        auto adsRes = core::link::create(
+          core::link::Role::Client, core::link::Mode::Symbolic, core::link::Protocol::Ads, adsConfig);
         if (adsRes) {
             m_adsLink = std::move(*adsRes);
-        } else {
+        }
+        else {
             core::logger::error("Failed to create shared ADS link: {}", adsRes.error().message());
         }
 
@@ -53,30 +60,15 @@ namespace backend
 
     Backend::~Backend() = default;
 
-    QString Backend::welcomeMessage() const
-    {
-        return QStringLiteral("Hello from C++ Backend!");
-    }
+    QString Backend::welcomeMessage() const { return QStringLiteral("Hello from C++ Backend!"); }
 
-    QString Backend::asyncTestStatus() const
-    {
-        return m_asyncTestStatus;
-    }
+    QString Backend::asyncTestStatus() const { return m_asyncTestStatus; }
 
-    backend::controllers::LaserController* Backend::laser() const
-    {
-        return m_laserController.get();
-    }
+    backend::controllers::LaserController* Backend::laser() const { return m_laserController.get(); }
 
-    backend::controllers::RobotController* Backend::robot() const
-    {
-        return m_robotController.get();
-    }
+    backend::controllers::RobotController* Backend::robot() const { return m_robotController.get(); }
 
-    void Backend::runAsyncTest()
-    {
-        doAsyncTest();
-    }
+    void Backend::runAsyncTest() { doAsyncTest(); }
 
     void Backend::captureScreenshot(QObject* item)
     {
@@ -90,13 +82,15 @@ namespace backend
         if (result) {
             connect(result.data(), &QQuickItemGrabResult::ready, this, [result]() {
                 QDir dir("screenshots");
-                if (!dir.exists()) dir.mkpath(".");
-                
+                if (!dir.exists())
+                    dir.mkpath(".");
+
                 QString filename = QString("screenshots/capture_%1.png")
-                                   .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd_HH-mm-ss"));
+                                     .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd_HH-mm-ss"));
                 if (result->saveToFile(filename)) {
                     core::logger::info("Screenshot saved to {}", filename.toStdString());
-                } else {
+                }
+                else {
                     core::logger::error("Failed to save screenshot");
                 }
             });
@@ -112,7 +106,7 @@ namespace backend
 
         m_asyncTestStatus = "QCoro Works! (Delay finished)";
         emit asyncTestStatusChanged();
-        
+
         co_return;
     }
 }
