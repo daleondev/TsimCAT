@@ -26,14 +26,32 @@ ApplicationWindow {
             Layout.fillHeight: true
             Layout.preferredWidth: 240
             footerText: "QCoro Status: " + backend.asyncTestStatus
-            
+
             model: [
-                { name: "Plant Overview", icon: "DashboardIcon" },
-                { name: "Robot Status", icon: "RobotIcon" },
-                { name: "Camera Status", icon: "CameraIcon" },
-                { name: "Laser Status", icon: "LaserIcon" },
-                { name: "Gantry Status", icon: "GantryIcon" },
-                { name: "Process Data", icon: "AnalyticsIcon" }
+                {
+                    name: "Plant Overview",
+                    icon: "DashboardIcon"
+                },
+                {
+                    name: "Robot Status",
+                    icon: "RobotIcon"
+                },
+                {
+                    name: "Camera Status",
+                    icon: "CameraIcon"
+                },
+                {
+                    name: "Laser Status",
+                    icon: "LaserIcon"
+                },
+                {
+                    name: "Gantry Status",
+                    icon: "GantryIcon"
+                },
+                {
+                    name: "Process Data",
+                    icon: "AnalyticsIcon"
+                }
             ]
         }
 

@@ -22,3 +22,6 @@
 18:07:11 DBG [LaserSimulator.cpp:184] LaserSimulator TX: [state <idle>]
 18:07:11 DBG [LaserSimulator.cpp:184] LaserSimulator TX: [laser done]
 18:07:16 INF [LaserSimulator.cpp:130] LaserSimulator: PLC disconnected (Error: Ein Verbindungsversuch ist fehlgeschlagen, da die Gegenstelle nach einer bestimmten Zeitspanne nicht richtig reagiert hat, oder die hergestellte Verbindung war fehlerhaft, da der verbundene Host nicht reagiert hat.)
+20:10:59 INF [Backend.cpp:24] Backend initialized
+23:06:05 INF [Backend.cpp:24] Backend initialized
+23:10:20 INF [Backend.cpp:24] Backend initialized

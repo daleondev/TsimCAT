@@ -328,9 +328,9 @@ namespace
     };
     constexpr auto getStatus(UA_StatusCode status) -> UaStatus { return static_cast<UaStatus>(status); }
 
-    constexpr auto isGood(UaStatus code) -> bool { return (std::to_underlying(code) & 0xC0000000) == 0; }
-    constexpr auto isUncertain(UaStatus code) -> bool { return (std::to_underlying(code) & 0xC0000000) == 0x40000000; }
-    constexpr auto isBad(UaStatus code) -> bool { return (std::to_underlying(code) & 0xC0000000) == 0x80000000; }
+    constexpr auto isGood(UaStatus code) -> bool { return UA_StatusCode_isGood(std::to_underlying(code)); }
+    constexpr auto isUncertain(UaStatus code) -> bool { return UA_StatusCode_isUncertain(std::to_underlying(code)); }
+    constexpr auto isBad(UaStatus code) -> bool { return UA_StatusCode_isBad(std::to_underlying(code)); }
     // clang-format on
 
     class UaStatusCategory : public std::error_category

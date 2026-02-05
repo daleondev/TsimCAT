@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../controls" as Controls
 
 Control {
     id: root
@@ -21,6 +22,32 @@ Control {
                 text: root.title
                 font.pixelSize: 28
                 Layout.alignment: Qt.AlignHCenter
+            }
+
+            Rectangle {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: 900
+                Layout.preferredHeight: 400
+                color: "#f8f8f8"
+                border.color: "#ddd"
+                radius: 8
+                clip: true
+
+                Controls.Robot3DView {
+                    id: robot3d
+                    anchors.fill: parent
+                    // Bindings for joint angles will go here, e.g.:
+                    // axis1: root.backend.robot.axis1
+                }
+
+                Text {
+                    anchors.bottom: parent.bottom
+                    anchors.right: parent.right
+                    anchors.margins: 10
+                    text: "Hold Right Click to Rotate | Middle Click to Pan | Scroll to Zoom"
+                    font.pixelSize: 10
+                    color: "#888"
+                }
             }
 
             RowLayout {
