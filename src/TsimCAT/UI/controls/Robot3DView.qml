@@ -25,30 +25,36 @@ Item {
         }
 
         Node {
+            id: cameraPivot
+            eulerRotation: Qt.vector3d(-30, 45, 0)
+
+            PerspectiveCamera {
+                id: camera
+                position: Qt.vector3d(0, 0, 2500)
+                clipNear: 10
+                clipFar: 10000
+            }
+        }
+
+        Node {
             id: sceneRoot
 
             DirectionalLight {
                 eulerRotation.x: -30
                 eulerRotation.y: -45
                 brightness: 1.0
+                castsShadow: true
             }
 
-            DirectionalLight {
-                eulerRotation.x: 30
-                eulerRotation.y: 135
+            PointLight {
+                position: Qt.vector3d(0, 500, 500)
                 brightness: 0.5
-            }
-
-            PerspectiveCamera {
-                id: camera
-                position: Qt.vector3d(500, 500, 500)
-                eulerRotation: Qt.vector3d(-30, 45, 0)
             }
 
             Node {
                 id: robotRoot
                 eulerRotation.x: -90
-                scale: Qt.vector3d(1000, 1000, 1000) // Scale to mm for better viewing with default camera settings
+                scale: Qt.vector3d(1000, 1000, 1000)
 
                 Node {
                     id: robotBase
@@ -66,7 +72,7 @@ Item {
                     Node {
                         id: joint1
                         position: Qt.vector3d(0, 0, 0.450)
-                        eulerRotation.z: -root.axis1 // Axis 0 0 -1
+                        eulerRotation.z: -root.axis1
 
                         Model {
                             id: link1
@@ -81,7 +87,7 @@ Item {
                         Node {
                             id: joint2
                             position: Qt.vector3d(0.150, 0, 0)
-                            eulerRotation.y: root.axis2 // Axis 0 1 0
+                            eulerRotation.y: root.axis2
 
                             Model {
                                 id: link2
@@ -96,7 +102,7 @@ Item {
                             Node {
                                 id: joint3
                                 position: Qt.vector3d(0.610, 0, 0)
-                                eulerRotation.y: root.axis3 // Axis 0 1 0
+                                eulerRotation.y: root.axis3
 
                                 Model {
                                     id: link3
@@ -111,7 +117,7 @@ Item {
                                 Node {
                                     id: joint4
                                     position: Qt.vector3d(0, 0, 0.02)
-                                    eulerRotation.x: -root.axis4 // Axis -1 0 0
+                                    eulerRotation.x: -root.axis4
 
                                     Model {
                                         id: link4
@@ -126,7 +132,7 @@ Item {
                                     Node {
                                         id: joint5
                                         position: Qt.vector3d(0.660, 0, 0)
-                                        eulerRotation.y: root.axis5 // Axis 0 1 0
+                                        eulerRotation.y: root.axis5
 
                                         Model {
                                             id: link5
@@ -141,7 +147,7 @@ Item {
                                         Node {
                                             id: joint6
                                             position: Qt.vector3d(0.080, 0, 0)
-                                            eulerRotation.x: -root.axis6 // Axis -1 0 0
+                                            eulerRotation.x: -root.axis6
 
                                             Model {
                                                 id: link6
@@ -155,10 +161,8 @@ Item {
 
                                             Node {
                                                 id: flange
-                                                // joint_a6-flange is fixed at 0 0 0
                                                 Node {
                                                     id: tool0
-                                                    // joint_flange-tool0: origin 0 0 0, rpy 0 90 0
                                                     eulerRotation.y: 90
                                                 }
                                             }
@@ -171,12 +175,10 @@ Item {
 
                     Node {
                         id: base
-                        // joint_base_link-base is fixed at 0 0 0
                     }
                 }
             }
 
-            // Ground plane
             Model {
                 source: "#Rectangle"
                 y: -1
@@ -189,10 +191,45 @@ Item {
                 ]
             }
         }
+    }
 
-        WasdController {
-            anchors.fill: parent
-            controlledObject: camera
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        preventStealing: true
+
+        property real lastX: 0
+        property real lastY: 0
+
+        onPressed: mouse => {
+            lastX = mouse.x;
+            lastY = mouse.y;
+        }
+
+        onPositionChanged: mouse => {
+            let dx = mouse.x - lastX;
+            let dy = mouse.y - lastY;
+
+                        if (mouse.buttons & Qt.RightButton) {
+                            // Rotation: Orbiting around pivot
+                            cameraPivot.eulerRotation.y -= dx * 0.2;
+                            cameraPivot.eulerRotation.x -= dy * 0.2;
+                        } else if (mouse.buttons & Qt.LeftButton) {
+                            // Translation: Panning using the camera's local orientation
+                            // This makes dragging left/right/up/down always follow the screen axes
+                            let speed = camera.position.z / 1000.0;
+                            let right = camera.mapDirectionToScene(Qt.vector3d(1, 0, 0));
+                            let up = camera.mapDirectionToScene(Qt.vector3d(0, 1, 0));
+                            
+                            let move = right.times(-dx * speed).plus(up.times(dy * speed));
+                            cameraPivot.position = cameraPivot.position.plus(move);
+                        }
+            lastX = mouse.x;
+            lastY = mouse.y;
+        }
+
+        onWheel: wheel => {
+            camera.position.z = Math.max(100, camera.position.z - wheel.angleDelta.y * 1.0);
         }
     }
 }
