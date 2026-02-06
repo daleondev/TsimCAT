@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick3D
 import QtQuick3D.Helpers
 
@@ -29,7 +30,7 @@ Item {
 
             PerspectiveCamera {
                 id: sceneCamera
-                position: Qt.vector3d(0, 0, 5000) // Zoomed back in for compact cell
+                position: Qt.vector3d(0, 0, 5000)
                 clipNear: 10
                 clipFar: 30000
             }
@@ -54,7 +55,7 @@ Item {
             Model {
                 y: -1
                 source: "#Rectangle"
-                scale: Qt.vector3d(100, 100, 1)
+                scale: Qt.vector3d(150, 150, 1)
                 eulerRotation.x: -90
                 materials: [
                     DefaultMaterial {
@@ -67,30 +68,33 @@ Item {
 
             // 1. SAFETY FENCE
             FenceModel {
+                id: fence
                 width: 6000
                 depth: 4500
                 position: Qt.vector3d(500, 0, 0)
+                
+                damperOpen: damperToggle.checked
+                doorOpen: doorToggle.checked
             }
 
-            // 2. ENTRY CONVEYOR (Neighbor -> Cell)
+            // 2. ENTRY CONVEYOR
             ConveyorModel {
                 id: entryConveyor
-                position: Qt.vector3d(-1800, 0, 0) // Compact side
-                length: 1500
+                position: Qt.vector3d(-2500, 0, 0) 
+                length: 2500
             }
 
-            // 3. MAIN ROBOT (Center)
+            // 3. MAIN ROBOT
             RobotModel {
                 id: plantRobot
                 position: Qt.vector3d(0, 0, 0)
             }
 
-            // 4. STATIONS (Side-by-Side behind robot)
+            // 4. STATIONS
             Node {
                 id: stationsRow
-                position: Qt.vector3d(0, 0, -1200) // Behind robot
+                position: Qt.vector3d(0, 0, -1200)
 
-                // Analysis Station
                 Node {
                     position: Qt.vector3d(-800, 0, 0)
                     StationModel { color: "#3498db" }
@@ -100,7 +104,6 @@ Item {
                     }
                 }
 
-                // Laser Station
                 Node {
                     position: Qt.vector3d(800, 0, 0)
                     StationModel { color: "#e74c3c" }
@@ -111,23 +114,24 @@ Item {
                 }
             }
 
-            // 5. EXIT CONVEYOR (Shortened)
+            // 5. EXIT CONVEYOR
             ConveyorModel {
                 id: exitConveyor
-                position: Qt.vector3d(1800, 0, 0)
-                length: 1500
+                position: Qt.vector3d(2500, 0, 0)
+                length: 2500
             }
 
-            // 6. TRANSFER GANTRY (2-Axis YZ)
+            // 6. TRANSFER GANTRY
             GantryModel {
                 id: plantGantry
-                position: Qt.vector3d(2800, 0, 0) // Very close to exit
+                position: Qt.vector3d(3500, 0, 0)
                 yPos: 500
                 zPos: 400
             }
         }
     }
 
+    // Move MouseArea BEFORE the UI controls so it sits lower in the stack
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
@@ -152,6 +156,25 @@ Item {
         onWheel: wheel => {
             let zoomSpeed = sceneCamera.position.z * 0.1;
             sceneCamera.position.z = Math.max(500, Math.min(15000, sceneCamera.position.z - (wheel.angleDelta.y / 120.0) * zoomSpeed));
+        }
+    }
+
+    // Interactive UI controls (Now on top and clickable)
+    Column {
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.margins: 20
+        spacing: 10
+
+        CheckBox {
+            id: damperToggle
+            text: "Open Guillotine Damper"
+            palette.windowText: "#333"
+        }
+        CheckBox {
+            id: doorToggle
+            text: "Open Safety Door"
+            palette.windowText: "#333"
         }
     }
 }
