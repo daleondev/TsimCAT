@@ -44,6 +44,8 @@ Item {
                 eulerRotation.y: -45
                 brightness: 1.2
                 castsShadow: true
+                shadowMapFar: 10000
+                shadowMapQuality: DirectionalLight.ShadowMapQualityVeryHigh
             }
 
             PointLight {
@@ -72,7 +74,7 @@ Item {
                 width: 6000
                 depth: 4500
                 position: Qt.vector3d(500, 0, 0)
-                
+
                 damperOpen: damperToggle.checked
                 doorOpen: doorToggle.checked
             }
@@ -80,7 +82,7 @@ Item {
             // 2. ENTRY CONVEYOR
             ConveyorModel {
                 id: entryConveyor
-                position: Qt.vector3d(-2500, 0, 0) 
+                position: Qt.vector3d(-2500, 0, 0)
                 length: 2500
             }
 
@@ -99,7 +101,9 @@ Item {
                 // Analysis Station
                 Node {
                     position: Qt.vector3d(-1000, 0, 0)
-                    StationModel { color: "#3498db" }
+                    StationModel {
+                        color: "#3498db"
+                    }
                     StationFrameModel {}
                     CameraModel {
                         position: Qt.vector3d(0, 1950, 0) // Centered on frame crossbar
@@ -110,13 +114,15 @@ Item {
                 // Laser Station
                 Node {
                     position: Qt.vector3d(1000, 0, 0)
-                    StationModel { color: "#e74c3c" }
-                    
+                    StationModel {
+                        color: "#e74c3c"
+                    }
+
                     // Offset frame to compensate for laser angle
-                    // Laser is tilted 30deg. Height is ~1m above table. 
+                    // Laser is tilted 30deg. Height is ~1m above table.
                     // offset = tan(30) * 1000 ~= 577mm
                     Node {
-                        position: Qt.vector3d(580, 0, 0) 
+                        position: Qt.vector3d(580, 0, 0)
                         StationFrameModel {}
                         LaserModel {
                             position: Qt.vector3d(0, 1950, 0)
@@ -155,7 +161,10 @@ Item {
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-        onPressed: mouse => { lastX = mouse.x; lastY = mouse.y; }
+        onPressed: mouse => {
+            lastX = mouse.x;
+            lastY = mouse.y;
+        }
         property real lastX: 0
         property real lastY: 0
         onPositionChanged: mouse => {
@@ -171,7 +180,8 @@ Item {
                 let move = right.times(-dx * speed).plus(up.times(dy * speed));
                 cameraPivot.position = cameraPivot.position.plus(move);
             }
-            lastX = mouse.x; lastY = mouse.y;
+            lastX = mouse.x;
+            lastY = mouse.y;
         }
         onWheel: wheel => {
             let zoomSpeed = sceneCamera.position.z * 0.1;
