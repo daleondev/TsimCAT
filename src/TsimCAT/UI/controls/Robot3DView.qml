@@ -18,10 +18,15 @@ Item {
         anchors.fill: parent
 
         environment: SceneEnvironment {
-            clearColor: "#f0f0f0"
+            clearColor: "#fdfdfd"
             backgroundMode: SceneEnvironment.Color
             antialiasingMode: SceneEnvironment.MSAA
             antialiasingQuality: SceneEnvironment.High
+            lightProbe: Texture {
+                textureData: ProceduralSkyTextureData {
+                    sunCurve: 2.0
+                }
+            }
         }
 
         Node {
@@ -30,8 +35,8 @@ Item {
 
             PerspectiveCamera {
                 id: camera
-                position: Qt.vector3d(0, 0, 2500)
-                clipNear: 10
+                position: Qt.vector3d(0, 0, 1800)
+                clipNear: 1.0
                 clipFar: 10000
             }
         }
@@ -42,13 +47,37 @@ Item {
             DirectionalLight {
                 eulerRotation.x: -30
                 eulerRotation.y: -45
-                brightness: 1.0
+                brightness: 1.5
                 castsShadow: true
+                shadowFactor: 10
+                shadowMapQuality: DirectionalLight.ShadowMapQualityHigh
             }
 
             PointLight {
-                position: Qt.vector3d(0, 500, 500)
-                brightness: 0.5
+                position: Qt.vector3d(1000, 1000, 1000)
+                brightness: 0.8
+                color: "#fff4e5" // Slightly warm
+            }
+
+            PointLight {
+                position: Qt.vector3d(-1000, 500, -500)
+                brightness: 0.4
+                color: "#e5f1ff" // Slightly cool
+            }
+
+            // Ground Plane
+            Node {
+                y: -1
+                Model {
+                    source: "#Rectangle"
+                    scale: Qt.vector3d(50, 50, 1)
+                    eulerRotation.x: -90
+                    materials: [
+                        DefaultMaterial {
+                            diffuseColor: "#eeeeee"
+                        }
+                    ]
+                }
             }
 
             Node {
@@ -63,8 +92,10 @@ Item {
                         id: baseLink
                         source: "../assets/meshes/base_link/meshes/node3.mesh"
                         materials: [
-                            DefaultMaterial {
-                                diffuseColor: "#0e0e10"
+                            PrincipledMaterial {
+                                baseColor: "#1a1a1a"
+                                metalness: 0.8
+                                roughness: 0.2
                             }
                         ]
                     }
@@ -78,8 +109,10 @@ Item {
                             id: link1
                             source: "../assets/meshes/link_1/meshes/node3.mesh"
                             materials: [
-                                DefaultMaterial {
-                                    diffuseColor: "#f67828"
+                                PrincipledMaterial {
+                                    baseColor: "#f67828"
+                                    metalness: 0.2
+                                    roughness: 0.4
                                 }
                             ]
                         }
@@ -93,8 +126,10 @@ Item {
                                 id: link2
                                 source: "../assets/meshes/link_2/meshes/node3.mesh"
                                 materials: [
-                                    DefaultMaterial {
-                                        diffuseColor: "#f67828"
+                                    PrincipledMaterial {
+                                        baseColor: "#f67828"
+                                        metalness: 0.2
+                                        roughness: 0.4
                                     }
                                 ]
                             }
@@ -108,8 +143,10 @@ Item {
                                     id: link3
                                     source: "../assets/meshes/link_3/meshes/node3.mesh"
                                     materials: [
-                                        DefaultMaterial {
-                                            diffuseColor: "#f67828"
+                                        PrincipledMaterial {
+                                            baseColor: "#f67828"
+                                            metalness: 0.2
+                                            roughness: 0.4
                                         }
                                     ]
                                 }
@@ -123,8 +160,10 @@ Item {
                                         id: link4
                                         source: "../assets/meshes/link_4/meshes/node3.mesh"
                                         materials: [
-                                            DefaultMaterial {
-                                                diffuseColor: "#f67828"
+                                            PrincipledMaterial {
+                                                baseColor: "#f67828"
+                                                metalness: 0.2
+                                                roughness: 0.4
                                             }
                                         ]
                                     }
@@ -138,8 +177,10 @@ Item {
                                             id: link5
                                             source: "../assets/meshes/link_5/meshes/node3.mesh"
                                             materials: [
-                                                DefaultMaterial {
-                                                    diffuseColor: "#f67828"
+                                                PrincipledMaterial {
+                                                    baseColor: "#f67828"
+                                                    metalness: 0.2
+                                                    roughness: 0.4
                                                 }
                                             ]
                                         }
@@ -153,8 +194,10 @@ Item {
                                                 id: link6
                                                 source: "../assets/meshes/link_6/meshes/node3.mesh"
                                                 materials: [
-                                                    DefaultMaterial {
-                                                        diffuseColor: "#817863"
+                                                    PrincipledMaterial {
+                                                        baseColor: "#2a2a2a"
+                                                        metalness: 0.9
+                                                        roughness: 0.1
                                                     }
                                                 ]
                                             }
@@ -172,30 +215,14 @@ Item {
                             }
                         }
                     }
-
-                    Node {
-                        id: base
-                    }
                 }
-            }
-
-            Model {
-                source: "#Rectangle"
-                y: -1
-                scale: Qt.vector3d(20, 20, 1)
-                eulerRotation.x: -90
-                materials: [
-                    DefaultMaterial {
-                        diffuseColor: "#e0e0e0"
-                    }
-                ]
             }
         }
     }
 
     MouseArea {
         anchors.fill: parent
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         preventStealing: true
 
         property real lastX: 0
@@ -210,26 +237,26 @@ Item {
             let dx = mouse.x - lastX;
             let dy = mouse.y - lastY;
 
-                        if (mouse.buttons & Qt.RightButton) {
-                            // Rotation: Orbiting around pivot
-                            cameraPivot.eulerRotation.y -= dx * 0.2;
-                            cameraPivot.eulerRotation.x -= dy * 0.2;
-                        } else if (mouse.buttons & Qt.LeftButton) {
-                            // Translation: Panning using the camera's local orientation
-                            // This makes dragging left/right/up/down always follow the screen axes
-                            let speed = camera.position.z / 1000.0;
-                            let right = camera.mapDirectionToScene(Qt.vector3d(1, 0, 0));
-                            let up = camera.mapDirectionToScene(Qt.vector3d(0, 1, 0));
-                            
-                            let move = right.times(-dx * speed).plus(up.times(dy * speed));
-                            cameraPivot.position = cameraPivot.position.plus(move);
-                        }
+            if (mouse.buttons & Qt.RightButton) {
+                // Rotation: Orbiting around pivot
+                cameraPivot.eulerRotation.y -= dx * 0.2;
+                cameraPivot.eulerRotation.x = Math.max(-90, Math.min(0, cameraPivot.eulerRotation.x - dy * 0.2));
+            } else if (mouse.buttons & (Qt.LeftButton | Qt.MiddleButton)) {
+                // Translation: Panning using the camera's local orientation
+                let speed = camera.position.z / 1500.0;
+                let right = camera.mapDirectionToScene(Qt.vector3d(1, 0, 0));
+                let up = camera.mapDirectionToScene(Qt.vector3d(0, 1, 0));
+
+                let move = right.times(-dx * speed).plus(up.times(dy * speed));
+                cameraPivot.position = cameraPivot.position.plus(move);
+            }
             lastX = mouse.x;
             lastY = mouse.y;
         }
 
         onWheel: wheel => {
-            camera.position.z = Math.max(100, camera.position.z - wheel.angleDelta.y * 1.0);
+            let zoomSpeed = camera.position.z * 0.1;
+            camera.position.z = Math.max(200, Math.min(5000, camera.position.z - (wheel.angleDelta.y / 120.0) * zoomSpeed));
         }
     }
 }

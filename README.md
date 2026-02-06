@@ -4,6 +4,9 @@ TsimCAT is a modern industrial control and simulation interface built with **Qt 
 
 ## 🚀 Key Features
 - **Modern UI**: Material Design 16:9 responsive layout with procedural graphics.
+- **3D Digital Twin**: Real-time robot visualization using **QtQuick3D**.
+    - Integrated 6-axis kinematic chain with mesh-based rendering.
+    - Custom CAD-style camera controls (Right-click Orbit, Left-click Pan, Scroll Zoom).
 - **Advanced Architecture**: 
     - **Composition Root**: A thin `Backend` wrapper managing specialized domain `Controllers`.
     - **Interface-Driven Drivers**: Drivers (ADS, TCP, OPC UA) are hidden behind a `LinkFactory`. No driver-specific headers (Asio, AdsLib) leak into the rest of the project.
@@ -27,18 +30,19 @@ TsimCAT/
 │       │   ├── Common/   # Shared types (Result, etc.)
 │       │   ├── Coroutines/ # Custom Task system
 │       │   ├── Logger/   # Advanced logging framework
-│       │   └── Link/     # Communication abstraction
-│       │       ├── LinkFactory.hpp  # Centralized driver creation
-│       │       ├── Raw/             # Byte-stream interfaces (TCP)
-│       │       └── Symbolic/        # Variable-based interfaces (ADS, OPC UA)
+│       │   ├── Link/     # Communication abstraction
+│       │   └── Simulators/ # Domain simulation (Robot, Laser)
 │       ├── Backend/      # [Glue] Qt/C++ Bridge
 │       │   ├── Backend.h # Composition Root
-│       │   └── Controllers/ # Feature-specific logic (e.g., LaserController)
+│       │   └── Controllers/ # Feature-specific logic (e.g., RobotController)
 │       └── UI/           # [View] QML Frontend
+│           ├── assets/   # 3D Meshes and icons
+│           ├── controls/ # Reusable UI components (Robot3DView)
+│           └── subscreens/ # Full-page views
 ```
 
 ## 🛠 Prerequisites & Build
-- **Qt 6.10.1** (MinGW 64-bit)
+- **Qt 6.10.1** (MinGW 64-bit) with **QtQuick3D** module
 - **MinGW GCC 15.2+** (Required for C++23 features like `std::print`)
 - **CMake 3.24+** & **Ninja**
 
@@ -67,12 +71,11 @@ if (auto* server = link->asServer()) {
 }
 ```
 
-### Feature Controllers
-The `backend::Backend` class is a composition root. It delegates screen-specific logic to controllers:
-- `LaserController`: Manages the Asio-based TCP server and Laser state.
-- `Backend`: Manages global utilities like `captureScreenshot`.
+### 3D Kinematics
+The 3D robot visualization uses a nested `Node` structure to represent a standard 6-axis kinematic chain. The `Robot3DView.qml` component maps joint angles directly to these nodes, allowing the UI to reflect the simulated robot state in real-time.
 
 ## 📌 Development Status
+- [x] **3D Digital Twin**: Implemented 6-axis robot visualization with custom camera navigation.
 - [x] **Namespace Cleanup**: Standardized on `core::` and `backend::`.
 - [x] **Encapsulation**: Driver dependencies (`asio`, `ads`, `open62541`) are now **PRIVATE** to the link module.
 - [x] **TCP Robustness**: Fixed socket reuse, disconnect detection (EOF handling), and `NO_TIMEOUT` logic.
