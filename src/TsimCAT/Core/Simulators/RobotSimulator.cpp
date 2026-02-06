@@ -14,6 +14,14 @@ namespace core::sim
         m_status.bInAut = 1;
         m_status.bMasteringOk = 1;
         m_status.bBrakeTestOk = 1;
+
+        // Initialize to a nice "Home" position (Degrees)
+        m_jointAngles[0] = 0.0;    // Axis 1
+        m_jointAngles[1] = -90.0;  // Axis 2 (Upright)
+        m_jointAngles[2] = 90.0;   // Axis 3 (Horizontal)
+        m_jointAngles[3] = 0.0;    // Axis 4
+        m_jointAngles[4] = 0.0;    // Axis 5
+        m_jointAngles[5] = 0.0;    // Axis 6
     }
 
     RobotSimulator::~RobotSimulator()
@@ -86,6 +94,12 @@ namespace core::sim
             case link::Status::Faulty: return "Faulty";
             default: return "Unknown";
         }
+    }
+
+    auto RobotSimulator::jointAngles() const -> const double*
+    {
+        std::scoped_lock lock(m_mutex);
+        return m_jointAngles;
     }
 
     auto RobotSimulator::run() -> coro::Task<void>

@@ -74,12 +74,14 @@ namespace core::sim
         auto control() const -> RobotControl;
         auto status() const -> RobotStatus;
         auto adsStatus() const -> std::string;
+        auto jointAngles() const -> const double*;
 
       private:
         std::shared_ptr<link::ILink> m_link;
         
         RobotControl m_control{};
         RobotStatus m_status{};
+        double m_jointAngles[6]{};
         
         mutable std::mutex m_mutex;
         std::atomic<bool> m_running{ false };

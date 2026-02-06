@@ -32,11 +32,12 @@ Item {
 
         Node {
             id: cameraPivot
-            eulerRotation: Qt.vector3d(-30, 45, 0)
+            eulerRotation: Qt.vector3d(-25, 45, 0)
+            position: Qt.vector3d(0, 300, 0) // Lift the pivot center slightly
 
             PerspectiveCamera {
                 id: sceneCamera
-                position: Qt.vector3d(0, 0, 1800)
+                position: Qt.vector3d(0, 0, 2500) // Move camera further back
                 clipNear: 1.0
                 clipFar: 10000
             }
@@ -244,9 +245,9 @@ Item {
                 cameraPivot.eulerRotation.x = Math.max(-90, Math.min(0, cameraPivot.eulerRotation.x - dy * 0.2));
             } else if (mouse.buttons & (Qt.LeftButton | Qt.MiddleButton)) {
                 // Translation: Panning using the camera's local orientation
-                let speed = camera.position.z / 1500.0;
-                let right = camera.mapDirectionToScene(Qt.vector3d(1, 0, 0));
-                let up = camera.mapDirectionToScene(Qt.vector3d(0, 1, 0));
+                let speed = sceneCamera.position.z / 1500.0;
+                let right = sceneCamera.mapDirectionToScene(Qt.vector3d(1, 0, 0));
+                let up = sceneCamera.mapDirectionToScene(Qt.vector3d(0, 1, 0));
 
                 let move = right.times(-dx * speed).plus(up.times(dy * speed));
                 cameraPivot.position = cameraPivot.position.plus(move);
@@ -256,8 +257,8 @@ Item {
         }
 
         onWheel: wheel => {
-            let zoomSpeed = camera.position.z * 0.1;
-            camera.position.z = Math.max(200, Math.min(5000, camera.position.z - (wheel.angleDelta.y / 120.0) * zoomSpeed));
+            let zoomSpeed = sceneCamera.position.z * 0.1;
+            sceneCamera.position.z = Math.max(200, Math.min(5000, sceneCamera.position.z - (wheel.angleDelta.y / 120.0) * zoomSpeed));
         }
     }
 }

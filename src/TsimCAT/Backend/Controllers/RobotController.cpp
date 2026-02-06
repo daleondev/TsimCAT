@@ -36,6 +36,13 @@ namespace backend::controllers
     uint8_t RobotController::areaFreeRobot() const { return m_simulator ? m_simulator->status().nAreaFree_Robot : 0; }
     uint32_t RobotController::errorCode() const { return m_simulator ? m_simulator->status().nErrorCode : 0; }
 
+    double RobotController::axis1() const { return m_simulator ? m_simulator->jointAngles()[0] : 0.0; }
+    double RobotController::axis2() const { return m_simulator ? m_simulator->jointAngles()[1] : 0.0; }
+    double RobotController::axis3() const { return m_simulator ? m_simulator->jointAngles()[2] : 0.0; }
+    double RobotController::axis4() const { return m_simulator ? m_simulator->jointAngles()[3] : 0.0; }
+    double RobotController::axis5() const { return m_simulator ? m_simulator->jointAngles()[4] : 0.0; }
+    double RobotController::axis6() const { return m_simulator ? m_simulator->jointAngles()[5] : 0.0; }
+
     // --- Control Getters ---
     uint16_t RobotController::controlJobId() const { return m_simulator ? m_simulator->control().nJobId : 0; }
     uint8_t RobotController::controlPartType() const { return m_simulator ? m_simulator->control().nPartType : 0; }

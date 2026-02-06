@@ -29,6 +29,12 @@ Control {
             Controls.Robot3DView {
                 id: robot3d
                 anchors.fill: parent
+                axis1: root.robot ? root.robot.axis1 : 0
+                axis2: root.robot ? root.robot.axis2 : -90
+                axis3: root.robot ? root.robot.axis3 : 90
+                axis4: root.robot ? root.robot.axis4 : 0
+                axis5: root.robot ? root.robot.axis5 : 0
+                axis6: root.robot ? root.robot.axis6 : 0
             }
 
             // Title Overlay

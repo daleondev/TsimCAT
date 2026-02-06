@@ -32,6 +32,14 @@ namespace backend::controllers
         Q_PROPERTY(uint8_t areaFreeRobot READ areaFreeRobot NOTIFY stateChanged)
         Q_PROPERTY(uint32_t errorCode READ errorCode NOTIFY stateChanged)
 
+        // Joint Angles (Degrees)
+        Q_PROPERTY(double axis1 READ axis1 NOTIFY stateChanged)
+        Q_PROPERTY(double axis2 READ axis2 NOTIFY stateChanged)
+        Q_PROPERTY(double axis3 READ axis3 NOTIFY stateChanged)
+        Q_PROPERTY(double axis4 READ axis4 NOTIFY stateChanged)
+        Q_PROPERTY(double axis5 READ axis5 NOTIFY stateChanged)
+        Q_PROPERTY(double axis6 READ axis6 NOTIFY stateChanged)
+
         // Control from PLC (Observing what PLC sends)
         Q_PROPERTY(uint16_t controlJobId READ controlJobId NOTIFY stateChanged)
         Q_PROPERTY(uint8_t controlPartType READ controlPartType NOTIFY stateChanged)
@@ -58,6 +66,13 @@ namespace backend::controllers
         bool inExt() const;
         uint8_t areaFreeRobot() const;
         uint32_t errorCode() const;
+
+        double axis1() const;
+        double axis2() const;
+        double axis3() const;
+        double axis4() const;
+        double axis5() const;
+        double axis6() const;
 
         uint16_t controlJobId() const;
         uint8_t controlPartType() const;
