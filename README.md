@@ -1,22 +1,50 @@
 # TsimCAT - Industrial Control Center
 
-TsimCAT is a modern industrial control and simulation interface built with **Qt 6.10.1**, **C++23**, **Asio**, and **QCoro**. It follows a strictly decoupled architecture, hiding complex driver implementations behind clean interfaces and a centralized factory.
+TsimCAT is a modern industrial control and simulation interface built with **Qt 6.10.1**, **C++23**, **Asio**, and **QCoro**. It follows a strictly decoupled architecture, hiding complex driver implementations behind clean interfaces and a centralized factory. The application features a high-fidelity **3D Digital Twin** of an industrial manufacturing cell, built entirely with **QtQuick3D**.
 
 ## 🚀 Key Features
 - **Modern UI**: Material Design 16:9 responsive layout with procedural graphics.
-- **3D Digital Twin**: Real-time robot visualization using **QtQuick3D**.
-    - Integrated 6-axis kinematic chain with mesh-based rendering.
-    - Custom CAD-style camera controls (Right-click Orbit, Left-click Pan, Scroll Zoom).
+- **3D Digital Twin**: High-performance, real-time visualization of a complete industrial plant.
+    - **6-Axis Robot**: Kinematically accurate simulation with real-time joint feedback.
+    - **Interactive Plant**: Includes conveyors, gantry systems, and processing stations.
+    - **Safety Systems**: Visualized safety fencing with interactive doors and dampers.
 - **Advanced Architecture**: 
     - **Composition Root**: A thin `Backend` wrapper managing specialized domain `Controllers`.
-    - **Interface-Driven Drivers**: Drivers (ADS, TCP, OPC UA) are hidden behind a `LinkFactory`. No driver-specific headers (Asio, AdsLib) leak into the rest of the project.
+    - **Interface-Driven Drivers**: Drivers (ADS, TCP, OPC UA) are hidden behind a `LinkFactory`.
 - **Sophisticated Logging**:
     - Thread-safe `core::logger` module with console (ANSI colors) and file output.
-    - Automated directory structure (`logs/`).
-    - Uses `format_utils` for type-safe, compile-time/runtime formatting and `std::source_location` for automatic call-site tracking.
 - **Diagnostics**:
-    - Real-time TCP server status and message logging.
-    - Integrated UI screenshot capability for debugging purposes.
+    - Real-time connectivity status and integrated UI screenshot capability.
+
+## 🎨 UI & 3D Visualization
+
+The user interface is powered by **QtQuick 3D**, moving beyond static dashboards to provide a fully immersive operational view.
+
+### 🏭 Plant Overview (`Plant3DView`)
+A comprehensive digital twin of the manufacturing cell, featuring:
+*   **Conveyor System**: A dual-belt setup simulating material flow.
+    *   **Entry Conveyor**: Transports parts into the cell, passing through a safety-interlocked **Guillotine Damper**.
+    *   **Exit Conveyor**: Moves processed parts out of the cell to a higher-level neighbor belt.
+*   **Processing Stations**:
+    *   **Analysis Station**: Features a frame-mounted camera with a visualized **Field of View (FOV)** cone.
+    *   **Laser Station**: Equipped with a 30° tilted laser head and visible beam for part marking.
+*   **Transfer Gantry**: A 2-axis (Y/Z) linear robot with a detailed **Industrial Gripper**, bridging the cell's exit to the neighbor's logistics.
+*   **Safety Perimeter**: A modular **Chain-Link Fence** system (procedurally textured) ensuring operator safety, complete with:
+    *   **Double Safety Door**: Animated swinging doors with "soft-stop" mechanics.
+    *   **Safety Interlocks**: Visual feedback for open/closed states.
+
+### 🤖 Robot Control (`Robot3DView`)
+A focused, detailed view of the 6-axis industrial manipulator.
+*   **Kinematics**: Joint angles are bound directly to the C++ backend simulation.
+*   **Visualization**: High-fidelity mesh rendering with PBR materials (PrincipledMaterial) for realistic metal and paint finishes.
+*   **Navigation**: CAD-style camera controls (Orbit, Pan, Zoom) allow operators to inspect the robot from any angle.
+
+### 🛠 reusable 3D Components
+The 3D scene is built from modular, reusable QML components found in `src/TsimCAT/UI/controls/`:
+*   `RobotModel.qml`: The core 6-axis kinematic chain.
+*   `GantryModel.qml`: Parametric 2-axis gantry with Z-rod and gripper.
+*   `FenceModel.qml`: Procedurally generated wire-mesh fence with door/damper logic.
+*   `CameraModel.qml` / `LaserModel.qml`: Sensor and tool heads with mounting frames.
 
 ## 📁 Project Structure
 ```text
@@ -27,18 +55,15 @@ TsimCAT/
 │   ├── app/              # Entry point (main.cpp)
 │   └── TsimCAT/
 │       ├── Core/         # [Logic] Pure C++23 Domain Layer (Qt-Independent)
-│       │   ├── Common/   # Shared types (Result, etc.)
-│       │   ├── Coroutines/ # Custom Task system
-│       │   ├── Logger/   # Advanced logging framework
-│       │   ├── Link/     # Communication abstraction
-│       │   └── Simulators/ # Domain simulation (Robot, Laser)
+│       │   ├── Link/     # Communication abstraction (ADS, TCP)
+│       │   └── Simulators/ # Domain simulation logic (Robot kinematics)
 │       ├── Backend/      # [Glue] Qt/C++ Bridge
 │       │   ├── Backend.h # Composition Root
 │       │   └── Controllers/ # Feature-specific logic (e.g., RobotController)
 │       └── UI/           # [View] QML Frontend
-│           ├── assets/   # 3D Meshes and icons
-│           ├── controls/ # Reusable UI components (Robot3DView)
-│           └── subscreens/ # Full-page views
+│           ├── assets/   # 3D Meshes (.mesh)
+│           ├── controls/ # 3D Components (RobotModel, FenceModel, etc.)
+│           └── subscreens/ # Full-page views (PlantOverview, RobotStatus)
 ```
 
 ## 🛠 Prerequisites & Build
@@ -53,7 +78,7 @@ cmake --build --preset debug
 ```
 
 ### ⚠️ Running (Critical DLL Order)
-To avoid "Entry Point Not Found" errors, the **Compiler's bin directory must be prioritized** over Qt's bin directory in the PATH to ensure the correct `libstdc++` version is loaded:
+To avoid "Entry Point Not Found" errors, the **Compiler's bin directory must be prioritized** over Qt's bin directory in the PATH:
 ```powershell
 $env:PATH = "C:\Users\Dev.Windows-Desktop\AppData\Local\mingw64\bin;D:\Qt\6.10.1\mingw_64\bin;" + $env:PATH
 .\build\debug\appTsimCAT.exe
@@ -72,12 +97,13 @@ if (auto* server = link->asServer()) {
 ```
 
 ### 3D Kinematics
-The 3D robot visualization uses a nested `Node` structure to represent a standard 6-axis kinematic chain. The `Robot3DView.qml` component maps joint angles directly to these nodes, allowing the UI to reflect the simulated robot state in real-time.
+The robot visualization uses a nested `Node` structure to represent a standard 6-axis kinematic chain. The `RobotModel.qml` component maps joint angles from the C++ `RobotController` directly to these nodes, enabling real-time, jitter-free visualization of the machine state.
 
 ## 📌 Development Status
-- [x] **3D Digital Twin**: Implemented 6-axis robot visualization with custom camera navigation.
+- [x] **3D Digital Twin**: Full plant layout with Robot, Gantry, Conveyors, and Stations.
+- [x] **Safety Systems**: Interactive fencing, doors, and dampers.
 - [x] **Namespace Cleanup**: Standardized on `core::` and `backend::`.
-- [x] **Encapsulation**: Driver dependencies (`asio`, `ads`, `open62541`) are now **PRIVATE** to the link module.
-- [x] **TCP Robustness**: Fixed socket reuse, disconnect detection (EOF handling), and `NO_TIMEOUT` logic.
+- [x] **Encapsulation**: Driver dependencies (`asio`, `ads`, `open62541`) are **PRIVATE**.
+- [x] **TCP Robustness**: Fixed socket reuse and disconnect detection.
 - [x] **Logging**: Implemented folder-based logging with source tracking.
-- [x] **Screenshots**: UI capture logic implemented.
+- [x] **Screenshots**: Integrated UI capture logic.

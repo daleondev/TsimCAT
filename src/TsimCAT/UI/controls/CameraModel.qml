@@ -18,6 +18,7 @@ Node {
 
     // Lens
     Model {
+        id: lens
         position: Qt.vector3d(0, 0, 60)
         eulerRotation.x: 90
         source: "#Cylinder"
@@ -27,6 +28,22 @@ Node {
                 baseColor: "#000"
                 metalness: 1.0
                 roughness: 0.0
+            }
+        ]
+    }
+
+    // Inspection Cone (Field of View)
+    Model {
+        position: Qt.vector3d(0, 0, 2060)
+        eulerRotation.x: -90
+        source: "#Cone"
+        scale: Qt.vector3d(8, 20, 8)
+        materials: [
+            PrincipledMaterial {
+                baseColor: "#3498db"
+                opacity: 0.1
+                alphaMode: PrincipledMaterial.Blend
+                cullMode: PrincipledMaterial.NoCulling
             }
         ]
     }
