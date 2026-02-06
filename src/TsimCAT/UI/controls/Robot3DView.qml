@@ -16,6 +16,7 @@ Item {
     View3D {
         id: view
         anchors.fill: parent
+        camera: sceneCamera
 
         environment: SceneEnvironment {
             clearColor: "#fdfdfd"
@@ -34,7 +35,7 @@ Item {
             eulerRotation: Qt.vector3d(-30, 45, 0)
 
             PerspectiveCamera {
-                id: camera
+                id: sceneCamera
                 position: Qt.vector3d(0, 0, 1800)
                 clipNear: 1.0
                 clipFar: 10000

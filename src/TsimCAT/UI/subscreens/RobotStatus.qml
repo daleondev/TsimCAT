@@ -8,286 +8,264 @@ Control {
     property string title: "Robot Communication Interface"
     required property var backend
 
-    ScrollView {
-        anchors.fill: parent
-        contentWidth: mainLayout.width
+    padding: 20
 
-        ColumnLayout {
-            id: mainLayout
-            anchors.centerIn: parent
-            width: 900
-            spacing: 30
+    // Helper to safely access robot properties
+    readonly property var robot: backend ? backend.robot : null
 
-            Text {
-                text: root.title
-                font.pixelSize: 28
-                Layout.alignment: Qt.AlignHCenter
+    contentItem: RowLayout {
+        spacing: 20
+
+        // --- LEFT SIDE: 3D VISUALIZATION ---
+        Rectangle {
+            id: viewContainer
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.minimumWidth: 400
+            color: "#1e1e1e"
+            radius: 12
+            clip: true
+
+            Controls.Robot3DView {
+                id: robot3d
+                anchors.fill: parent
             }
 
+            // Title Overlay
             Rectangle {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: 900
-                Layout.preferredHeight: 400
-                color: "#f8f8f8"
-                border.color: "#ddd"
-                radius: 8
-                clip: true
-
-                Controls.Robot3DView {
-                    id: robot3d
-                    anchors.fill: parent
-                    // Bindings for joint angles will go here, e.g.:
-                    // axis1: root.backend.robot.axis1
-                }
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.margins: 15
+                color: "#aa000000"
+                radius: 6
+                width: titleText.width + 20
+                height: titleText.height + 10
 
                 Text {
-                    anchors.bottom: parent.bottom
-                    anchors.right: parent.right
-                    anchors.margins: 10
-                    text: "Hold Right Click to Rotate | Left Click to Pan | Scroll to Zoom"
-                    font.pixelSize: 10
-                    color: "#888"
-                }
-            }
-
-            RowLayout {
-                spacing: 40
-                Layout.alignment: Qt.AlignHCenter
-
-                // --- PLC CONTROL PANEL ---
-                GroupBox {
-                    title: "PLC -> Robot (Control)"
-                    Layout.preferredWidth: 400
-
-                    ColumnLayout {
-                        anchors.fill: parent
-                        spacing: 15
-
-                        ValueRow {
-                            label: "Job ID:"
-                            value: root.backend.robot.controlJobId
-                        }
-                        ValueRow {
-                            label: "Part Type:"
-                            value: root.backend.robot.controlPartType
-                        }
-                        ValueRow {
-                            label: "Area Free (Mask):"
-                            value: "0x" + root.backend.robot.areaFreePlc.toString(16).toUpperCase()
-                        }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            height: 1
-                            color: "#ddd"
-                        }
-
-                        RowLayout {
-                            spacing: 20
-                            BitIndicator {
-                                label: "MOVE ENABLE"
-                                active: root.backend.robot.controlMoveEnable
-                                activeColor: "green"
-                            }
-                            BitIndicator {
-                                label: "RESET"
-                                active: root.backend.robot.controlReset
-                                activeColor: "blue"
-                            }
-                        }
-                    }
-                }
-
-                // --- ROBOT STATUS PANEL ---
-                GroupBox {
-                    title: "Robot -> PLC (Status)"
-                    Layout.preferredWidth: 400
-
-                    ColumnLayout {
-                        anchors.fill: parent
-                        spacing: 10
-
-                        RowLayout {
-                            ValueRow {
-                                label: "Job Feedback:"
-                                value: root.backend.robot.jobIdFeedback
-                            }
-                            Item {
-                                Layout.fillWidth: true
-                            }
-                            ValueRow {
-                                label: "Part Mirror:"
-                                value: root.backend.robot.partTypeMirrored
-                            }
-                        }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            height: 1
-                            color: "#ddd"
-                        }
-
-                        // State Bits
-                        Text {
-                            text: "State Bits"
-                            font.bold: true
-                            font.pixelSize: 11
-                            color: "#666"
-                        }
-                        Flow {
-                            Layout.fillWidth: true
-                            spacing: 8
-                            BitIndicator {
-                                label: "MOTION"
-                                active: root.backend.robot.inMotion
-                                activeColor: "orange"
-                            }
-                            BitIndicator {
-                                label: "HOME"
-                                active: root.backend.robot.inHome
-                                activeColor: "blue"
-                            }
-                            BitIndicator {
-                                label: "ENABLED"
-                                active: root.backend.robot.enabled
-                            }
-                            BitIndicator {
-                                label: "ERROR"
-                                active: root.backend.robot.error
-                                activeColor: "red"
-                            }
-                        }
-
-                        // Quality Bits
-                        Text {
-                            text: "Quality Bits"
-                            font.bold: true
-                            font.pixelSize: 11
-                            color: "#666"
-                            Layout.topMargin: 5
-                        }
-                        Flow {
-                            Layout.fillWidth: true
-                            spacing: 8
-                            BitIndicator {
-                                label: "BRAKE TEST"
-                                active: root.backend.robot.brakeTestOk
-                            }
-                            BitIndicator {
-                                label: "MASTERING"
-                                active: root.backend.robot.masteringOk
-                            }
-                        }
-
-                        // Mode Bits
-                        Text {
-                            text: "Mode"
-                            font.bold: true
-                            font.pixelSize: 11
-                            color: "#666"
-                            Layout.topMargin: 5
-                        }
-                        Flow {
-                            Layout.fillWidth: true
-                            spacing: 8
-                            BitIndicator {
-                                label: "T1"
-                                active: root.backend.robot.inT1
-                                activeColor: "#9c27b0"
-                            }
-                            BitIndicator {
-                                label: "T2"
-                                active: root.backend.robot.inT2
-                                activeColor: "#673ab7"
-                            }
-                            BitIndicator {
-                                label: "AUT"
-                                active: root.backend.robot.inAut
-                                activeColor: "#3f51b5"
-                            }
-                            BitIndicator {
-                                label: "EXT"
-                                active: root.backend.robot.inExt
-                                activeColor: "#2196f3"
-                            }
-                        }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            height: 1
-                            color: "#ddd"
-                            Layout.topMargin: 5
-                        }
-
-                        ValueRow {
-                            label: "Error Code:"
-                            value: root.backend.robot.errorCode
-                            color: root.backend.robot.error ? "red" : "black"
-                        }
-                    }
-                }
-            }
-
-            // Connection Footer
-            RowLayout {
-                Layout.alignment: Qt.AlignHCenter
-                spacing: 20
-
-                Text {
-                    text: "ADS Status:"
+                    id: titleText
+                    anchors.centerIn: parent
+                    text: root.title
+                    color: "white"
+                    font.pixelSize: 16
                     font.bold: true
                 }
-                Text {
-                    text: root.backend.robot.adsStatus
-                    color: root.backend.robot.adsStatus === "Connected" ? "green" : "red"
-                }
+            }
 
-                Button {
-                    text: "Connect to ADS"
-                    onClicked: root.backend.robot.connectAds()
-                    enabled: root.backend.robot.adsStatus === "Disconnected" || root.backend.robot.adsStatus === "Faulty"
+            // Legend Overlay
+            Rectangle {
+                anchors.bottom: parent.bottom
+                anchors.right: parent.right
+                anchors.margins: 15
+                color: "#aa000000"
+                radius: 6
+                width: legendText.width + 20
+                height: legendText.height + 10
+
+                Text {
+                    id: legendText
+                    anchors.centerIn: parent
+                    text: "Right Click: Rotate | Left Click: Pan | Scroll: Zoom"
+                    color: "#ccc"
+                    font.pixelSize: 11
+                }
+            }
+        }
+
+        // --- RIGHT SIDE: CONTROL & STATUS SIDEBAR ---
+        ColumnLayout {
+            id: sidebarContainer
+            Layout.preferredWidth: 420
+            Layout.fillWidth: false
+            Layout.fillHeight: true
+            spacing: 15
+
+            // --- PLC CONTROL PANEL ---
+            GroupBox {
+                title: "PLC COMMANDS"
+                Layout.fillWidth: true
+                
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: 12
+
+                    RowLayout {
+                        ValueBox { label: "JOB ID"; value: root.robot ? root.robot.controlJobId : 0; Layout.fillWidth: true }
+                        ValueBox { label: "PART TYPE"; value: root.robot ? root.robot.controlPartType : 0; Layout.fillWidth: true }
+                    }
+
+                    ValueBox { 
+                        label: "AREA FREE (PLC)"
+                        value: root.robot ? "0x" + root.robot.areaFreePlc.toString(16).toUpperCase() : "0x00"
+                        Layout.fillWidth: true 
+                    }
+
+                    RowLayout {
+                        spacing: 15
+                        BitIndicator { label: "MOVE ENABLE"; active: root.robot ? root.robot.controlMoveEnable : false; activeColor: "#2ecc71" }
+                        BitIndicator { label: "RESET"; active: root.robot ? root.robot.controlReset : false; activeColor: "#3498db" }
+                    }
+                }
+            }
+
+            // --- ROBOT STATUS PANEL ---
+            GroupBox {
+                title: "ROBOT STATUS"
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: 10
+
+                    RowLayout {
+                        ValueBox { label: "FEEDBACK ID"; value: root.robot ? root.robot.jobIdFeedback : 0; Layout.fillWidth: true }
+                        ValueBox { label: "PART ECHO"; value: root.robot ? root.robot.partTypeMirrored : 0; Layout.fillWidth: true }
+                    }
+
+                    // State Grid
+                    GridLayout {
+                        columns: 2
+                        columnSpacing: 10
+                        rowSpacing: 10
+                        Layout.fillWidth: true
+
+                        BitIndicator { label: "MOTION"; active: root.robot ? root.robot.inMotion : false; activeColor: "#f1c40f"; Layout.fillWidth: true }
+                        BitIndicator { label: "HOME"; active: root.robot ? root.robot.inHome : false; activeColor: "#3498db"; Layout.fillWidth: true }
+                        BitIndicator { label: "ENABLED"; active: root.robot ? root.robot.enabled : false; Layout.fillWidth: true }
+                        BitIndicator { label: "ERROR"; active: root.robot ? root.robot.error : false; activeColor: "#e74c3c"; Layout.fillWidth: true }
+                    }
+
+                    Rectangle { Layout.fillWidth: true; height: 1; color: "#eee" }
+
+                    // Quality & Modes
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: 8
+                        BitIndicator { label: "BRAKE TEST"; active: root.robot ? root.robot.brakeTestOk : false }
+                        BitIndicator { label: "MASTERING"; active: root.robot ? root.robot.masteringOk : false }
+                        BitIndicator { label: "T1"; active: root.robot ? root.robot.inT1 : false; activeColor: "#9b59b6" }
+                        BitIndicator { label: "T2"; active: root.robot ? root.robot.inT2 : false; activeColor: "#8e44ad" }
+                        BitIndicator { label: "AUT"; active: root.robot ? root.robot.inAut : false; activeColor: "#2980b9" }
+                        BitIndicator { label: "EXT"; active: root.robot ? root.robot.inExt : false; activeColor: "#3498db" }
+                    }
+
+                    Item { Layout.fillHeight: true } // Spacer
+
+                    ValueBox { 
+                        label: "ERROR CODE"
+                        value: root.robot ? root.robot.errorCode : 0
+                        textColor: (root.robot && root.robot.error) ? "#e74c3c" : "#2c3e50"
+                        Layout.fillWidth: true 
+                    }
+                }
+            }
+
+            // --- CONNECTION FOOTER ---
+            Rectangle {
+                Layout.fillWidth: true
+                height: 60
+                color: "#f8f9fa"
+                radius: 8
+                border.color: "#e9ecef"
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    spacing: 15
+
+                    StatusDot { active: root.robot ? root.robot.adsStatus === "Connected" : false }
+                    
+                    ColumnLayout {
+                        spacing: 2
+                        Text { text: "ADS INTERFACE"; font.pixelSize: 9; font.bold: true; color: "#6c757d" }
+                        Text { 
+                            text: root.robot ? root.robot.adsStatus : "Disconnected"
+                            font.pixelSize: 14
+                            font.bold: true
+                            color: (root.robot && root.robot.adsStatus === "Connected") ? "#2ecc71" : "#e74c3c"
+                        }
+                    }
+
+                    Item { Layout.fillWidth: true }
+
+                    Button {
+                        text: "RECONNECT"
+                        onClicked: if (root.robot) root.robot.connectAds()
+                        enabled: root.robot ? root.robot.adsStatus !== "Connected" : false
+                        flat: true
+                    }
                 }
             }
         }
     }
 
-    // --- REUSABLE COMPONENTS ---
+    // --- REUSABLE STYLED COMPONENTS ---
 
-    component ValueRow: RowLayout {
+    component ValueBox : Rectangle {
+        id: valueBoxRoot
         property string label: ""
         property var value: ""
-        property color color: "black"
-        Text {
-            text: label
-            font.bold: true
-            color: "#555"
-        }
-        Text {
-            text: value
-            font.family: "Monospace"
-            font.pixelSize: 14
-            color: parent.color
+        property color textColor: "#2c3e50"
+        
+        height: 45
+        color: "#fdfdfd"
+        border.color: "#edf2f7"
+        radius: 6
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 6
+            spacing: 0
+            Text { text: valueBoxRoot.label; font.pixelSize: 9; font.bold: true; color: "#a0aec0" }
+            Text { text: valueBoxRoot.value !== undefined ? valueBoxRoot.value : ""; font.family: "Monospace"; font.pixelSize: 16; font.bold: true; color: valueBoxRoot.textColor }
         }
     }
 
-    component BitIndicator: Rectangle {
+    component BitIndicator : Rectangle {
+        id: bitIndicatorRoot
         property string label: ""
         property bool active: false
-        property color activeColor: "green"
-
-        width: bitLabel.width + 16
-        height: 20
+        property color activeColor: "#2ecc71"
+        
+        height: 28
         radius: 4
-        color: active ? activeColor : "#eee"
-        border.color: active ? "transparent" : "#ccc"
+        implicitWidth: 100
+        
+        color: active ? activeColor : "#f7fafc"
+        border.color: active ? "transparent" : "#e2e8f0"
+        
+        Behavior on color { ColorAnimation { duration: 200 } }
 
         Text {
-            id: bitLabel
             anchors.centerIn: parent
-            text: parent.label
-            color: parent.active ? "white" : "#888"
-            font.pixelSize: 9
-            font.bold: true
+            text: bitIndicatorRoot.label
+            color: bitIndicatorRoot.active ? "white" : "#718096"
+            font.pixelSize: 10; font.bold: true; font.letterSpacing: 0.5
+        }
+    }
+
+    component StatusDot : Rectangle {
+        id: statusDotRoot
+        property bool active: false
+        width: 12; height: 12; radius: 6
+        color: active ? "#2ecc71" : "#e74c3c"
+        
+        Rectangle {
+            anchors.fill: parent
+            radius: 6
+            color: statusDotRoot.color
+            opacity: 0.4
+            scale: pulseAnimation.running ? 1.5 : 1.0
+            
+            PropertyAnimation on scale {
+                id: pulseAnimation
+                from: 1.0; to: 2.0; duration: 1000
+                running: statusDotRoot.active; loops: Animation.Infinite
+            }
+            PropertyAnimation on opacity {
+                from: 0.4; to: 0.0; duration: 1000
+                running: statusDotRoot.active; loops: Animation.Infinite
+            }
         }
     }
 }

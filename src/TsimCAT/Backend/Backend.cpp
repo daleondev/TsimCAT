@@ -70,7 +70,7 @@ namespace backend
 
     void Backend::runAsyncTest() { doAsyncTest(); }
 
-    void Backend::captureScreenshot(QObject* item)
+    void Backend::captureScreenshot(QObject* item, const QString& filename)
     {
         auto* quickItem = qobject_cast<QQuickItem*>(item);
         if (!quickItem) {
@@ -80,18 +80,24 @@ namespace backend
 
         auto result = quickItem->grabToImage();
         if (result) {
-            connect(result.data(), &QQuickItemGrabResult::ready, this, [result]() {
+            connect(result.data(), &QQuickItemGrabResult::ready, this, [this, result, filename]() {
                 QDir dir("screenshots");
                 if (!dir.exists())
                     dir.mkpath(".");
 
-                QString filename = QString("screenshots/capture_%1.png")
-                                     .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd_HH-mm-ss"));
-                if (result->saveToFile(filename)) {
-                    core::logger::info("Screenshot saved to {}", filename.toStdString());
+                QString finalFilename;
+                if (filename.isEmpty()) {
+                    finalFilename = QString("screenshots/capture_%1.png")
+                                         .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd_HH-mm-ss"));
+                } else {
+                    finalFilename = QString("screenshots/%1.png").arg(filename);
+                }
+
+                if (result->saveToFile(finalFilename)) {
+                    core::logger::info("Screenshot saved to {}", finalFilename.toStdString());
                 }
                 else {
-                    core::logger::error("Failed to save screenshot");
+                    core::logger::error("Failed to save screenshot to {}", finalFilename.toStdString());
                 }
             });
         }

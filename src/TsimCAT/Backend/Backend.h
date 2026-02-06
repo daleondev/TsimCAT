@@ -35,7 +35,7 @@ namespace backend
         backend::controllers::RobotController* robot() const;
 
         Q_INVOKABLE void runAsyncTest();
-        Q_INVOKABLE void captureScreenshot(QObject* item);
+        Q_INVOKABLE void captureScreenshot(QObject* item, const QString& filename = QString());
 
       signals:
         void asyncTestStatusChanged();

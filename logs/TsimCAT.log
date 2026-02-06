@@ -32,3 +32,21 @@
 23:24:25 INF [Backend.cpp:24] Backend initialized
 18:27:45 INF [Backend.cpp:24] Backend initialized
 18:30:07 INF [Backend.cpp:24] Backend initialized
+18:45:39 INF [Backend.cpp:24] Backend initialized
+18:48:08 INF [Backend.cpp:24] Backend initialized
+18:50:36 INF [Backend.cpp:24] Backend initialized
+18:53:17 INF [Backend.cpp:24] Backend initialized
+18:53:55 INF [Backend.cpp:24] Backend initialized
+18:57:21 INF [Backend.cpp:24] Backend initialized
+18:57:59 INF [Backend.cpp:24] Backend initialized
+19:03:03 INF [Backend.cpp:24] Backend initialized
+19:03:05 INF [Backend.cpp:97] Screenshot saved to screenshots/Robot_Status.png
+19:03:07 INF [Backend.cpp:97] Screenshot saved to screenshots/Plant_Overview.png
+19:03:09 INF [Backend.cpp:97] Screenshot saved to screenshots/Camera_Status.png
+19:03:09 INF [Backend.cpp:97] Screenshot saved to screenshots/Laser_Status.png
+19:03:10 INF [Backend.cpp:97] Screenshot saved to screenshots/Gantry_Status.png
+19:03:11 INF [Backend.cpp:97] Screenshot saved to screenshots/Process_Data.png
+19:07:37 INF [Backend.cpp:24] Backend initialized
+19:07:56 INF [Backend.cpp:97] Screenshot saved to screenshots/Robot_Status.png
+19:07:57 INF [Backend.cpp:97] Screenshot saved to screenshots/Plant_Overview.png
+19:07:57 INF [Backend.cpp:97] Screenshot saved to screenshots/Robot_Status.png

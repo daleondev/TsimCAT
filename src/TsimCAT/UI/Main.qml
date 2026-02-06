@@ -62,6 +62,12 @@ ApplicationWindow {
             Layout.fillHeight: true
             currentIndex: sidebar.currentIndex
 
+            onCurrentIndexChanged: {
+                let subscreenName = sidebar.model[currentIndex].name;
+                let safeName = subscreenName.replace(/\s+/g, '_');
+                backend.captureScreenshot(window.contentItem, safeName);
+            }
+
             Subscreens.PlantOverview {}
             Subscreens.RobotStatus {
                 backend: backend
