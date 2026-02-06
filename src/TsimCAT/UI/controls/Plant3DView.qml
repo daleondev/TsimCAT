@@ -87,7 +87,8 @@ Item {
             // 3. MAIN ROBOT
             RobotModel {
                 id: plantRobot
-                position: Qt.vector3d(0, 0, 0)
+                position: Qt.vector3d(0, 0, 500) // Moved forward towards door
+                eulerRotation.z: 90 // Rotated to face back towards stations
             }
 
             // 4. STATIONS
