@@ -11,6 +11,13 @@ qt_add_qml_module(TsimCAT_UI
         Main.qml
         controls/NavigationSidebar.qml
         controls/Robot3DView.qml
+        controls/RobotModel.qml
+        controls/GantryModel.qml
+        controls/LaserModel.qml
+        controls/CameraModel.qml
+        controls/ConveyorModel.qml
+        controls/StationModel.qml
+        controls/Plant3DView.qml
         icons/DashboardIcon.qml
         icons/RobotIcon.qml
         icons/CameraIcon.qml
