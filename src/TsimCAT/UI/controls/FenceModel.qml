@@ -99,8 +99,10 @@ Node {
     component FencePanel : Node {
         property real panelWidth: 1000
         property bool showMesh: true
+        property bool showLeftPost: true
 
         Model {
+            visible: showLeftPost
             position: Qt.vector3d(-panelWidth/2, 1000, 0)
             source: "#Cube"
             scale: Qt.vector3d(0.5, 20, 0.5)
@@ -116,15 +118,23 @@ Node {
         Model {
             position: Qt.vector3d(0, 1950, 0)
             source: "#Cube"
-            scale: Qt.vector3d(panelWidth/100, 0.3, 0.3)
+            scale: Qt.vector3d(panelWidth/100 + 0.1, 0.3, 0.3)
             materials: [ PrincipledMaterial { baseColor: fenceRoot.fenceColor } ]
         }
         Model {
             position: Qt.vector3d(0, 50, 0)
             source: "#Cube"
-            scale: Qt.vector3d(panelWidth/100, 0.3, 0.3)
+            scale: Qt.vector3d(panelWidth/100 + 0.1, 0.3, 0.3)
             materials: [ PrincipledMaterial { baseColor: fenceRoot.fenceColor } ]
         }
+    }
+
+    // Closing post component
+    component EndPost : Model {
+        position: Qt.vector3d(0, 1000, 0)
+        source: "#Cube"
+        scale: Qt.vector3d(0.5, 20, 0.5)
+        materials: [ postMaterial ]
     }
 
     // Guillotine Damper Component
@@ -189,7 +199,6 @@ Node {
         Node {
             position: Qt.vector3d(-doorWidth/2, 0, 0)
             
-            // Fix: Animate the Y component directly
             eulerRotation.y: fenceRoot.doorOpen ? -100 : 0
             Behavior on eulerRotation.y { 
                 NumberAnimation { 
@@ -211,6 +220,14 @@ Node {
                 materials: [ PrincipledMaterial { baseColor: fenceRoot.fenceColor } ]
             }
         }
+        
+        // Right closing post for the door to close against
+        Model {
+            position: Qt.vector3d(doorWidth/2, 1000, 0)
+            source: "#Cube"
+            scale: Qt.vector3d(0.7, 20, 0.7)
+            materials: [ postMaterial ]
+        }
     }
 
     // --- ASSEMBLE PERIMETER ---
@@ -222,6 +239,7 @@ Node {
             model: 6
             delegate: FencePanel { position: Qt.vector3d(-2500 + index * 1000, 0, 0) }
         }
+        EndPost { position: Qt.vector3d(3000, 0, 0) }
     }
 
     // Front Side
@@ -229,26 +247,34 @@ Node {
         position: Qt.vector3d(0, 0, depth/2)
         FencePanel { position: Qt.vector3d(-2500, 0, 0) }
         FencePanel { position: Qt.vector3d(-1500, 0, 0) }
+        
+        // Safety Door
         SafetyDoor { position: Qt.vector3d(0, 0, 0) }
-        FencePanel { position: Qt.vector3d(1500, 0, 0) }
+        
+        // panels right of door (start with no left post because door has its own closing post)
+        FencePanel { position: Qt.vector3d(1500, 0, 0); showLeftPost: false }
         FencePanel { position: Qt.vector3d(2500, 0, 0) }
+        EndPost { position: Qt.vector3d(3000, 0, 0) }
     }
 
-    // Left Side (Entry)
+    // Left Side
     Node {
         position: Qt.vector3d(-width/2, 0, 0)
         eulerRotation.y: 90
         FencePanel { position: Qt.vector3d(-1500, 0, 0) }
         GuillotineDamper { position: Qt.vector3d(0, 0, 0) }
         FencePanel { position: Qt.vector3d(1500, 0, 0) }
+        EndPost { position: Qt.vector3d(2000, 0, 0) }
     }
 
-    // Right Side (Exit)
+    // Right Side (Open for transfer)
     Node {
         position: Qt.vector3d(width/2, 0, 0)
         eulerRotation.y: 90
+        
         FencePanel { position: Qt.vector3d(-1500, 0, 0) }
-        FencePanel { position: Qt.vector3d(0, 0, 0); showMesh: false } 
+        // Middle panel removed
         FencePanel { position: Qt.vector3d(1500, 0, 0) }
+        EndPost { position: Qt.vector3d(2000, 0, 0) }
     }
 }

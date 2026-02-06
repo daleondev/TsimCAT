@@ -129,10 +129,10 @@ Item {
                 height: 1000 // Higher than our 800mm conveyor
             }
 
-            // 7. TRANSFER GANTRY (Bridges our Exit and Neighbor Entry)
+            // 7. TRANSFER GANTRY
             GantryModel {
                 id: plantGantry
-                position: Qt.vector3d(3750, 0, 0) // Centered between the two conveyors
+                position: Qt.vector3d(3250, 0, 0) // Moved in from 3750 to 3250
                 yPos: 500
                 zPos: 400
             }
