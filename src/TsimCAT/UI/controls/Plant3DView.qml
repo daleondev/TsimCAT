@@ -29,7 +29,7 @@ Item {
 
             PerspectiveCamera {
                 id: sceneCamera
-                position: Qt.vector3d(0, 0, 8000) // Zoomed out a bit more for larger scene
+                position: Qt.vector3d(0, 0, 5000) // Zoomed back in for compact cell
                 clipNear: 10
                 clipFar: 30000
             }
@@ -54,7 +54,7 @@ Item {
             Model {
                 y: -1
                 source: "#Rectangle"
-                scale: Qt.vector3d(250, 250, 1)
+                scale: Qt.vector3d(100, 100, 1)
                 eulerRotation.x: -90
                 materials: [
                     DefaultMaterial {
@@ -63,62 +63,65 @@ Item {
                 ]
             }
 
-            // --- THE PLANT LAYOUT (Adjusted spacing for 2x robot scale) ---
+            // --- COMPACT PLANT LAYOUT ---
 
-            // 1. ENTRY CONVEYOR
-            ConveyorModel {
-                id: entryConveyor
-                position: Qt.vector3d(-3500, 0, 0) // Moved further left
-                length: 3000
+            // 1. SAFETY FENCE
+            FenceModel {
+                width: 6000
+                depth: 4500
+                position: Qt.vector3d(500, 0, 0)
             }
 
-            // 2. MAIN ROBOT (Center)
+            // 2. ENTRY CONVEYOR (Neighbor -> Cell)
+            ConveyorModel {
+                id: entryConveyor
+                position: Qt.vector3d(-1800, 0, 0) // Compact side
+                length: 1500
+            }
+
+            // 3. MAIN ROBOT (Center)
             RobotModel {
                 id: plantRobot
                 position: Qt.vector3d(0, 0, 0)
             }
 
-            // 3. ANALYSIS STATION
+            // 4. STATIONS (Side-by-Side behind robot)
             Node {
-                id: analysisStation
-                position: Qt.vector3d(0, 0, 1800) // Moved further forward
+                id: stationsRow
+                position: Qt.vector3d(0, 0, -1200) // Behind robot
 
-                StationModel {
-                    color: "#3498db"
+                // Analysis Station
+                Node {
+                    position: Qt.vector3d(-800, 0, 0)
+                    StationModel { color: "#3498db" }
+                    CameraModel {
+                        position: Qt.vector3d(0, 1800, 0)
+                        eulerRotation.x: 90
+                    }
                 }
 
-                CameraModel {
-                    position: Qt.vector3d(0, 1800, 0)
-                    eulerRotation.x: 90
+                // Laser Station
+                Node {
+                    position: Qt.vector3d(800, 0, 0)
+                    StationModel { color: "#e74c3c" }
+                    LaserModel {
+                        position: Qt.vector3d(0, 1800, 0)
+                        laserOn: true
+                    }
                 }
             }
 
-            // 4. LASER STATION
-            Node {
-                id: laserStation
-                position: Qt.vector3d(1800, 0, 0) // Moved further right
-
-                StationModel {
-                    color: "#e74c3c"
-                }
-
-                LaserModel {
-                    position: Qt.vector3d(0, 1800, 0)
-                    laserOn: true
-                }
-            }
-
-            // 5. EXIT CONVEYOR
+            // 5. EXIT CONVEYOR (Shortened)
             ConveyorModel {
                 id: exitConveyor
-                position: Qt.vector3d(4500, 0, 0) // Moved further right
-                length: 3500
+                position: Qt.vector3d(1800, 0, 0)
+                length: 1500
             }
 
-            // 6. TRANSFER GANTRY
+            // 6. TRANSFER GANTRY (2-Axis YZ)
             GantryModel {
                 id: plantGantry
-                position: Qt.vector3d(6000, 0, 0) // Over end of exit conveyor
+                position: Qt.vector3d(2800, 0, 0) // Very close to exit
                 yPos: 500
                 zPos: 400
             }
@@ -148,7 +151,7 @@ Item {
         }
         onWheel: wheel => {
             let zoomSpeed = sceneCamera.position.z * 0.1;
-            sceneCamera.position.z = Math.max(500, Math.min(20000, sceneCamera.position.z - (wheel.angleDelta.y / 120.0) * zoomSpeed));
+            sceneCamera.position.z = Math.max(500, Math.min(15000, sceneCamera.position.z - (wheel.angleDelta.y / 120.0) * zoomSpeed));
         }
     }
 }
