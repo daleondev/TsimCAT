@@ -34,10 +34,10 @@ Node {
 
     // Inspection Cone (Field of View)
     Model {
-        position: Qt.vector3d(0, 0, 2060)
+        position: Qt.vector3d(0, 0, 1260)
         eulerRotation.x: -90
         source: "#Cone"
-        scale: Qt.vector3d(8, 20, 8)
+        scale: Qt.vector3d(6, 12, 6)
         materials: [
             PrincipledMaterial {
                 baseColor: "#3498db"
