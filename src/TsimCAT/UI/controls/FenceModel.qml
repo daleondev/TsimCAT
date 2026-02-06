@@ -12,6 +12,39 @@ Node {
 
     readonly property color fenceColor: "#f1c40f" // Safety Yellow
 
+    // Improved Procedural Chain Link Texture
+    Texture {
+        id: gridTexture
+        sourceItem: Item {
+            width: 64
+            height: 64
+            x: -500; y: -500 
+            
+            Rectangle {
+                anchors.fill: parent
+                color: "black"
+                
+                Rectangle {
+                    width: 100; height: 6
+                    color: "white"
+                    rotation: 45
+                    anchors.centerIn: parent
+                }
+                Rectangle {
+                    width: 100; height: 6
+                    color: "white"
+                    rotation: -45
+                    anchors.centerIn: parent
+                }
+            }
+            layer.enabled: true
+        }
+        scaleU: 30
+        scaleV: 15
+        tilingModeHorizontal: Texture.Repeat
+        tilingModeVertical: Texture.Repeat
+    }
+
     // Helper for a physical wire mesh panel
     component WireMesh : Node {
         property real w: 1000
@@ -39,7 +72,7 @@ Node {
             }
         }
 
-        // Faint semi-transparent backing to give it some "volume"
+        // Faint semi-transparent backing
         Model {
             position: Qt.vector3d(0, h/2, 0)
             source: "#Cube"
@@ -55,27 +88,31 @@ Node {
         }
     }
 
+    // Common Material for frame/posts
+    PrincipledMaterial {
+        id: postMaterial
+        baseColor: "#222"
+        metalness: 0.8
+    }
+
     // Helper for a single fence panel segment
     component FencePanel : Node {
         property real panelWidth: 1000
         property bool showMesh: true
 
-        // Left Post
         Model {
             position: Qt.vector3d(-panelWidth/2, 1000, 0)
             source: "#Cube"
             scale: Qt.vector3d(0.5, 20, 0.5)
-            materials: [ PrincipledMaterial { baseColor: "#222"; metalness: 0.8 } ]
+            materials: [ postMaterial ]
         }
 
-        // The Mesh
         WireMesh {
             visible: showMesh
             w: panelWidth
             h: 2000
         }
 
-        // Horizontal Rails (Frame)
         Model {
             position: Qt.vector3d(0, 1950, 0)
             source: "#Cube"
@@ -94,18 +131,17 @@ Node {
     component GuillotineDamper : Node {
         property real panelWidth: 1200
         
-        // Frame/Guides
         Model {
             position: Qt.vector3d(-panelWidth/2, 1000, 0)
             source: "#Cube"
             scale: Qt.vector3d(0.8, 20, 0.8)
-            materials: [ PrincipledMaterial { baseColor: "#111" } ]
+            materials: [ postMaterial ]
         }
         Model {
             position: Qt.vector3d(panelWidth/2, 1000, 0)
             source: "#Cube"
             scale: Qt.vector3d(0.8, 20, 0.8)
-            materials: [ PrincipledMaterial { baseColor: "#111" } ]
+            materials: [ postMaterial ]
         }
         
         Model {
@@ -117,17 +153,19 @@ Node {
 
         // Moving Blade
         Node {
-            position: Qt.vector3d(0, 1400 + (fenceRoot.damperOpen ? 1000 : 0), 0)
-            Behavior on position { Vector3dAnimation { duration: 1500; easing.type: Easing.InOutQuad } }
+            id: damperBlade
+            y: 1400 + (fenceRoot.damperOpen ? 1000 : 0)
+            
+            Behavior on y { 
+                NumberAnimation { duration: 1500; easing.type: Easing.InOutQuad } 
+            }
             
             WireMesh {
                 w: panelWidth
                 h: 1200
-                // Adjust height for the blade
                 y: -600 
             }
             
-            // Blade Frame
             Model {
                 source: "#Cube"
                 scale: Qt.vector3d(panelWidth/100, 12, 0.2)
@@ -144,14 +182,17 @@ Node {
             position: Qt.vector3d(-doorWidth/2, 1000, 0)
             source: "#Cube"
             scale: Qt.vector3d(0.7, 20, 0.7)
-            materials: [ PrincipledMaterial { baseColor: "#222" } ]
+            materials: [ postMaterial ]
         }
 
+        // Swinging Leaf
         Node {
             position: Qt.vector3d(-doorWidth/2, 0, 0)
+            
+            // Fix: Animate the Y component directly
             eulerRotation.y: fenceRoot.doorOpen ? -100 : 0
-            Behavior on eulerRotation { 
-                Vector3dAnimation { 
+            Behavior on eulerRotation.y { 
+                NumberAnimation { 
                     duration: 1200
                     easing.type: Easing.InOutBack 
                 } 
@@ -193,7 +234,7 @@ Node {
         FencePanel { position: Qt.vector3d(2500, 0, 0) }
     }
 
-    // Left Side
+    // Left Side (Entry)
     Node {
         position: Qt.vector3d(-width/2, 0, 0)
         eulerRotation.y: 90
@@ -202,7 +243,7 @@ Node {
         FencePanel { position: Qt.vector3d(1500, 0, 0) }
     }
 
-    // Right Side
+    // Right Side (Exit)
     Node {
         position: Qt.vector3d(width/2, 0, 0)
         eulerRotation.y: 90
