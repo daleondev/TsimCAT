@@ -12,52 +12,47 @@ Node {
 
     readonly property color fenceColor: "#f1c40f" // Safety Yellow
 
-    // Define the 2D pattern here so it's part of the same file but outside the 3D scene
-    Item {
-        id: patternSource
-        width: 128
-        height: 128
-        visible: false // sourceItem still works if visible is false but it must be in the 2D tree
+    // Helper for a physical wire mesh panel
+    component WireMesh : Node {
+        property real w: 1000
+        property real h: 2000
         
-        Rectangle {
-            anchors.fill: parent
-            color: "black"
-            
-            // Draw a diagonal mesh pattern
-            Rectangle {
-                width: 200; height: 15
-                color: "white"
-                rotation: 45
-                anchors.centerIn: parent
-            }
-            Rectangle {
-                width: 200; height: 15
-                color: "white"
-                rotation: -45
-                anchors.centerIn: parent
+        // Vertical Wires
+        Repeater3D {
+            model: Math.ceil(w / 100) + 1
+            delegate: Model {
+                position: Qt.vector3d(-w/2 + index * 100, h/2, 0)
+                source: "#Cube"
+                scale: Qt.vector3d(0.02, h/100, 0.02)
+                materials: [ PrincipledMaterial { baseColor: fenceRoot.fenceColor; metalness: 0.8 } ]
             }
         }
-        layer.enabled: true
-    }
+        
+        // Horizontal Wires
+        Repeater3D {
+            model: Math.ceil(h / 100) + 1
+            delegate: Model {
+                position: Qt.vector3d(0, index * 100, 0)
+                source: "#Cube"
+                scale: Qt.vector3d(w/100, 0.02, 0.02)
+                materials: [ PrincipledMaterial { baseColor: fenceRoot.fenceColor; metalness: 0.8 } ]
+            }
+        }
 
-    Texture {
-        id: gridTexture
-        sourceItem: patternSource
-        scaleU: 40
-        scaleV: 20
-        tilingModeHorizontal: Texture.Repeat
-        tilingModeVertical: Texture.Repeat
-    }
-
-    // Common Material for all mesh panels
-    PrincipledMaterial {
-        id: fenceMeshMaterial
-        baseColor: fenceRoot.fenceColor
-        metalness: 0.5
-        roughness: 0.1
-        opacityMap: gridTexture
-        alphaMode: PrincipledMaterial.Mask
-        cullMode: PrincipledMaterial.NoCulling // Fix: Show from both sides
+        // Faint semi-transparent backing to give it some "volume"
+        Model {
+            position: Qt.vector3d(0, h/2, 0)
+            source: "#Cube"
+            scale: Qt.vector3d(w/100, h/100, 0.01)
+            materials: [
+                PrincipledMaterial {
+                    baseColor: fenceRoot.fenceColor
+                    opacity: 0.1
+                    alphaMode: PrincipledMaterial.Blend
+                    cullMode: PrincipledMaterial.NoCulling
+                }
+            ]
+        }
     }
 
     // Helper for a single fence panel segment
@@ -73,16 +68,14 @@ Node {
             materials: [ PrincipledMaterial { baseColor: "#222"; metalness: 0.8 } ]
         }
 
-        // Mesh Panel
-        Model {
+        // The Mesh
+        WireMesh {
             visible: showMesh
-            position: Qt.vector3d(0, 1000, 0)
-            source: "#Rectangle"
-            scale: Qt.vector3d(panelWidth/100, 20, 1)
-            materials: [ fenceMeshMaterial ]
+            w: panelWidth
+            h: 2000
         }
 
-        // Rails
+        // Horizontal Rails (Frame)
         Model {
             position: Qt.vector3d(0, 1950, 0)
             source: "#Cube"
@@ -123,19 +116,23 @@ Node {
         }
 
         // Moving Blade
-        Model {
+        Node {
             position: Qt.vector3d(0, 1400 + (fenceRoot.damperOpen ? 1000 : 0), 0)
-            source: "#Rectangle"
-            scale: Qt.vector3d(panelWidth/100, 12, 1)
-            materials: [
-                PrincipledMaterial {
-                    baseColor: "#7f8c8d"
-                    opacityMap: gridTexture
-                    alphaMode: PrincipledMaterial.Mask
-                    cullMode: PrincipledMaterial.NoCulling
-                }
-            ]
             Behavior on position { Vector3dAnimation { duration: 1500; easing.type: Easing.InOutQuad } }
+            
+            WireMesh {
+                w: panelWidth
+                h: 1200
+                // Adjust height for the blade
+                y: -600 
+            }
+            
+            // Blade Frame
+            Model {
+                source: "#Cube"
+                scale: Qt.vector3d(panelWidth/100, 12, 0.2)
+                materials: [ PrincipledMaterial { baseColor: "#bdc3c7"; opacity: 0.3; alphaMode: PrincipledMaterial.Blend } ]
+            }
         }
     }
 
@@ -155,12 +152,12 @@ Node {
             eulerRotation.y: fenceRoot.doorOpen ? -100 : 0
             Behavior on eulerRotation { Vector3dAnimation { duration: 1000; easing.type: Easing.InOutQuad } }
 
-            Model {
-                position: Qt.vector3d(doorWidth/2, 1000, 0)
-                source: "#Rectangle"
-                scale: Qt.vector3d(doorWidth/100, 20, 1)
-                materials: [ fenceMeshMaterial ]
+            WireMesh {
+                position: Qt.vector3d(doorWidth/2, 0, 0)
+                w: doorWidth
+                h: 2000
             }
+
             Model {
                 position: Qt.vector3d(doorWidth/2, 1950, 0)
                 source: "#Cube"
