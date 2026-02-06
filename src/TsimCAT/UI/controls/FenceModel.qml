@@ -284,7 +284,7 @@ Node {
             }
         }
         EndPost {
-            position: Qt.vector3d(3000, 0, 0)
+            position: Qt.vector3d(3000, 1000, 0)
         }
     }
 
@@ -312,7 +312,7 @@ Node {
             position: Qt.vector3d(2500, 0, 0)
         }
         EndPost {
-            position: Qt.vector3d(3000, 0, 0)
+            position: Qt.vector3d(3000, 1000, 0)
         }
     }
 
@@ -332,7 +332,7 @@ Node {
             position: Qt.vector3d(1500, 0, 0)
         }
         EndPost {
-            position: Qt.vector3d(2000, 0, 0)
+            position: Qt.vector3d(2000, 1000, 0)
         }
     }
 
@@ -348,14 +348,14 @@ Node {
             position: Qt.vector3d(1500, 0, 0)
         }
         EndPost {
-            position: Qt.vector3d(2000, 0, 0)
+            position: Qt.vector3d(2000, 1000, 0)
         }
         // Add post at the other side of the gap
         EndPost {
-            position: Qt.vector3d(1000, 0, 0)
+            position: Qt.vector3d(1000, 1000, 0)
         }
         EndPost {
-            position: Qt.vector3d(-1000, 0, 0)
+            position: Qt.vector3d(-1000, 1000, 0)
         }
     }
 }
