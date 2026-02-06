@@ -7,7 +7,7 @@ Node {
     // Housing
     Model {
         source: "#Cube"
-        scale: Qt.vector3d(0.5, 0.5, 0.8)
+        scale: Qt.vector3d(0.8, 0.8, 1.2)
         materials: [
             PrincipledMaterial {
                 baseColor: "#7f8c8d"
@@ -18,10 +18,10 @@ Node {
 
     // Lens
     Model {
-        position: Qt.vector3d(0, 0, 40)
+        position: Qt.vector3d(0, 0, 60)
         eulerRotation.x: 90
         source: "#Cylinder"
-        scale: Qt.vector3d(0.3, 0.1, 0.3)
+        scale: Qt.vector3d(0.5, 0.1, 0.5)
         materials: [
             PrincipledMaterial {
                 baseColor: "#000"

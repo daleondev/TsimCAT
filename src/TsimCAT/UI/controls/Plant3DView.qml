@@ -30,7 +30,7 @@ Item {
 
             PerspectiveCamera {
                 id: sceneCamera
-                position: Qt.vector3d(0, 0, 6000)
+                position: Qt.vector3d(0, 0, 5500)
                 clipNear: 10
                 clipFar: 30000
             }
@@ -55,7 +55,7 @@ Item {
             Model {
                 y: -1
                 source: "#Rectangle"
-                scale: Qt.vector3d(200, 200, 1)
+                scale: Qt.vector3d(150, 150, 1)
                 eulerRotation.x: -90
                 materials: [
                     DefaultMaterial {
@@ -87,8 +87,8 @@ Item {
             // 3. MAIN ROBOT
             RobotModel {
                 id: plantRobot
-                position: Qt.vector3d(0, 0, 500) // Moved forward towards door
-                eulerRotation.z: 90 // Rotated to face back towards stations
+                position: Qt.vector3d(0, 0, 500)
+                eulerRotation.z: 90
             }
 
             // 4. STATIONS
@@ -96,21 +96,33 @@ Item {
                 id: stationsRow
                 position: Qt.vector3d(0, 0, -1200)
 
+                // Analysis Station
                 Node {
-                    position: Qt.vector3d(-800, 0, 0)
+                    position: Qt.vector3d(-1000, 0, 0)
                     StationModel { color: "#3498db" }
+                    StationFrameModel {}
                     CameraModel {
-                        position: Qt.vector3d(0, 1800, 0)
-                        eulerRotation.x: 90
+                        position: Qt.vector3d(0, 1950, 0) // Centered on frame crossbar
+                        eulerRotation.x: 90 // Straight down
                     }
                 }
 
+                // Laser Station
                 Node {
-                    position: Qt.vector3d(800, 0, 0)
+                    position: Qt.vector3d(1000, 0, 0)
                     StationModel { color: "#e74c3c" }
-                    LaserModel {
-                        position: Qt.vector3d(0, 1800, 0)
-                        laserOn: true
+                    
+                    // Offset frame to compensate for laser angle
+                    // Laser is tilted 30deg. Height is ~1m above table. 
+                    // offset = tan(30) * 1000 ~= 577mm
+                    Node {
+                        position: Qt.vector3d(580, 0, 0) 
+                        StationFrameModel {}
+                        LaserModel {
+                            position: Qt.vector3d(0, 1950, 0)
+                            eulerRotation.z: -30 // Points back to center of station
+                            laserOn: true
+                        }
                     }
                 }
             }
@@ -122,18 +134,18 @@ Item {
                 length: 2500
             }
 
-            // 6. NEIGHBOR EXIT CONVEYOR (Slightly Higher)
+            // 6. NEIGHBOR EXIT CONVEYOR
             ConveyorModel {
                 id: neighborConveyor
-                position: Qt.vector3d(5000, 0, 0) // Next to our exit
+                position: Qt.vector3d(5000, 0, 0)
                 length: 2500
-                height: 1000 // Higher than our 800mm conveyor
+                height: 1000
             }
 
             // 7. TRANSFER GANTRY
             GantryModel {
                 id: plantGantry
-                position: Qt.vector3d(3250, 0, 0) // Moved in from 3750 to 3250
+                position: Qt.vector3d(3250, 0, 0)
                 yPos: 500
                 zPos: 400
             }
