@@ -102,3 +102,8 @@
 20:26:47 INF [Backend.cpp:97] Screenshot saved to screenshots/Robot_Status.png
 20:26:54 INF [Backend.cpp:97] Screenshot saved to screenshots/Plant_Overview.png
 20:30:50 INF [Backend.cpp:24] Backend initialized
+20:35:08 INF [Backend.cpp:24] Backend initialized
+20:38:50 INF [Backend.cpp:24] Backend initialized
+20:39:12 INF [Backend.cpp:97] Screenshot saved to screenshots/Robot_Status.png
+20:39:12 INF [Backend.cpp:97] Screenshot saved to screenshots/Plant_Overview.png
+20:41:37 INF [Backend.cpp:24] Backend initialized

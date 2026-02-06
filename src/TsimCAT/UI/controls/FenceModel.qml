@@ -115,6 +115,7 @@ Node {
             h: 2000
         }
 
+        // Frame Rails
         Model {
             position: Qt.vector3d(0, 1950, 0)
             source: "#Cube"
@@ -184,10 +185,11 @@ Node {
         }
     }
 
-    // Safety Door Component
+    // Double Safety Door Component
     component SafetyDoor : Node {
-        property real doorWidth: 1000
+        property real doorWidth: 2000
         
+        // Left Hinge Post
         Model {
             position: Qt.vector3d(-doorWidth/2, 1000, 0)
             source: "#Cube"
@@ -195,33 +197,47 @@ Node {
             materials: [ postMaterial ]
         }
 
-        // Swinging Leaf
+        // Left Swinging Leaf
         Node {
             position: Qt.vector3d(-doorWidth/2, 0, 0)
-            
             eulerRotation.y: fenceRoot.doorOpen ? -100 : 0
-            Behavior on eulerRotation.y { 
-                NumberAnimation { 
-                    duration: 1200
-                    easing.type: Easing.InOutBack 
-                } 
-            }
+            Behavior on eulerRotation.y { NumberAnimation { duration: 1200; easing.type: Easing.InOutBack } }
 
             WireMesh {
-                position: Qt.vector3d(doorWidth/2, 0, 0)
-                w: doorWidth
+                position: Qt.vector3d(doorWidth/4, 0, 0)
+                w: doorWidth / 2
                 h: 2000
             }
 
             Model {
-                position: Qt.vector3d(doorWidth/2, 1950, 0)
+                position: Qt.vector3d(doorWidth/4, 1950, 0)
                 source: "#Cube"
-                scale: Qt.vector3d(doorWidth/100 + 0.2, 0.4, 0.4)
+                scale: Qt.vector3d(doorWidth/200, 0.4, 0.4)
+                materials: [ PrincipledMaterial { baseColor: fenceRoot.fenceColor } ]
+            }
+        }
+
+        // Right Swinging Leaf
+        Node {
+            position: Qt.vector3d(doorWidth/2, 0, 0)
+            eulerRotation.y: fenceRoot.doorOpen ? 100 : 0
+            Behavior on eulerRotation.y { NumberAnimation { duration: 1200; easing.type: Easing.InOutBack } }
+
+            WireMesh {
+                position: Qt.vector3d(-doorWidth/4, 0, 0)
+                w: doorWidth / 2
+                h: 2000
+            }
+
+            Model {
+                position: Qt.vector3d(-doorWidth/4, 1950, 0)
+                source: "#Cube"
+                scale: Qt.vector3d(doorWidth/200, 0.4, 0.4)
                 materials: [ PrincipledMaterial { baseColor: fenceRoot.fenceColor } ]
             }
         }
         
-        // Right closing post for the door to close against
+        // Right Hinge Post
         Model {
             position: Qt.vector3d(doorWidth/2, 1000, 0)
             source: "#Cube"
@@ -232,7 +248,7 @@ Node {
 
     // --- ASSEMBLE PERIMETER ---
 
-    // Back Side
+    // Back Side (Fixed positions)
     Node {
         position: Qt.vector3d(0, 0, -depth/2)
         Repeater3D {
@@ -242,27 +258,27 @@ Node {
         EndPost { position: Qt.vector3d(3000, 0, 0) }
     }
 
-    // Front Side
+    // Front Side (Fixed positions and missing panel)
     Node {
         position: Qt.vector3d(0, 0, depth/2)
         FencePanel { position: Qt.vector3d(-2500, 0, 0) }
-        FencePanel { position: Qt.vector3d(-1500, 0, 0) }
+        FencePanel { position: Qt.vector3d(-1500, 0, 0) } // Added missing panel
         
-        // Safety Door
-        SafetyDoor { position: Qt.vector3d(0, 0, 0) }
+        // Double Safety Door (covers -1000 to 1000)
+        SafetyDoor { position: Qt.vector3d(0, 0, 0); doorWidth: 2000 }
         
-        // panels right of door (start with no left post because door has its own closing post)
         FencePanel { position: Qt.vector3d(1500, 0, 0); showLeftPost: false }
         FencePanel { position: Qt.vector3d(2500, 0, 0) }
         EndPost { position: Qt.vector3d(3000, 0, 0) }
     }
 
-    // Left Side
+    // Left Side (Entry)
     Node {
         position: Qt.vector3d(-width/2, 0, 0)
         eulerRotation.y: 90
+        // Use depth based positions
         FencePanel { position: Qt.vector3d(-1500, 0, 0) }
-        GuillotineDamper { position: Qt.vector3d(0, 0, 0) }
+        GuillotineDamper { position: Qt.vector3d(0, 0, 0); panelWidth: 1200 }
         FencePanel { position: Qt.vector3d(1500, 0, 0) }
         EndPost { position: Qt.vector3d(2000, 0, 0) }
     }
@@ -271,10 +287,12 @@ Node {
     Node {
         position: Qt.vector3d(width/2, 0, 0)
         eulerRotation.y: 90
-        
         FencePanel { position: Qt.vector3d(-1500, 0, 0) }
-        // Middle panel removed
+        // Middle area is open
         FencePanel { position: Qt.vector3d(1500, 0, 0) }
         EndPost { position: Qt.vector3d(2000, 0, 0) }
+        // Add post at the other side of the gap
+        EndPost { position: Qt.vector3d(1000, 0, 0) }
+        EndPost { position: Qt.vector3d(-1000, 0, 0) }
     }
 }
