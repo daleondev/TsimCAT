@@ -26,11 +26,11 @@ Item {
         Node {
             id: cameraPivot
             eulerRotation: Qt.vector3d(-35, 45, 0)
-            position: Qt.vector3d(0, 500, 0)
+            position: Qt.vector3d(500, 500, 0)
 
             PerspectiveCamera {
                 id: sceneCamera
-                position: Qt.vector3d(0, 0, 5000)
+                position: Qt.vector3d(0, 0, 6000)
                 clipNear: 10
                 clipFar: 30000
             }
@@ -55,7 +55,7 @@ Item {
             Model {
                 y: -1
                 source: "#Rectangle"
-                scale: Qt.vector3d(150, 150, 1)
+                scale: Qt.vector3d(200, 200, 1)
                 eulerRotation.x: -90
                 materials: [
                     DefaultMaterial {
@@ -121,17 +121,24 @@ Item {
                 length: 2500
             }
 
-            // 6. TRANSFER GANTRY
+            // 6. NEIGHBOR EXIT CONVEYOR (Slightly Higher)
+            ConveyorModel {
+                id: neighborConveyor
+                position: Qt.vector3d(5000, 0, 0) // Next to our exit
+                length: 2500
+                height: 1000 // Higher than our 800mm conveyor
+            }
+
+            // 7. TRANSFER GANTRY (Bridges our Exit and Neighbor Entry)
             GantryModel {
                 id: plantGantry
-                position: Qt.vector3d(3500, 0, 0)
+                position: Qt.vector3d(3750, 0, 0) // Centered between the two conveyors
                 yPos: 500
                 zPos: 400
             }
         }
     }
 
-    // Move MouseArea BEFORE the UI controls so it sits lower in the stack
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
@@ -159,7 +166,6 @@ Item {
         }
     }
 
-    // Interactive UI controls (Now on top and clickable)
     Column {
         anchors.bottom: parent.bottom
         anchors.left: parent.left

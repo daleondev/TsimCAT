@@ -150,7 +150,12 @@ Node {
         Node {
             position: Qt.vector3d(-doorWidth/2, 0, 0)
             eulerRotation.y: fenceRoot.doorOpen ? -100 : 0
-            Behavior on eulerRotation { Vector3dAnimation { duration: 1000; easing.type: Easing.InOutQuad } }
+            Behavior on eulerRotation { 
+                Vector3dAnimation { 
+                    duration: 1200
+                    easing.type: Easing.InOutBack 
+                } 
+            }
 
             WireMesh {
                 position: Qt.vector3d(doorWidth/2, 0, 0)
