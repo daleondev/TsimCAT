@@ -12,7 +12,7 @@ Control {
         Text {
             text: root.title
             font.pixelSize: 32
-            color: "#333"
+            color: "#333333"
             anchors.horizontalCenter: parent.horizontalCenter
         }
         

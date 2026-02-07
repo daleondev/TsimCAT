@@ -18,7 +18,7 @@ Node {
         scale: Qt.vector3d(1, 20, 1)
         materials: [
             PrincipledMaterial {
-                baseColor: frameColor
+                baseColor: gantryRoot.frameColor
                 metalness: 0.8
             }
         ]
@@ -29,7 +29,7 @@ Node {
         scale: Qt.vector3d(1, 20, 1)
         materials: [
             PrincipledMaterial {
-                baseColor: frameColor
+                baseColor: gantryRoot.frameColor
                 metalness: 0.8
             }
         ]
@@ -42,7 +42,7 @@ Node {
         scale: Qt.vector3d(0.8, 0.8, 20)
         materials: [
             PrincipledMaterial {
-                baseColor: frameColor
+                baseColor: gantryRoot.frameColor
                 metalness: 0.9
             }
         ]
@@ -58,7 +58,7 @@ Node {
             scale: Qt.vector3d(1.2, 1.2, 1.2)
             materials: [
                 PrincipledMaterial {
-                    baseColor: axisColor
+                    baseColor: gantryRoot.axisColor
                 }
             ]
         }

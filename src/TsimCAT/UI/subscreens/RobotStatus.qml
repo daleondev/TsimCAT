@@ -71,7 +71,7 @@ Control {
                     id: legendText
                     anchors.centerIn: parent
                     text: "Right Click: Rotate | Left Click: Pan | Scroll: Zoom"
-                    color: "#ccc"
+                    color: "#cccccc"
                     font.pixelSize: 11
                 }
             }
@@ -141,7 +141,7 @@ Control {
                         BitIndicator { label: "ERROR"; active: root.robot ? root.robot.error : false; activeColor: "#e74c3c"; Layout.fillWidth: true }
                     }
 
-                    Rectangle { Layout.fillWidth: true; height: 1; color: "#eee" }
+                    Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: "#eeeeee" }
 
                     // Quality & Modes
                     Flow {
@@ -169,7 +169,7 @@ Control {
             // --- CONNECTION FOOTER ---
             Rectangle {
                 Layout.fillWidth: true
-                height: 60
+                Layout.preferredHeight: 60
                 color: "#f8f9fa"
                 radius: 8
                 border.color: "#e9ecef"
@@ -253,7 +253,7 @@ Control {
     component StatusDot : Rectangle {
         id: statusDotRoot
         property bool active: false
-        width: 12; height: 12; radius: 6
+        implicitWidth: 12; implicitHeight: 12; radius: 6
         color: active ? "#2ecc71" : "#e74c3c"
         
         Rectangle {

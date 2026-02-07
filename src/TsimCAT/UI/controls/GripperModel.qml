@@ -20,7 +20,7 @@ Node {
     Model {
         source: "#Cube"
         position: Qt.vector3d(0, 40 * 0.001, 0) // Centered at 40mm height
-        scale: Qt.vector3d(120 * mm, 80 * mm, 80 * mm)
+        scale: Qt.vector3d(120 * root.mm, 80 * root.mm, 80 * root.mm)
         materials: [
             PrincipledMaterial {
                 baseColor: "#2c3e50"
@@ -34,9 +34,11 @@ Node {
     Node {
         id: leftFinger
         // Open: -45mm, Closed: -15mm
-        position: Qt.vector3d((root.gripped ? -15 : -45) * 0.001, 80 * 0.001, 0)
+        x: (root.gripped ? -15 : -45) * 0.001
+        y: 80 * 0.001
+        z: 0
 
-        Behavior on position.x {
+        Behavior on x {
             NumberAnimation { duration: 300; easing.type: Easing.InOutQuad }
         }
 
@@ -44,7 +46,7 @@ Node {
         Model {
             position: Qt.vector3d(0, 40 * 0.001, 0) // 40mm forward from base
             source: "#Cube"
-            scale: Qt.vector3d(20 * mm, 100 * mm, 30 * mm)
+            scale: Qt.vector3d(20 * root.mm, 100 * root.mm, 30 * root.mm)
             materials: [ PrincipledMaterial { baseColor: "#ecf0f1"; metalness: 0.9 } ]
         }
         
@@ -52,32 +54,34 @@ Node {
         Model {
             position: Qt.vector3d(10 * 0.001, 70 * 0.001, 0)
             source: "#Cube"
-            scale: Qt.vector3d(5 * mm, 40 * mm, 25 * mm)
-            materials: [ PrincipledMaterial { baseColor: "#111" } ]
+            scale: Qt.vector3d(5 * root.mm, 40 * root.mm, 25 * root.mm)
+            materials: [ PrincipledMaterial { baseColor: "#111111" } ]
         }
     }
 
     // 3. RIGHT FINGER (Mirror)
     Node {
         id: rightFinger
-        position: Qt.vector3d((root.gripped ? 15 : 45) * 0.001, 80 * 0.001, 0)
+        x: (root.gripped ? 15 : 45) * 0.001
+        y: 80 * 0.001
+        z: 0
 
-        Behavior on position.x {
+        Behavior on x {
             NumberAnimation { duration: 300; easing.type: Easing.InOutQuad }
         }
 
         Model {
             position: Qt.vector3d(0, 40 * 0.001, 0)
             source: "#Cube"
-            scale: Qt.vector3d(20 * mm, 100 * mm, 30 * mm)
+            scale: Qt.vector3d(20 * root.mm, 100 * root.mm, 30 * root.mm)
             materials: [ PrincipledMaterial { baseColor: "#ecf0f1"; metalness: 0.9 } ]
         }
 
         Model {
             position: Qt.vector3d(-10 * 0.001, 70 * 0.001, 0)
             source: "#Cube"
-            scale: Qt.vector3d(5 * mm, 40 * mm, 25 * mm)
-            materials: [ PrincipledMaterial { baseColor: "#111" } ]
+            scale: Qt.vector3d(5 * root.mm, 40 * root.mm, 25 * root.mm)
+            materials: [ PrincipledMaterial { baseColor: "#111111" } ]
         }
     }
 }

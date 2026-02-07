@@ -27,7 +27,7 @@ Node {
         scale: Qt.vector3d(0.4, 0.2, 0.4)
         materials: [
             PrincipledMaterial {
-                baseColor: "#111"
+                baseColor: "#111111"
                 metalness: 1.0
             }
         ]

@@ -212,3 +212,5 @@
 11:47:39 INFO [Backend.cpp:97] Screenshot saved to screenshots/Plant_Overview.png
 11:47:40 INFO [Backend.cpp:97] Screenshot saved to screenshots/Robot_Status.png
 11:47:46 INFO [Backend.cpp:97] Screenshot saved to screenshots/Plant_Overview.png
+11:57:28 INFO [Backend.cpp:24] Backend initialized
+11:57:28 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 0.890, Y: 0.000, Z: 1.080]

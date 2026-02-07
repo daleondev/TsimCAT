@@ -36,7 +36,9 @@ Control {
                 spacing: 15
 
                 Rectangle {
-                    width: 12; height: 12; radius: 6
+                    Layout.preferredWidth: 12
+                    Layout.preferredHeight: 12
+                    radius: 6
                     color: "#2ecc71"
                     
                     PropertyAnimation on opacity {
@@ -67,7 +69,7 @@ Control {
                 id: legendText
                 anchors.centerIn: parent
                 text: "Right Click: Orbit | Left Click: Pan | Scroll: Zoom"
-                color: "#ccc"
+                color: "#cccccc"
                 font.pixelSize: 11
             }
         }
