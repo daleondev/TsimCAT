@@ -81,6 +81,9 @@ namespace core::sim
         auto isGripperGripped() const -> bool;
         auto setGripper(bool gripped) -> void;
 
+        auto setJointAngles(const double* anglesDegrees) -> void;
+        auto setTargetPose(const Pose& pose) -> bool;
+
       private:
         std::shared_ptr<link::ILink> m_link;
         Kinematics m_kinematics;

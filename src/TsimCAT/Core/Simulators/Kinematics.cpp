@@ -16,27 +16,27 @@ namespace core::sim
         {
             using namespace KDL;
             
-            // Replicating the RobotModel.qml structure
+            // Replicating the RobotModel.qml structure (Units in mm)
             // 1. Base to Joint 1
-            chain.addSegment(Segment(Joint(Joint::None), Frame(Vector(0, 0, 0.450))));
+            chain.addSegment(Segment(Joint(Joint::None), Frame(Vector(0, 0, 450))));
             
             // 2. Joint 1 (RotZ) to Joint 2
-            chain.addSegment(Segment(Joint(Joint::RotZ), Frame(Vector(0.150, 0, 0))));
+            chain.addSegment(Segment(Joint(Joint::RotZ), Frame(Vector(150, 0, 0))));
             
             // 3. Joint 2 (RotY) to Joint 3
-            chain.addSegment(Segment(Joint(Joint::RotY), Frame(Vector(0.610, 0, 0))));
+            chain.addSegment(Segment(Joint(Joint::RotY), Frame(Vector(610, 0, 0))));
             
             // 4. Joint 3 (RotY) to Joint 4
-            chain.addSegment(Segment(Joint(Joint::RotY), Frame(Vector(0, 0, 0.02))));
+            chain.addSegment(Segment(Joint(Joint::RotY), Frame(Vector(0, 0, 20))));
             
             // 5. Joint 4 (RotX) to Joint 5
-            chain.addSegment(Segment(Joint(Joint::RotX), Frame(Vector(0.660, 0, 0))));
+            chain.addSegment(Segment(Joint(Joint::RotX), Frame(Vector(660, 0, 0))));
             
             // 6. Joint 5 (RotY) to Joint 6
-            chain.addSegment(Segment(Joint(Joint::RotY), Frame(Vector(0.080, 0, 0))));
+            chain.addSegment(Segment(Joint(Joint::RotY), Frame(Vector(80, 0, 0))));
             
-            // 7. Joint 6 (RotX) to Flange
-            chain.addSegment(Segment(Joint(Joint::RotX), Frame::Identity()));
+            // 7. Joint 6 (RotX) to Tool0
+            chain.addSegment(Segment(Joint(Joint::RotX), Frame(Vector(15, 0, 0))));
 
             fkSolver = std::make_unique<ChainFkSolverPos_recursive>(chain);
             
@@ -51,9 +51,13 @@ namespace core::sim
     auto Kinematics::forward(const std::array<double, 6>& jointAngles) const -> Pose
     {
         KDL::JntArray jntPos(6);
-        for (int i = 0; i < 6; ++i) {
-            jntPos(i) = jointAngles[i];
-        }
+        // Match signs with RobotModel.qml: axis1, axis4, axis6 are inverted
+        jntPos(0) = -jointAngles[0];
+        jntPos(1) =  jointAngles[1];
+        jntPos(2) =  jointAngles[2];
+        jntPos(3) = -jointAngles[3];
+        jntPos(4) =  jointAngles[4];
+        jntPos(5) = -jointAngles[5];
 
         KDL::Frame cartPos;
         m_impl->fkSolver->JntToCart(jntPos, cartPos);
@@ -69,9 +73,12 @@ namespace core::sim
     auto Kinematics::inverse(const Pose& target, const std::array<double, 6>& seed) const -> std::vector<double>
     {
         KDL::JntArray jntSeed(6);
-        for (int i = 0; i < 6; ++i) {
-            jntSeed(i) = seed[i];
-        }
+        jntSeed(0) = -seed[0];
+        jntSeed(1) =  seed[1];
+        jntSeed(2) =  seed[2];
+        jntSeed(3) = -seed[3];
+        jntSeed(4) =  seed[4];
+        jntSeed(5) = -seed[5];
 
         KDL::Frame cartGoal(KDL::Rotation::RPY(target.roll, target.pitch, target.yaw), 
                             KDL::Vector(target.x, target.y, target.z));
@@ -81,9 +88,12 @@ namespace core::sim
 
         if (ret >= 0) {
             std::vector<double> result(6);
-            for (int i = 0; i < 6; ++i) {
-                result[i] = jntResult(i);
-            }
+            result[0] = -jntResult(0);
+            result[1] =  jntResult(1);
+            result[2] =  jntResult(2);
+            result[3] = -jntResult(3);
+            result[4] =  jntResult(4);
+            result[5] = -jntResult(5);
             return result;
         }
 

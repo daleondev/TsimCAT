@@ -13,6 +13,26 @@ Control {
     // Helper to safely access robot properties
     readonly property var robot: backend ? backend.robot : null
 
+    function updateJoints(index, value) {
+        if (!robot) return;
+        let joints = [robot.axis1, robot.axis2, robot.axis3, robot.axis4, robot.axis5, robot.axis6];
+        joints[index] = value;
+        robot.setJoints(joints[0], joints[1], joints[2], joints[3], joints[4], joints[5]);
+    }
+
+    function updateTcp(axis, value) {
+        if (!robot) return;
+        let x = robot.tcpX, y = robot.tcpY, z = robot.tcpZ;
+        let r = robot.tcpRoll, p = robot.tcpPitch, w = robot.tcpYaw;
+        if (axis === "x") x = value;
+        else if (axis === "y") y = value;
+        else if (axis === "z") z = value;
+        else if (axis === "r") r = value;
+        else if (axis === "p") p = value;
+        else if (axis === "w") w = value;
+        robot.setTcp(x, y, z, r, p, w);
+    }
+
     contentItem: RowLayout {
         spacing: 20
 
@@ -117,7 +137,7 @@ Control {
             GroupBox {
                 title: "ROBOT STATUS"
                 Layout.fillWidth: true
-                Layout.fillHeight: true
+                // Removed Layout.fillHeight: true to allow more boxes below
 
                 ColumnLayout {
                     anchors.fill: parent
@@ -155,13 +175,53 @@ Control {
                         BitIndicator { label: "EXT"; active: root.robot ? root.robot.inExt : false; activeColor: "#3498db" }
                     }
 
-                    Item { Layout.fillHeight: true } // Spacer
-
                     ValueBox { 
                         label: "ERROR CODE"
                         value: root.robot ? root.robot.errorCode : 0
                         textColor: (root.robot && root.robot.error) ? "#e74c3c" : "#2c3e50"
                         Layout.fillWidth: true 
+                    }
+                }
+            }
+
+            // --- KINEMATICS CONTROL ---
+            GroupBox {
+                title: "KINEMATICS"
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: 10
+
+                    // Tabs or sections for Joints/TCP
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 10
+                        
+                        // Joints Column
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            Text { text: "JOINTS (DEG)"; font.pixelSize: 10; font.bold: true; color: "#718096" }
+                            EditableValue { label: "A1"; value: root.robot ? root.robot.axis1 : 0; Layout.fillWidth: true; onUpdated: v => root.updateJoints(0, v) }
+                            EditableValue { label: "A2"; value: root.robot ? root.robot.axis2 : 0; Layout.fillWidth: true; onUpdated: v => root.updateJoints(1, v) }
+                            EditableValue { label: "A3"; value: root.robot ? root.robot.axis3 : 0; Layout.fillWidth: true; onUpdated: v => root.updateJoints(2, v) }
+                            EditableValue { label: "A4"; value: root.robot ? root.robot.axis4 : 0; Layout.fillWidth: true; onUpdated: v => root.updateJoints(3, v) }
+                            EditableValue { label: "A5"; value: root.robot ? root.robot.axis5 : 0; Layout.fillWidth: true; onUpdated: v => root.updateJoints(4, v) }
+                            EditableValue { label: "A6"; value: root.robot ? root.robot.axis6 : 0; Layout.fillWidth: true; onUpdated: v => root.updateJoints(5, v) }
+                        }
+
+                        // TCP Column
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            Text { text: "TCP (MM / DEG)"; font.pixelSize: 10; font.bold: true; color: "#718096" }
+                            EditableValue { label: "X"; value: root.robot ? root.robot.tcpX : 0; Layout.fillWidth: true; onUpdated: v => root.updateTcp("x", v) }
+                            EditableValue { label: "Y"; value: root.robot ? root.robot.tcpY : 0; Layout.fillWidth: true; onUpdated: v => root.updateTcp("y", v) }
+                            EditableValue { label: "Z"; value: root.robot ? root.robot.tcpZ : 0; Layout.fillWidth: true; onUpdated: v => root.updateTcp("z", v) }
+                            EditableValue { label: "R"; value: root.robot ? root.robot.tcpRoll : 0; Layout.fillWidth: true; onUpdated: v => root.updateTcp("r", v) }
+                            EditableValue { label: "P"; value: root.robot ? root.robot.tcpPitch : 0; Layout.fillWidth: true; onUpdated: v => root.updateTcp("p", v) }
+                            EditableValue { label: "W"; value: root.robot ? root.robot.tcpYaw : 0; Layout.fillWidth: true; onUpdated: v => root.updateTcp("w", v) }
+                        }
                     }
                 }
             }
@@ -224,6 +284,49 @@ Control {
             spacing: 0
             Text { text: valueBoxRoot.label; font.pixelSize: 9; font.bold: true; color: "#a0aec0" }
             Text { text: valueBoxRoot.value !== undefined ? valueBoxRoot.value : ""; font.family: "Monospace"; font.pixelSize: 16; font.bold: true; color: valueBoxRoot.textColor }
+        }
+    }
+
+    component EditableValue : Rectangle {
+        id: editableValueRoot
+        property string label: ""
+        property var value: 0
+        property string suffix: ""
+        signal updated(var newValue)
+
+        height: 40
+        color: "#fdfdfd"
+        border.color: input.activeFocus ? "#3498db" : "#edf2f7"
+        radius: 6
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 4
+            spacing: 0
+            Text { text: editableValueRoot.label; font.pixelSize: 8; font.bold: true; color: "#a0aec0" }
+            TextInput {
+                id: input
+                Layout.fillWidth: true
+                text: Number(editableValueRoot.value).toFixed(2)
+                font.family: "Monospace"
+                font.pixelSize: 12
+                font.bold: true
+                color: "#2c3e50"
+                selectByMouse: true
+                onAccepted: {
+                    editableValueRoot.updated(parseFloat(text))
+                    focus = false
+                }
+                // When not editing, follow the property
+                Connections {
+                    target: editableValueRoot
+                    function onValueChanged() {
+                        if (!input.activeFocus) {
+                            input.text = Number(editableValueRoot.value).toFixed(2)
+                        }
+                    }
+                }
+            }
         }
     }
 

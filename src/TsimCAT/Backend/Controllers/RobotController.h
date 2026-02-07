@@ -41,6 +41,14 @@ namespace backend::controllers
         Q_PROPERTY(double axis6 READ axis6 NOTIFY stateChanged)
         Q_PROPERTY(bool gripperGripped READ gripperGripped WRITE setGripperGripped NOTIFY stateChanged)
 
+        // TCP Pose (X, Y, Z in mm; Roll, Pitch, Yaw in Degrees)
+        Q_PROPERTY(double tcpX READ tcpX NOTIFY stateChanged)
+        Q_PROPERTY(double tcpY READ tcpY NOTIFY stateChanged)
+        Q_PROPERTY(double tcpZ READ tcpZ NOTIFY stateChanged)
+        Q_PROPERTY(double tcpRoll READ tcpRoll NOTIFY stateChanged)
+        Q_PROPERTY(double tcpPitch READ tcpPitch NOTIFY stateChanged)
+        Q_PROPERTY(double tcpYaw READ tcpYaw NOTIFY stateChanged)
+
         // Control from PLC (Observing what PLC sends)
         Q_PROPERTY(uint16_t controlJobId READ controlJobId NOTIFY stateChanged)
         Q_PROPERTY(uint8_t controlPartType READ controlPartType NOTIFY stateChanged)
@@ -75,6 +83,13 @@ namespace backend::controllers
         double axis5() const;
         double axis6() const;
 
+        double tcpX() const;
+        double tcpY() const;
+        double tcpZ() const;
+        double tcpRoll() const;
+        double tcpPitch() const;
+        double tcpYaw() const;
+
         bool gripperGripped() const;
         void setGripperGripped(bool gripped);
 
@@ -87,6 +102,8 @@ namespace backend::controllers
         QString adsStatus() const;
 
         Q_INVOKABLE void connectAds();
+        Q_INVOKABLE void setJoints(double j1, double j2, double j3, double j4, double j5, double j6);
+        Q_INVOKABLE bool setTcp(double x, double y, double z, double r, double p, double w);
 
       signals:
         void stateChanged();

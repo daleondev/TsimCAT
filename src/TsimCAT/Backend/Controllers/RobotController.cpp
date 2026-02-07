@@ -43,6 +43,13 @@ namespace backend::controllers
     double RobotController::axis5() const { return m_simulator ? m_simulator->jointAngles()[4] : 0.0; }
     double RobotController::axis6() const { return m_simulator ? m_simulator->jointAngles()[5] : 0.0; }
 
+    double RobotController::tcpX() const { return m_simulator ? m_simulator->currentPose().x : 0.0; }
+    double RobotController::tcpY() const { return m_simulator ? m_simulator->currentPose().y : 0.0; }
+    double RobotController::tcpZ() const { return m_simulator ? m_simulator->currentPose().z : 0.0; }
+    double RobotController::tcpRoll() const { return m_simulator ? m_simulator->currentPose().roll * 180.0 / M_PI : 0.0; }
+    double RobotController::tcpPitch() const { return m_simulator ? m_simulator->currentPose().pitch * 180.0 / M_PI : 0.0; }
+    double RobotController::tcpYaw() const { return m_simulator ? m_simulator->currentPose().yaw * 180.0 / M_PI : 0.0; }
+
     bool RobotController::gripperGripped() const { 
         return m_simulator ? m_simulator->isGripperGripped() : false; 
     }
@@ -79,5 +86,27 @@ namespace backend::controllers
                 }
             }(m_simulator);
         }
+    }
+
+    void RobotController::setJoints(double j1, double j2, double j3, double j4, double j5, double j6)
+    {
+        if (m_simulator) {
+            double angles[6] = {j1, j2, j3, j4, j5, j6};
+            m_simulator->setJointAngles(angles);
+            emit stateChanged();
+        }
+    }
+
+    bool RobotController::setTcp(double x, double y, double z, double r, double p, double w)
+    {
+        if (m_simulator) {
+            core::sim::Pose pose{x, y, z, r * M_PI / 180.0, p * M_PI / 180.0, w * M_PI / 180.0};
+            bool success = m_simulator->setTargetPose(pose);
+            if (success) {
+                emit stateChanged();
+            }
+            return success;
+        }
+        return false;
     }
 }

@@ -136,96 +136,56 @@ namespace core::sim
                 co_await coro::sleep(std::chrono::milliseconds(500));
             }
             
-                        // Standard loop throttle
-            
-                        co_await coro::sleep(std::chrono::milliseconds(50));
-            
-                    }
-            
-                }
-            
-            
-            
-                    auto RobotSimulator::currentPose() const -> Pose
-            
-            
-            
-                    {
-            
-            
-            
-                        std::scoped_lock lock(m_mutex);
-            
-            
-            
-                        std::array<double, 6> rads;
-            
-            
-            
-                        for (int i = 0; i < 6; ++i) rads[i] = m_jointAngles[i] * M_PI / 180.0;
-            
-            
-            
-                        return m_kinematics.forward(rads);
-            
-            
-            
-                    }
-            
-            
-            
-                
-            
-            
-            
-                    auto RobotSimulator::isGripperGripped() const -> bool
-            
-            
-            
-                    {
-            
-            
-            
-                        std::scoped_lock lock(m_mutex);
-            
-            
-            
-                        return m_gripperGripped;
-            
-            
-            
-                    }
-            
-            
-            
-                
-            
-            
-            
-                    auto RobotSimulator::setGripper(bool gripped) -> void
-            
-            
-            
-                    {
-            
-            
-            
-                        std::scoped_lock lock(m_mutex);
-            
-            
-            
-                        m_gripperGripped = gripped;
-            
-            
-            
-                    }
-            
-            
-            
-                }
-            
-            
-            
-                
-            
-            
+            // Standard loop throttle
+            co_await coro::sleep(std::chrono::milliseconds(50));
+        }
+    }
+
+    auto RobotSimulator::currentPose() const -> Pose
+    {
+        std::scoped_lock lock(m_mutex);
+        std::array<double, 6> rads;
+        for (int i = 0; i < 6; ++i) rads[i] = m_jointAngles[i] * M_PI / 180.0;
+        return m_kinematics.forward(rads);
+    }
+
+    auto RobotSimulator::isGripperGripped() const -> bool
+    {
+        std::scoped_lock lock(m_mutex);
+        return m_gripperGripped;
+    }
+
+    auto RobotSimulator::setGripper(bool gripped) -> void
+    {
+        std::scoped_lock lock(m_mutex);
+        m_gripperGripped = gripped;
+    }
+
+    auto RobotSimulator::setJointAngles(const double* anglesDegrees) -> void
+    {
+        std::scoped_lock lock(m_mutex);
+        for (int i = 0; i < 6; ++i) {
+            m_jointAngles[i] = anglesDegrees[i];
+        }
+    }
+
+    auto RobotSimulator::setTargetPose(const Pose& pose) -> bool
+    {
+        std::array<double, 6> seed;
+        {
+            std::scoped_lock lock(m_mutex);
+            for (int i = 0; i < 6; ++i) seed[i] = m_jointAngles[i] * M_PI / 180.0;
+        }
+
+        auto joints = m_kinematics.inverse(pose, seed);
+        if (joints.empty()) {
+            return false;
+        }
+
+        std::scoped_lock lock(m_mutex);
+        for (int i = 0; i < 6; ++i) {
+            m_jointAngles[i] = joints[i] * 180.0 / M_PI;
+        }
+        return true;
+    }
+}

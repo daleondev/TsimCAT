@@ -6,6 +6,8 @@ import QtQuick3D.Helpers
 Item {
     id: root
     property var backend: null
+    property bool damperOpen: false
+    property bool doorOpen: false
 
     View3D {
         id: view
@@ -74,8 +76,8 @@ Item {
                 id: fence
                 position: Qt.vector3d(500, 0, 0)
 
-                damperOpen: damperToggle.checked
-                doorOpen: doorToggle.checked
+                damperOpen: root.damperOpen
+                doorOpen: root.doorOpen
             }
 
             // 2. ENTRY CONVEYOR
@@ -200,35 +202,6 @@ Item {
         onWheel: wheel => {
             let zoomSpeed = sceneCamera.position.z * 0.1;
             sceneCamera.position.z = Math.max(500, Math.min(15000, sceneCamera.position.z - (wheel.angleDelta.y / 120.0) * zoomSpeed));
-        }
-    }
-
-    Column {
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.margins: 20
-        spacing: 10
-
-        CheckBox {
-            id: damperToggle
-            text: "Open Guillotine Damper"
-            palette.windowText: "#333"
-        }
-        CheckBox {
-            id: doorToggle
-            text: "Open Safety Door"
-            palette.windowText: "#333"
-        }
-        CheckBox {
-            id: gripperToggle
-            text: "Close Robot Gripper"
-            palette.windowText: "#333"
-            checked: root.backend ? root.backend.robot.gripperGripped : false
-            onToggled: {
-                if (root.backend) {
-                    root.backend.robot.gripperGripped = checked;
-                }
-            }
         }
     }
 }
