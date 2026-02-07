@@ -6,6 +6,7 @@ import "../controls" as Controls
 Control {
     id: root
     property string title: "Plant Overview"
+    property var backend: null
 
     padding: 0
 
@@ -14,6 +15,7 @@ Control {
         Controls.Plant3DView {
             id: plantView
             anchors.fill: parent
+            backend: root.backend
         }
 
         // --- OVERLAYS ---

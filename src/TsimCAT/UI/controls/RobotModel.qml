@@ -11,6 +11,8 @@ Node {
     property real axis4: 0
     property real axis5: 0
     property real axis6: 0
+    property bool gripperGripped: false
+    onGripperGrippedChanged: console.log("RobotModel: gripperGripped changed to " + gripperGripped)
 
     eulerRotation.x: -90
     scale: Qt.vector3d(2000, 2000, 2000)
@@ -134,9 +136,26 @@ Node {
 
                                 Node {
                                     id: flange
+                                    
+                                    // Mounting Plate (Physical part of the robot)
+                                    Model {
+                                        source: "#Cylinder"
+                                        scale: Qt.vector3d(0.0008, 0.0001, 0.0008)
+                                        eulerRotation.z: 90
+                                        materials: [ PrincipledMaterial { baseColor: "#1a1a1a"; metalness: 0.9 } ]
+                                    }
+
                                     Node {
                                         id: tool0
-                                        eulerRotation.y: 90
+                                        position: Qt.vector3d(0.015, 0, 0) // Offset along X (Forward for Axis 6)
+                                        
+                                        GripperModel {
+                                            id: robotGripper
+                                            // Gripper is Y-up internally. Flange X is forward.
+                                            // Rotate -90 around Z to align Gripper Y with Flange X.
+                                            eulerRotation.z: -90 
+                                            gripped: robotRoot.gripperGripped
+                                        }
                                     }
                                 }
                             }

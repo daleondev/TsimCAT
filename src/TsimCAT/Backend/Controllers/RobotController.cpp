@@ -43,6 +43,18 @@ namespace backend::controllers
     double RobotController::axis5() const { return m_simulator ? m_simulator->jointAngles()[4] : 0.0; }
     double RobotController::axis6() const { return m_simulator ? m_simulator->jointAngles()[5] : 0.0; }
 
+    bool RobotController::gripperGripped() const { 
+        return m_simulator ? m_simulator->isGripperGripped() : false; 
+    }
+
+    void RobotController::setGripperGripped(bool gripped) {
+        if (m_simulator) {
+            qDebug() << "RobotController: Setting gripper to" << gripped;
+            m_simulator->setGripper(gripped);
+            emit stateChanged();
+        }
+    }
+
     // --- Control Getters ---
     uint16_t RobotController::controlJobId() const { return m_simulator ? m_simulator->control().nJobId : 0; }
     uint8_t RobotController::controlPartType() const { return m_simulator ? m_simulator->control().nPartType : 0; }

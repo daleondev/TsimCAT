@@ -39,6 +39,7 @@ namespace backend::controllers
         Q_PROPERTY(double axis4 READ axis4 NOTIFY stateChanged)
         Q_PROPERTY(double axis5 READ axis5 NOTIFY stateChanged)
         Q_PROPERTY(double axis6 READ axis6 NOTIFY stateChanged)
+        Q_PROPERTY(bool gripperGripped READ gripperGripped WRITE setGripperGripped NOTIFY stateChanged)
 
         // Control from PLC (Observing what PLC sends)
         Q_PROPERTY(uint16_t controlJobId READ controlJobId NOTIFY stateChanged)
@@ -73,6 +74,9 @@ namespace backend::controllers
         double axis4() const;
         double axis5() const;
         double axis6() const;
+
+        bool gripperGripped() const;
+        void setGripperGripped(bool gripped);
 
         uint16_t controlJobId() const;
         uint8_t controlPartType() const;

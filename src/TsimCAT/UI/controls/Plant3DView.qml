@@ -5,6 +5,7 @@ import QtQuick3D.Helpers
 
 Item {
     id: root
+    property var backend: null
 
     View3D {
         id: view
@@ -91,9 +92,24 @@ Item {
                 id: plantRobot
                 position: Qt.vector3d(0, 0, 500)
                 eulerRotation.z: 90
-            }
-
-            // 4. STATIONS
+                
+                axis1: root.backend ? root.backend.robot.axis1 : 0
+                axis2: root.backend ? root.backend.robot.axis2 : -90
+                axis3: root.backend ? root.backend.robot.axis3 : 90
+                axis4: root.backend ? root.backend.robot.axis4 : 0
+                axis5: root.backend ? root.backend.robot.axis5 : 0
+                            axis6: root.backend ? root.backend.robot.axis6 : 0
+                            
+                            // Explicit connection for gripper state
+                            gripperGripped: false
+                            Connections {
+                                target: root.backend ? root.backend.robot : null
+                                function onStateChanged() {
+                                    plantRobot.gripperGripped = root.backend.robot.gripperGripped
+                                }
+                            }
+                        }
+                            // 4. STATIONS
             Node {
                 id: stationsRow
                 position: Qt.vector3d(0, 0, -1200)
@@ -204,6 +220,17 @@ Item {
             id: doorToggle
             text: "Open Safety Door"
             palette.windowText: "#333"
+        }
+        CheckBox {
+            id: gripperToggle
+            text: "Close Robot Gripper"
+            palette.windowText: "#333"
+            checked: root.backend ? root.backend.robot.gripperGripped : false
+            onToggled: {
+                if (root.backend) {
+                    root.backend.robot.gripperGripped = checked
+                }
+            }
         }
     }
 }

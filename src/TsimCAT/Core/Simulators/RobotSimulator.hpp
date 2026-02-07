@@ -78,6 +78,9 @@ namespace core::sim
         auto jointAngles() const -> const double*;
         auto currentPose() const -> Pose;
 
+        auto isGripperGripped() const -> bool;
+        auto setGripper(bool gripped) -> void;
+
       private:
         std::shared_ptr<link::ILink> m_link;
         Kinematics m_kinematics;
@@ -85,6 +88,7 @@ namespace core::sim
         RobotControl m_control{};
         RobotStatus m_status{};
         double m_jointAngles[6]{};
+        bool m_gripperGripped{ false };
         
         mutable std::mutex m_mutex;
         std::atomic<bool> m_running{ false };

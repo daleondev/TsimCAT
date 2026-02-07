@@ -19,8 +19,7 @@ Node {
         sourceItem: Item {
             width: 64
             height: 64
-            x: -500
-            y: -500
+            // Removed suspicious x/y offsets
 
             Rectangle {
                 anchors.fill: parent

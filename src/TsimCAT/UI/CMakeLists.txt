@@ -12,6 +12,7 @@ qt_add_qml_module(TsimCAT_UI
         controls/NavigationSidebar.qml
         controls/Robot3DView.qml
         controls/RobotModel.qml
+        controls/GripperModel.qml
         controls/GantryModel.qml
         controls/LaserModel.qml
         controls/CameraModel.qml

@@ -68,7 +68,9 @@ ApplicationWindow {
                 backend.captureScreenshot(window.contentItem, safeName);
             }
 
-            Subscreens.PlantOverview {}
+            Subscreens.PlantOverview {
+                backend: backend
+            }
             Subscreens.RobotStatus {
                 backend: backend
             }

@@ -78,60 +78,9 @@ Node {
         }
 
         // INDUSTRIAL GRIPPER (At the very tip of the Z Rod)
-        Node {
-            // Rod tip is at -zPos.
+        GripperModel {
             position: Qt.vector3d(0, -gantryRoot.zPos, 0)
-
-            // Mounting Plate
-            Model {
-                position: Qt.vector3d(0, 10, 0)
-                source: "#Cube"
-                scale: Qt.vector3d(1.2, 0.2, 1.2)
-                materials: [
-                    PrincipledMaterial {
-                        baseColor: "#333"
-                    }
-                ]
-            }
-
-            // Actuator Body
-            Model {
-                position: Qt.vector3d(0, -25, 0)
-                source: "#Cube"
-                scale: Qt.vector3d(0.8, 0.5, 0.8)
-                materials: [
-                    PrincipledMaterial {
-                        baseColor: "#2c3e50"
-                        metalness: 0.9
-                    }
-                ]
-            }
-
-            // Left Finger
-            Model {
-                position: Qt.vector3d(-30, -75, 0)
-                source: "#Cube"
-                scale: Qt.vector3d(0.15, 1, 0.4)
-                materials: [
-                    PrincipledMaterial {
-                        baseColor: "#7f8c8d"
-                        metalness: 1.0
-                    }
-                ]
-            }
-
-            // Right Finger
-            Model {
-                position: Qt.vector3d(30, -75, 0)
-                source: "#Cube"
-                scale: Qt.vector3d(0.15, 1, 0.4)
-                materials: [
-                    PrincipledMaterial {
-                        baseColor: "#7f8c8d"
-                        metalness: 1.0
-                    }
-                ]
-            }
+            scale: Qt.vector3d(1000, 1000, 1000)
         }
     }
 }

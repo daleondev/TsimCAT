@@ -146,20 +146,86 @@ namespace core::sim
             
             
             
-                auto RobotSimulator::currentPose() const -> Pose
+                    auto RobotSimulator::currentPose() const -> Pose
             
-                {
             
-                    std::scoped_lock lock(m_mutex);
             
-                    std::array<double, 6> rads;
+                    {
             
-                    for (int i = 0; i < 6; ++i) rads[i] = m_jointAngles[i] * M_PI / 180.0;
             
-                    return m_kinematics.forward(rads);
+            
+                        std::scoped_lock lock(m_mutex);
+            
+            
+            
+                        std::array<double, 6> rads;
+            
+            
+            
+                        for (int i = 0; i < 6; ++i) rads[i] = m_jointAngles[i] * M_PI / 180.0;
+            
+            
+            
+                        return m_kinematics.forward(rads);
+            
+            
+            
+                    }
+            
+            
+            
+                
+            
+            
+            
+                    auto RobotSimulator::isGripperGripped() const -> bool
+            
+            
+            
+                    {
+            
+            
+            
+                        std::scoped_lock lock(m_mutex);
+            
+            
+            
+                        return m_gripperGripped;
+            
+            
+            
+                    }
+            
+            
+            
+                
+            
+            
+            
+                    auto RobotSimulator::setGripper(bool gripped) -> void
+            
+            
+            
+                    {
+            
+            
+            
+                        std::scoped_lock lock(m_mutex);
+            
+            
+            
+                        m_gripperGripped = gripped;
+            
+            
+            
+                    }
+            
+            
             
                 }
             
-            }
+            
+            
+                
             
             
