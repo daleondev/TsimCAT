@@ -72,8 +72,6 @@ Item {
             // 1. SAFETY FENCE
             FenceModel {
                 id: fence
-                width: 6000
-                depth: 4500
                 position: Qt.vector3d(500, 0, 0)
 
                 damperOpen: damperToggle.checked
@@ -90,26 +88,26 @@ Item {
             // 3. MAIN ROBOT
             RobotModel {
                 id: plantRobot
-                position: Qt.vector3d(0, 0, 500)
+                position: Qt.vector3d(0, 0, 1000)
                 eulerRotation.z: 90
-                
+
                 axis1: root.backend ? root.backend.robot.axis1 : 0
                 axis2: root.backend ? root.backend.robot.axis2 : -90
                 axis3: root.backend ? root.backend.robot.axis3 : 90
                 axis4: root.backend ? root.backend.robot.axis4 : 0
                 axis5: root.backend ? root.backend.robot.axis5 : 0
-                            axis6: root.backend ? root.backend.robot.axis6 : 0
-                            
-                            // Explicit connection for gripper state
-                            gripperGripped: false
-                            Connections {
-                                target: root.backend ? root.backend.robot : null
-                                function onStateChanged() {
-                                    plantRobot.gripperGripped = root.backend.robot.gripperGripped
-                                }
-                            }
-                        }
-                            // 4. STATIONS
+                axis6: root.backend ? root.backend.robot.axis6 : 0
+
+                // Explicit connection for gripper state
+                gripperGripped: false
+                Connections {
+                    target: root.backend ? root.backend.robot : null
+                    function onStateChanged() {
+                        plantRobot.gripperGripped = root.backend.robot.gripperGripped;
+                    }
+                }
+            }
+            // 4. STATIONS
             Node {
                 id: stationsRow
                 position: Qt.vector3d(0, 0, -1200)
@@ -228,7 +226,7 @@ Item {
             checked: root.backend ? root.backend.robot.gripperGripped : false
             onToggled: {
                 if (root.backend) {
-                    root.backend.robot.gripperGripped = checked
+                    root.backend.robot.gripperGripped = checked;
                 }
             }
         }

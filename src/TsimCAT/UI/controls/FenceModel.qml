@@ -4,56 +4,40 @@ import QtQuick3D
 
 Node {
     id: fenceRoot
-    property real width: 6000
-    property real depth: 4500
-    property real height: 2000
+    readonly property real width: 6000
+    readonly property real depth: 3500
+    readonly property real height: 2000
+    readonly property real fencePanelWidth: 1000
 
     property bool damperOpen: false
     property bool doorOpen: false
 
-    // readonly property color fenceColor: "#f1c40f" // Safety Yellow
-    readonly property color fenceColor: '#5e5e5e'
-
-    // Improved Procedural Chain Link Texture
-    Texture {
-        id: gridTexture
-        sourceItem: Item {
-            width: 64
-            height: 64
-            // Removed suspicious x/y offsets
-
-            Rectangle {
-                anchors.fill: parent
-                color: "black"
-
-                Rectangle {
-                    width: 100
-                    height: 6
-                    color: "white"
-                    rotation: 45
-                    anchors.centerIn: parent
-                }
-                Rectangle {
-                    width: 100
-                    height: 6
-                    color: "white"
-                    rotation: -45
-                    anchors.centerIn: parent
-                }
-            }
-            layer.enabled: true
-        }
-        scaleU: 30
-        scaleV: 15
-        tilingModeHorizontal: Texture.Repeat
-        tilingModeVertical: Texture.Repeat
+    PrincipledMaterial {
+        id: darkMaterial
+        baseColor: '#181818'
+        metalness: 0.8
     }
 
-    // Helper for a physical wire mesh panel
+    // Common Material for frame/posts
+    PrincipledMaterial {
+        id: fenceMaterial
+        baseColor: '#5e5e5e'
+        metalness: 0.8
+    }
+
+    // Common Material for frame/posts
+    PrincipledMaterial {
+        id: postMaterial
+        baseColor: "#222222"
+        metalness: 0.8
+    }
+
     component WireMesh: Node {
         id: wireMesh
-        property real w: 1000
-        property real h: 2000
+        property real w: fenceRoot.fencePanelWidth
+        property real h: fenceRoot.height
+        property bool isSafety: false
+        property real wireScale: isSafety ? 0.06 : 0.02
 
         // Vertical Wires
         Repeater3D {
@@ -62,13 +46,8 @@ Node {
                 required property int index
                 position: Qt.vector3d(-wireMesh.w / 2 + index * 100, wireMesh.h / 2, 0)
                 source: "#Cube"
-                scale: Qt.vector3d(0.02, wireMesh.h / 100, 0.02)
-                materials: [
-                    PrincipledMaterial {
-                        baseColor: fenceRoot.fenceColor
-                        metalness: 0.8
-                    }
-                ]
+                scale: Qt.vector3d(wireMesh.wireScale, wireMesh.h / 100, wireMesh.wireScale)
+                materials: [wireMesh.isSafety ? darkMaterial : fenceMaterial]
             }
         }
 
@@ -79,103 +58,97 @@ Node {
                 required property int index
                 position: Qt.vector3d(0, index * 100, 0)
                 source: "#Cube"
-                scale: Qt.vector3d(wireMesh.w / 100, 0.02, 0.02)
-                materials: [
-                    PrincipledMaterial {
-                        baseColor: fenceRoot.fenceColor
-                        metalness: 0.8
-                    }
-                ]
+                scale: Qt.vector3d(wireMesh.w / 100, wireMesh.wireScale, wireMesh.wireScale)
+                materials: [wireMesh.isSafety ? darkMaterial : fenceMaterial]
             }
+        }
+
+        Model {
+            id: backing
+            visible: wireMesh.isSafety
+            position: Qt.vector3d(0, wireMesh.h / 2, 0)
+            source: "#Cube"
+            scale: Qt.vector3d(wireMesh.w / 100, wireMesh.h / 100, 0.01)
+            materials: [
+                PrincipledMaterial {
+                    baseColor: '#f1c40f'
+                    opacity: 0.32
+                    alphaMode: PrincipledMaterial.Blend
+                    cullMode: PrincipledMaterial.NoCulling
+                }
+            ]
         }
     }
 
-    // Common Material for frame/posts
-    PrincipledMaterial {
-        id: postMaterial
-        baseColor: "#222222"
-        metalness: 0.8
+    // Post component
+    component Post: Model {
+        property vector3d externalScale: Qt.vector3d(1, 1, 1)
+        readonly property vector3d internalScale: Qt.vector3d(0.5, fenceRoot.height / 100, 0.5)
+        source: "#Cube"
+        scale: internalScale.times(externalScale)
+        materials: [postMaterial]
+    }
+
+    // Bar component
+    component Bar: Model {
+        property vector3d externalScale: Qt.vector3d(1, 1, 1)
+        readonly property vector3d internalScale: Qt.vector3d(fenceRoot.fencePanelWidth / 100, 0.3, 0.3)
+        source: "#Cube"
+        scale: internalScale.times(externalScale)
+        materials: [postMaterial]
     }
 
     // Helper for a single fence panel segment
     component FencePanel: Node {
         id: fencePanel
-        property real panelWidth: 1000
+        property real panelWidth: fenceRoot.fencePanelWidth
         property bool showMesh: true
         property bool showLeftPost: true
+        property alias isSafety: wire.isSafety
 
-        Model {
-            visible: fencePanel.showLeftPost
-            position: Qt.vector3d(-fencePanel.panelWidth / 2, 1000, 0)
-            source: "#Cube"
-            scale: Qt.vector3d(0.5, 20, 0.5)
-            materials: [postMaterial]
+        Bar {
+            position: Qt.vector3d(0, 0, 0)
+        }
+
+        Post {
+            position: Qt.vector3d(fencePanel.panelWidth / 2, 1000, 0)
         }
 
         WireMesh {
+            id: wire
             visible: fencePanel.showMesh
             w: fencePanel.panelWidth
             h: 2000
         }
 
-        // Frame Rails
-        Model {
-            position: Qt.vector3d(0, 1950, 0)
-            source: "#Cube"
-            scale: Qt.vector3d(fencePanel.panelWidth / 100 + 0.1, 0.3, 0.3)
-            materials: [
-                PrincipledMaterial {
-                    baseColor: fenceRoot.fenceColor
-                }
-            ]
+        Post {
+            position: Qt.vector3d(-fencePanel.panelWidth / 2, 1000, 0)
         }
-        Model {
-            position: Qt.vector3d(0, 50, 0)
-            source: "#Cube"
-            scale: Qt.vector3d(fencePanel.panelWidth / 100 + 0.1, 0.3, 0.3)
-            materials: [
-                PrincipledMaterial {
-                    baseColor: fenceRoot.fenceColor
-                }
-            ]
-        }
-    }
 
-    // Closing post component
-    component EndPost: Model {
-        position: Qt.vector3d(0, 1000, 0)
-        source: "#Cube"
-        scale: Qt.vector3d(0.5, 20, 0.5)
-        materials: [postMaterial]
+        Bar {
+            position: Qt.vector3d(0, fenceRoot.height, 0)
+        }
     }
 
     // Guillotine Damper Component
     component GuillotineDamper: Node {
         id: guillotineDamper
-        property real panelWidth: 1200
+        property real panelWidth: 1500
 
-        Model {
-            position: Qt.vector3d(-guillotineDamper.panelWidth / 2, 1000, 0)
-            source: "#Cube"
-            scale: Qt.vector3d(0.8, 20, 0.8)
-            materials: [postMaterial]
+        Post {
+            position: Qt.vector3d(-guillotineDamper.panelWidth / 2, fenceRoot.height / 2, 0)
+            externalScale: Qt.vector3d(2, 1.05, 2)
         }
-        Model {
-            position: Qt.vector3d(guillotineDamper.panelWidth / 2, 1000, 0)
-            source: "#Cube"
-            scale: Qt.vector3d(0.8, 20, 0.8)
+
+        Bar {
+            position: Qt.vector3d(0, fenceRoot.height, 0)
+            externalScale: Qt.vector3d(guillotineDamper.panelWidth / fenceRoot.fencePanelWidth, 3.44, 3.44)
             materials: [postMaterial]
         }
 
-        Model {
-            position: Qt.vector3d(0, 2100, 0)
-            source: "#Cube"
-            scale: Qt.vector3d(guillotineDamper.panelWidth / 100 + 1, 2, 1.2)
-            materials: [
-                PrincipledMaterial {
-                    baseColor: "#333333"
-                }
-            ]
+        Post {
+            position: Qt.vector3d(guillotineDamper.panelWidth / 2, fenceRoot.height / 2, 0)
+            externalScale: Qt.vector3d(2, 1.05, 2)
         }
 
         // Moving Blade
@@ -190,97 +163,53 @@ Node {
                 }
             }
 
-            WireMesh {
-                w: guillotineDamper.panelWidth
-                h: 1200
-                y: -600
+            FencePanel {
+                position: Qt.vector3d(0, -600, 0)
+                scale: Qt.vector3d(1, 0.6, 1)
+                isSafety: true
             }
         }
     }
 
-    // Double Safety Door Component
     component SafetyDoor: Node {
         id: safetyDoor
-        property real doorWidth: 2000
 
-        // Left Hinge Post
-        Model {
-            position: Qt.vector3d(-safetyDoor.doorWidth / 2, 1000, 0)
-            source: "#Cube"
-            scale: Qt.vector3d(0.7, 20, 0.7)
-            materials: [postMaterial]
-        }
-
-        // Left Swinging Leaf
         Node {
-            position: Qt.vector3d(-safetyDoor.doorWidth / 2, 0, 0)
+            position: Qt.vector3d(-fenceRoot.fencePanelWidth, 0, 0)
             eulerRotation.y: fenceRoot.doorOpen ? -100 : 0
             Behavior on eulerRotation.y {
                 NumberAnimation {
                     duration: 1200
-                    easing.type: Easing.InOutBack
+                    easing.type: Easing.InOutQuad
                 }
             }
 
-            WireMesh {
-                position: Qt.vector3d(safetyDoor.doorWidth / 4, 0, 0)
-                w: safetyDoor.doorWidth / 2
-                h: 2000
-            }
-
-            Model {
-                position: Qt.vector3d(safetyDoor.doorWidth / 4, 1950, 0)
-                source: "#Cube"
-                scale: Qt.vector3d(safetyDoor.doorWidth / 200, 0.4, 0.4)
-                materials: [
-                    PrincipledMaterial {
-                        baseColor: fenceRoot.fenceColor
-                    }
-                ]
+            FencePanel {
+                position: Qt.vector3d(fenceRoot.fencePanelWidth / 2, 0, 0)
+                isSafety: true
             }
         }
 
-        // Right Swinging Leaf
         Node {
-            position: Qt.vector3d(safetyDoor.doorWidth / 2, 0, 0)
+            position: Qt.vector3d(fenceRoot.fencePanelWidth, 0, 0)
             eulerRotation.y: fenceRoot.doorOpen ? 100 : 0
             Behavior on eulerRotation.y {
                 NumberAnimation {
                     duration: 1200
-                    easing.type: Easing.InOutBack
+                    easing.type: Easing.InOutQuad
                 }
             }
 
-            WireMesh {
-                position: Qt.vector3d(-safetyDoor.doorWidth / 4, 0, 0)
-                w: safetyDoor.doorWidth / 2
-                h: 2000
+            FencePanel {
+                position: Qt.vector3d(-fenceRoot.fencePanelWidth / 2, 0, 0)
+                isSafety: true
             }
-
-            Model {
-                position: Qt.vector3d(-safetyDoor.doorWidth / 4, 1950, 0)
-                source: "#Cube"
-                scale: Qt.vector3d(safetyDoor.doorWidth / 200, 0.4, 0.4)
-                materials: [
-                    PrincipledMaterial {
-                        baseColor: fenceRoot.fenceColor
-                    }
-                ]
-            }
-        }
-
-        // Right Hinge Post
-        Model {
-            position: Qt.vector3d(safetyDoor.doorWidth / 2, 1000, 0)
-            source: "#Cube"
-            scale: Qt.vector3d(0.7, 20, 0.7)
-            materials: [postMaterial]
         }
     }
 
     // --- ASSEMBLE PERIMETER ---
 
-    // Back Side (Fixed positions)
+    // Back Side
     Node {
         position: Qt.vector3d(0, 0, -fenceRoot.depth / 2)
         Repeater3D {
@@ -290,36 +219,30 @@ Node {
                 position: Qt.vector3d(-2500 + index * 1000, 0, 0)
             }
         }
-        EndPost {
-            position: Qt.vector3d(3000, 1000, 0)
-        }
     }
 
-    // Front Side (Fixed positions and missing panel)
+    // Front Side
     Node {
         position: Qt.vector3d(0, 0, fenceRoot.depth / 2)
+
         FencePanel {
             position: Qt.vector3d(-2500, 0, 0)
         }
+
         FencePanel {
             position: Qt.vector3d(-1500, 0, 0)
-        } // Added missing panel
-
-        // Double Safety Door (covers -1000 to 1000)
-        SafetyDoor {
-            position: Qt.vector3d(0, 0, 0)
-            doorWidth: 2000
         }
 
         FencePanel {
-            position: Qt.vector3d(1500, 0, 0)
-            showLeftPost: false
+            position: Qt.vector3d(-500, 0, 0)
         }
+
+        SafetyDoor {
+            position: Qt.vector3d(1000, 0, 0)
+        }
+
         FencePanel {
             position: Qt.vector3d(2500, 0, 0)
-        }
-        EndPost {
-            position: Qt.vector3d(3000, 1000, 0)
         }
     }
 
@@ -327,22 +250,19 @@ Node {
     Node {
         position: Qt.vector3d(-fenceRoot.width / 2, 0, 0)
         eulerRotation.y: 90
+
         // Use depth based positions
         FencePanel {
-            position: Qt.vector3d(-1500, 0, 0)
+            position: Qt.vector3d(-1250, 0, 0)
         }
-        EndPost {
-            position: Qt.vector3d(-1000, 1000, 0)
-        }
+
         GuillotineDamper {
             position: Qt.vector3d(0, 0, 0)
             panelWidth: 1200
         }
+
         FencePanel {
-            position: Qt.vector3d(1500, 0, 0)
-        }
-        EndPost {
-            position: Qt.vector3d(2000, 1000, 0)
+            position: Qt.vector3d(1250, 0, 0)
         }
     }
 
@@ -350,21 +270,26 @@ Node {
     Node {
         position: Qt.vector3d(fenceRoot.width / 2, 0, 0)
         eulerRotation.y: 90
+
         FencePanel {
-            position: Qt.vector3d(-1500, 0, 0)
+            position: Qt.vector3d(-1250, 0, 0)
         }
+
         // Middle area is open
         FencePanel {
-            position: Qt.vector3d(1500, 0, 0)
+            position: Qt.vector3d(1250, 0, 0)
         }
-        EndPost {
+
+        Post {
             position: Qt.vector3d(2000, 1000, 0)
         }
+
         // Add post at the other side of the gap
-        EndPost {
+        Post {
             position: Qt.vector3d(1000, 1000, 0)
         }
-        EndPost {
+
+        Post {
             position: Qt.vector3d(-1000, 1000, 0)
         }
     }
