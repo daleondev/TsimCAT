@@ -171,8 +171,8 @@ Node {
         }
     }
 
-    component SafetyDoor: Node {
-        id: safetyDoor
+    component DoubleSafetyDoor: Node {
+        id: doubleSafetyDoor
 
         Node {
             position: Qt.vector3d(-fenceRoot.fencePanelWidth, 0, 0)
@@ -192,6 +192,26 @@ Node {
 
         Node {
             position: Qt.vector3d(fenceRoot.fencePanelWidth, 0, 0)
+            eulerRotation.y: fenceRoot.doorOpen ? 100 : 0
+            Behavior on eulerRotation.y {
+                NumberAnimation {
+                    duration: 1200
+                    easing.type: Easing.InOutQuad
+                }
+            }
+
+            FencePanel {
+                position: Qt.vector3d(-fenceRoot.fencePanelWidth / 2, 0, 0)
+                isSafety: true
+            }
+        }
+    }
+
+    component SafetyDoor: Node {
+        id: safetyDoor
+
+        Node {
+            position: Qt.vector3d(fenceRoot.fencePanelWidth / 2, 0, 0)
             eulerRotation.y: fenceRoot.doorOpen ? 100 : 0
             Behavior on eulerRotation.y {
                 NumberAnimation {
@@ -237,8 +257,12 @@ Node {
             position: Qt.vector3d(-500, 0, 0)
         }
 
+        FencePanel {
+            position: Qt.vector3d(500, 0, 0)
+        }
+
         SafetyDoor {
-            position: Qt.vector3d(1000, 0, 0)
+            position: Qt.vector3d(1500, 0, 0)
         }
 
         FencePanel {
