@@ -83,8 +83,8 @@ Item {
             // 2. ENTRY CONVEYOR
             ConveyorModel {
                 id: entryConveyor
-                position: Qt.vector3d(-2500, 0, 0)
-                length: 2500
+                position: Qt.vector3d(-2000, 0, 0)
+                length: 1875
                 height: 700
             }
 
@@ -150,29 +150,29 @@ Item {
                 }
             }
 
-            // 5. EXIT CONVEYOR
+            // // 5. EXIT CONVEYOR
             ConveyorModel {
                 id: exitConveyor
-                position: Qt.vector3d(2500, 0, 0)
-                length: 2500
+                position: Qt.vector3d(2050, 0, 0)
+                length: 1600
                 height: 700
             }
 
             // 6. NEIGHBOR EXIT CONVEYOR
             ConveyorModel {
                 id: neighborConveyor
-                position: Qt.vector3d(5000, 0, 0)
-                length: 2500
+                position: Qt.vector3d(3900, 0, 0)
+                length: 1900
                 height: 1000
             }
 
-            // 7. TRANSFER GANTRY
-            GantryModel {
-                id: plantGantry
-                position: Qt.vector3d(3250, 0, 0)
-                yPos: 500
-                zPos: 400
-            }
+            // // 7. TRANSFER GANTRY
+            // GantryModel {
+            //     id: plantGantry
+            //     position: Qt.vector3d(3250, 0, 0)
+            //     yPos: 500
+            //     zPos: 400
+            // }
         }
     }
 

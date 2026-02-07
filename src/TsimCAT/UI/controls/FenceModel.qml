@@ -235,11 +235,20 @@ Node {
     // Back Side
     Node {
         position: Qt.vector3d(0, 0, -fenceRoot.depth / 2)
+
         Repeater3D {
-            model: 6
+            model: 5
             delegate: FencePanel {
                 required property int index
                 position: Qt.vector3d(-2500 + index * 1000, 0, 0)
+            }
+        }
+
+        Repeater3D {
+            model: 2
+            delegate: FencePanel {
+                required property int index
+                position: Qt.vector3d(2500 + index * 1000, 0, 1000)
             }
         }
     }
@@ -248,20 +257,12 @@ Node {
     Node {
         position: Qt.vector3d(0, 0, fenceRoot.depth / 2)
 
-        FencePanel {
-            position: Qt.vector3d(-2500, 0, 0)
-        }
-
-        FencePanel {
-            position: Qt.vector3d(-1500, 0, 0)
-        }
-
-        FencePanel {
-            position: Qt.vector3d(-500, 0, 0)
-        }
-
-        FencePanel {
-            position: Qt.vector3d(500, 0, 0)
+        Repeater3D {
+            model: 4
+            delegate: FencePanel {
+                required property int index
+                position: Qt.vector3d(-2500 + index * 1000, 0, 0)
+            }
         }
 
         SafetyDoor {
@@ -270,6 +271,10 @@ Node {
 
         FencePanel {
             position: Qt.vector3d(2500, 0, 0)
+        }
+
+        FencePanel {
+            position: Qt.vector3d(3500, 0, -1000)
         }
     }
 
@@ -302,9 +307,13 @@ Node {
             position: Qt.vector3d(-1000, 0, 0)
         }
 
+        GuillotineDamper {
+            position: Qt.vector3d(0, 0, 1000)
+        }
+
         // Middle area is open
         FencePanel {
-            position: Qt.vector3d(1000, 0, 0)
+            position: Qt.vector3d(1000, 0, -1000)
         }
     }
 }

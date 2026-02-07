@@ -391,3 +391,51 @@
 21:54:35 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
 21:56:36 INFO [Backend.cpp:24] Backend initialized
 21:56:36 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+21:58:55 INFO [Backend.cpp:24] Backend initialized
+21:58:55 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:00:29 INFO [Backend.cpp:24] Backend initialized
+22:00:29 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:01:53 INFO [Backend.cpp:24] Backend initialized
+22:01:53 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:02:45 INFO [Backend.cpp:24] Backend initialized
+22:02:45 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:05:00 INFO [Backend.cpp:24] Backend initialized
+22:05:00 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:07:00 INFO [Backend.cpp:24] Backend initialized
+22:07:00 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:10:16 INFO [Backend.cpp:24] Backend initialized
+22:10:16 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:11:28 INFO [Backend.cpp:24] Backend initialized
+22:11:28 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:14:26 INFO [Backend.cpp:24] Backend initialized
+22:14:26 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:20:59 INFO [Backend.cpp:24] Backend initialized
+22:20:59 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:22:51 INFO [Backend.cpp:24] Backend initialized
+22:22:51 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:26:02 INFO [Backend.cpp:24] Backend initialized
+22:26:02 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:28:37 INFO [Backend.cpp:24] Backend initialized
+22:28:37 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:30:54 INFO [Backend.cpp:24] Backend initialized
+22:30:54 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:31:52 INFO [Backend.cpp:24] Backend initialized
+22:31:52 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:32:51 INFO [Backend.cpp:24] Backend initialized
+22:32:51 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:34:04 INFO [Backend.cpp:24] Backend initialized
+22:34:04 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:34:46 INFO [Backend.cpp:24] Backend initialized
+22:34:46 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:35:37 INFO [Backend.cpp:24] Backend initialized
+22:35:37 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:36:56 INFO [Backend.cpp:24] Backend initialized
+22:36:56 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:38:10 INFO [Backend.cpp:24] Backend initialized
+22:38:10 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:39:14 INFO [Backend.cpp:24] Backend initialized
+22:39:14 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:40:24 INFO [Backend.cpp:24] Backend initialized
+22:40:24 INFO [RobotSimulator.cpp:31] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+22:41:25 INFO [Backend.cpp:97] Screenshot saved to screenshots/Robot_Status.png
+22:41:26 INFO [Backend.cpp:97] Screenshot saved to screenshots/Plant_Overview.png
