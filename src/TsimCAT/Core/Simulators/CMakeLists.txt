@@ -6,6 +6,7 @@ target_sources(
     PRIVATE
     LaserSimulator.cpp
     RobotSimulator.cpp
+    Kinematics.cpp
 
     PUBLIC
     FILE_SET HEADERS
@@ -14,6 +15,7 @@ target_sources(
         ISimulator.hpp
         LaserSimulator.hpp
         RobotSimulator.hpp
+        Kinematics.hpp
         Components/IComponent.hpp
 )
 
@@ -23,6 +25,8 @@ target_link_libraries(
     core::common
     core::coroutines
     core::link
+    orocos-kdl
+    eigen
 )
 
 target_compile_features(

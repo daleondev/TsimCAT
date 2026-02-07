@@ -324,6 +324,9 @@ Node {
         FencePanel {
             position: Qt.vector3d(-1500, 0, 0)
         }
+        EndPost {
+            position: Qt.vector3d(-1000, 1000, 0)
+        }
         GuillotineDamper {
             position: Qt.vector3d(0, 0, 0)
             panelWidth: 1200

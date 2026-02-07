@@ -42,7 +42,7 @@ Item {
             DirectionalLight {
                 eulerRotation.x: -30
                 eulerRotation.y: -45
-                brightness: 1.2
+                brightness: 1.5
                 castsShadow: true
                 shadowMapFar: 10000
                 shadowMapQuality: DirectionalLight.ShadowMapQualityVeryHigh
@@ -50,7 +50,7 @@ Item {
 
             PointLight {
                 position: Qt.vector3d(2000, 2000, 2000)
-                brightness: 0.5
+                brightness: 0.75
             }
 
             // Floor

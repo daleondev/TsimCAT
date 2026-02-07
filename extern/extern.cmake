@@ -34,3 +34,19 @@ target_include_directories(
     INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/asio/asio/include
 )
+
+# Eigen
+add_library(eigen INTERFACE)
+add_library(Eigen3::Eigen ALIAS eigen)
+target_include_directories(eigen INTERFACE ${CMAKE_CURRENT_LIST_DIR}/eigen)
+
+# KDL
+set(EIGEN3_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/eigen CACHE PATH "" FORCE)
+set(ENABLE_TESTS OFF CACHE BOOL "" FORCE)
+set(ENABLE_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(KDL_USE_NEW_TREE_INTERFACE OFF CACHE BOOL "" FORCE) # Avoid Boost dependency
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/kdl/orocos_kdl)
+# Force KDL to be static and use our Eigen
+set_target_properties(orocos-kdl PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(orocos-kdl PRIVATE eigen)
+target_include_directories(orocos-kdl PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/kdl/orocos_kdl/src>")

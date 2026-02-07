@@ -2,6 +2,7 @@
 #include "Logger/Logger.hpp"
 #include "Link/Symbolic/ISymbolicLink.hpp"
 #include "Coroutines/Task.hpp"
+#include <cmath>
 
 namespace core::sim
 {
@@ -22,6 +23,12 @@ namespace core::sim
         m_jointAngles[3] = 0.0;    // Axis 4
         m_jointAngles[4] = 0.0;    // Axis 5
         m_jointAngles[5] = 0.0;    // Axis 6
+
+        // Test Kinematics
+        std::array<double, 6> rads;
+        for (int i = 0; i < 6; ++i) rads[i] = m_jointAngles[i] * M_PI / 180.0;
+        auto pose = m_kinematics.forward(rads);
+        logger::info("RobotSimulator: Initial Pose [X: {:.3f}, Y: {:.3f}, Z: {:.3f}]", pose.x, pose.y, pose.z);
     }
 
     RobotSimulator::~RobotSimulator()
@@ -129,8 +136,30 @@ namespace core::sim
                 co_await coro::sleep(std::chrono::milliseconds(500));
             }
             
-            // Standard loop throttle
-            co_await coro::sleep(std::chrono::milliseconds(50));
-        }
-    }
-}
+                        // Standard loop throttle
+            
+                        co_await coro::sleep(std::chrono::milliseconds(50));
+            
+                    }
+            
+                }
+            
+            
+            
+                auto RobotSimulator::currentPose() const -> Pose
+            
+                {
+            
+                    std::scoped_lock lock(m_mutex);
+            
+                    std::array<double, 6> rads;
+            
+                    for (int i = 0; i < 6; ++i) rads[i] = m_jointAngles[i] * M_PI / 180.0;
+            
+                    return m_kinematics.forward(rads);
+            
+                }
+            
+            }
+            
+            

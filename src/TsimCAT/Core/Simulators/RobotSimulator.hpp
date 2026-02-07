@@ -2,6 +2,7 @@
 
 #include "ISimulator.hpp"
 #include "Link/ILink.hpp"
+#include "Kinematics.hpp"
 #include <memory>
 #include <mutex>
 #include <string>
@@ -75,9 +76,11 @@ namespace core::sim
         auto status() const -> RobotStatus;
         auto adsStatus() const -> std::string;
         auto jointAngles() const -> const double*;
+        auto currentPose() const -> Pose;
 
       private:
         std::shared_ptr<link::ILink> m_link;
+        Kinematics m_kinematics;
         
         RobotControl m_control{};
         RobotStatus m_status{};
