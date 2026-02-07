@@ -17,12 +17,6 @@ Node {
         baseColor: '#f67828'
     }
 
-    PrincipledMaterial {
-        id: darkMaterial
-        baseColor: '#181818'
-        metalness: 0.8
-    }
-
     // Common Material for frame/posts
     PrincipledMaterial {
         id: fenceMaterial
@@ -53,7 +47,7 @@ Node {
                 position: Qt.vector3d(-wireMesh.w / 2 + index * 100, wireMesh.h / 2, 0)
                 source: "#Cube"
                 scale: Qt.vector3d(wireMesh.wireScale, wireMesh.h / 100, wireMesh.wireScale)
-                materials: [wireMesh.isSolid ? darkMaterial : fenceMaterial]
+                materials: [fenceMaterial]
             }
         }
 
@@ -66,7 +60,7 @@ Node {
                 position: Qt.vector3d(0, index * 100, 0)
                 source: "#Cube"
                 scale: Qt.vector3d(wireMesh.w / 100, wireMesh.wireScale, wireMesh.wireScale)
-                materials: [wireMesh.isSolid ? darkMaterial : fenceMaterial]
+                materials: [fenceMaterial]
             }
         }
 
@@ -162,7 +156,7 @@ Node {
         // Moving Blade
         Node {
             id: damperBlade
-            y: 1400 + (fenceRoot.damperOpen ? 1000 : 0)
+            y: fenceRoot.damperOpen ? 1800 : 800
 
             Behavior on y {
                 NumberAnimation {
@@ -172,7 +166,6 @@ Node {
             }
 
             FencePanel {
-                position: Qt.vector3d(0, -600, 0)
                 scale: Qt.vector3d(1, 0.6, 1)
             }
         }
@@ -302,13 +295,15 @@ Node {
         position: Qt.vector3d(-fenceRoot.width / 2, 0, 0)
         eulerRotation.y: 90
 
-        // Use depth based positions
         FencePanel {
             position: Qt.vector3d(-1250, 0, 0)
         }
 
+        FencePanel {
+            scale: Qt.vector3d(1, 0.3, 1)
+        }
+
         GuillotineDamper {
-            position: Qt.vector3d(0, 0, 0)
             panelWidth: 1200
         }
 
@@ -329,19 +324,6 @@ Node {
         // Middle area is open
         FencePanel {
             position: Qt.vector3d(1250, 0, 0)
-        }
-
-        Post {
-            position: Qt.vector3d(2000, 1000, 0)
-        }
-
-        // Add post at the other side of the gap
-        Post {
-            position: Qt.vector3d(1000, 1000, 0)
-        }
-
-        Post {
-            position: Qt.vector3d(-1000, 1000, 0)
         }
     }
 }
