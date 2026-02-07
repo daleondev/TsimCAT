@@ -85,6 +85,7 @@ Item {
                 id: entryConveyor
                 position: Qt.vector3d(-2500, 0, 0)
                 length: 2500
+                height: 700
             }
 
             // 3. MAIN ROBOT
@@ -154,6 +155,7 @@ Item {
                 id: exitConveyor
                 position: Qt.vector3d(2500, 0, 0)
                 length: 2500
+                height: 700
             }
 
             // 6. NEIGHBOR EXIT CONVEYOR

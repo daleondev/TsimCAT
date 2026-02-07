@@ -25,13 +25,14 @@ Node {
 
     // Belt surface
     Model {
-        position: Qt.vector3d(0, conveyorRoot.height - 10, 0) // Slightly above frame
+        position: Qt.vector3d(0, conveyorRoot.height + 5, 0) // On top of frame
         source: "#Cube"
         scale: Qt.vector3d(conveyorRoot.length / 100 - 0.1, 0.1, conveyorRoot.width / 100 - 0.2)
         materials: [
             PrincipledMaterial {
-                baseColor: "#111111"
-                roughness: 0.8
+                baseColor: "#1a1a1a"
+                roughness: 0.9
+                metalness: 0.0
             }
         ]
     }

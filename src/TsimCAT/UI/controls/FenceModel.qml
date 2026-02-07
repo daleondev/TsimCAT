@@ -5,7 +5,7 @@ import QtQuick3D
 Node {
     id: fenceRoot
     readonly property real width: 6000
-    readonly property real depth: 3500
+    readonly property real depth: 3000
     readonly property real height: 2000
     readonly property real fencePanelWidth: 1000
 
@@ -135,28 +135,11 @@ Node {
     // Guillotine Damper Component
     component GuillotineDamper: Node {
         id: guillotineDamper
-        property real panelWidth: 1500
-
-        Post {
-            position: Qt.vector3d(-guillotineDamper.panelWidth / 2, fenceRoot.height / 2, 0)
-            externalScale: Qt.vector3d(2, 1.05, 2)
-        }
-
-        Bar {
-            position: Qt.vector3d(0, fenceRoot.height, 0)
-            externalScale: Qt.vector3d(guillotineDamper.panelWidth / fenceRoot.fencePanelWidth, 3.44, 3.44)
-            materials: [postMaterial]
-        }
-
-        Post {
-            position: Qt.vector3d(guillotineDamper.panelWidth / 2, fenceRoot.height / 2, 0)
-            externalScale: Qt.vector3d(2, 1.05, 2)
-        }
 
         // Moving Blade
         Node {
             id: damperBlade
-            y: fenceRoot.damperOpen ? 1800 : 800
+            y: fenceRoot.damperOpen ? 1400 : 800
 
             Behavior on y {
                 NumberAnimation {
@@ -296,19 +279,17 @@ Node {
         eulerRotation.y: 90
 
         FencePanel {
-            position: Qt.vector3d(-1250, 0, 0)
+            position: Qt.vector3d(-1000, 0, 0)
         }
 
         FencePanel {
             scale: Qt.vector3d(1, 0.3, 1)
         }
 
-        GuillotineDamper {
-            panelWidth: 1200
-        }
+        GuillotineDamper {}
 
         FencePanel {
-            position: Qt.vector3d(1250, 0, 0)
+            position: Qt.vector3d(1000, 0, 0)
         }
     }
 
@@ -318,12 +299,12 @@ Node {
         eulerRotation.y: 90
 
         FencePanel {
-            position: Qt.vector3d(-1250, 0, 0)
+            position: Qt.vector3d(-1000, 0, 0)
         }
 
         // Middle area is open
         FencePanel {
-            position: Qt.vector3d(1250, 0, 0)
+            position: Qt.vector3d(1000, 0, 0)
         }
     }
 }
