@@ -175,14 +175,32 @@ Item {
     }
 
     MouseArea {
+        id: mainMouseArea
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+
+        property real lastX: 0
+        property real lastY: 0
+
         onPressed: mouse => {
             lastX = mouse.x;
             lastY = mouse.y;
         }
-        property real lastX: 0
-        property real lastY: 0
+
+        onClicked: mouse => {
+            // Only handle left clicks for picking
+            if (mouse.button === Qt.LeftButton) {
+                let result = view.pick(mouse.x, mouse.y);
+                if (result.objectHit) {
+                    let obj = result.objectHit;
+                    console.info("3D Pick: Hit object", obj.objectName);
+                    if (obj.objectName === "safetyDoorHandle") {
+                        fence.doorOpen = !fence.doorOpen;
+                    }
+                }
+            }
+        }
+
         onPositionChanged: mouse => {
             let dx = mouse.x - lastX;
             let dy = mouse.y - lastY;

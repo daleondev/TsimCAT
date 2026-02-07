@@ -13,6 +13,11 @@ Node {
     property bool doorOpen: false
 
     PrincipledMaterial {
+        id: interactiveMaterial
+        baseColor: '#f67828'
+    }
+
+    PrincipledMaterial {
         id: darkMaterial
         baseColor: '#181818'
         metalness: 0.8
@@ -36,43 +41,46 @@ Node {
         id: wireMesh
         property real w: fenceRoot.fencePanelWidth
         property real h: fenceRoot.height
-        property bool isSafety: false
-        property real wireScale: isSafety ? 0.06 : 0.02
+        property bool isSolid: false
+        property real wireScale: isSolid ? 0.06 : 0.02
 
         // Vertical Wires
         Repeater3D {
+            visible: !wireMesh.isSolid
             model: Math.ceil(wireMesh.w / 100) + 1
             delegate: Model {
                 required property int index
                 position: Qt.vector3d(-wireMesh.w / 2 + index * 100, wireMesh.h / 2, 0)
                 source: "#Cube"
                 scale: Qt.vector3d(wireMesh.wireScale, wireMesh.h / 100, wireMesh.wireScale)
-                materials: [wireMesh.isSafety ? darkMaterial : fenceMaterial]
+                materials: [wireMesh.isSolid ? darkMaterial : fenceMaterial]
             }
         }
 
         // Horizontal Wires
         Repeater3D {
+            visible: !wireMesh.isSolid
             model: Math.ceil(wireMesh.h / 100) + 1
             delegate: Model {
                 required property int index
                 position: Qt.vector3d(0, index * 100, 0)
                 source: "#Cube"
                 scale: Qt.vector3d(wireMesh.w / 100, wireMesh.wireScale, wireMesh.wireScale)
-                materials: [wireMesh.isSafety ? darkMaterial : fenceMaterial]
+                materials: [wireMesh.isSolid ? darkMaterial : fenceMaterial]
             }
         }
 
         Model {
             id: backing
-            visible: wireMesh.isSafety
+            visible: wireMesh.isSolid
             position: Qt.vector3d(0, wireMesh.h / 2, 0)
             source: "#Cube"
             scale: Qt.vector3d(wireMesh.w / 100, wireMesh.h / 100, 0.01)
             materials: [
                 PrincipledMaterial {
-                    baseColor: '#f1c40f'
-                    opacity: 0.32
+                    baseColor: '#5e5e5e'
+                    // opacity: 0.32
+                    opacity: 1
                     alphaMode: PrincipledMaterial.Blend
                     cullMode: PrincipledMaterial.NoCulling
                 }
@@ -104,7 +112,7 @@ Node {
         property real panelWidth: fenceRoot.fencePanelWidth
         property bool showMesh: true
         property bool showLeftPost: true
-        property alias isSafety: wire.isSafety
+        property alias isSolid: wire.isSolid
 
         Bar {
             position: Qt.vector3d(0, 0, 0)
@@ -166,43 +174,57 @@ Node {
             FencePanel {
                 position: Qt.vector3d(0, -600, 0)
                 scale: Qt.vector3d(1, 0.6, 1)
-                isSafety: true
             }
         }
     }
 
-    component DoubleSafetyDoor: Node {
-        id: doubleSafetyDoor
+    component DoorHandle: Node {
+        id: handleRoot
+        objectName: "doorHandle"
 
-        Node {
-            position: Qt.vector3d(-fenceRoot.fencePanelWidth, 0, 0)
-            eulerRotation.y: fenceRoot.doorOpen ? -100 : 0
-            Behavior on eulerRotation.y {
-                NumberAnimation {
-                    duration: 1200
-                    easing.type: Easing.InOutQuad
-                }
-            }
-
-            FencePanel {
-                position: Qt.vector3d(fenceRoot.fencePanelWidth / 2, 0, 0)
-                isSafety: true
-            }
+        // Handle Base/Escutcheon (Fixed to the door)
+        Model {
+            id: handleBase
+            objectName: handleRoot.objectName
+            pickable: true
+            source: "#Cube"
+            scale: Qt.vector3d(1, 1.2, 0.5)
+            position: Qt.vector3d(0, 0, 0)
+            materials: [postMaterial]
         }
 
+        // Rotating Pivot Assembly
         Node {
-            position: Qt.vector3d(fenceRoot.fencePanelWidth, 0, 0)
-            eulerRotation.y: fenceRoot.doorOpen ? 100 : 0
-            Behavior on eulerRotation.y {
+            id: leverPivot
+            position: Qt.vector3d(0, 0, 35) // Offset from base center
+            eulerRotation.z: fenceRoot.doorOpen ? -45 : 0
+
+            Behavior on eulerRotation.z {
                 NumberAnimation {
-                    duration: 1200
+                    duration: 300
                     easing.type: Easing.InOutQuad
                 }
             }
 
-            FencePanel {
-                position: Qt.vector3d(-fenceRoot.fencePanelWidth / 2, 0, 0)
-                isSafety: true
+            // The "Shaft" part of the lever
+            Model {
+                id: handleShaft
+                objectName: handleRoot.objectName
+                pickable: true
+                source: "#Cube"
+                scale: Qt.vector3d(0.4, 0.4, 0.4)
+                materials: [interactiveMaterial]
+            }
+
+            // The "Grip" part of the lever
+            Model {
+                id: handleGrip
+                objectName: handleRoot.objectName
+                pickable: true
+                source: "#Cube"
+                position: Qt.vector3d(60, 0, 30)
+                scale: Qt.vector3d(1.6, 0.4, 0.2)
+                materials: [interactiveMaterial]
             }
         }
     }
@@ -222,7 +244,12 @@ Node {
 
             FencePanel {
                 position: Qt.vector3d(-fenceRoot.fencePanelWidth / 2, 0, 0)
-                isSafety: true
+                isSolid: true
+            }
+
+            DoorHandle {
+                objectName: "safetyDoorHandle"
+                position: Qt.vector3d(-fenceRoot.fencePanelWidth + 50, 1000, 30)
             }
         }
     }
