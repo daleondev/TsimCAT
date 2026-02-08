@@ -135,11 +135,12 @@ Node {
     // Guillotine Damper Component
     component GuillotineDamper: Node {
         id: guillotineDamper
+        property real ratio: 0.6
 
         // Moving Blade
         Node {
             id: damperBlade
-            y: fenceRoot.damperOpen ? 1400 : 800
+            y: (1 - guillotineDamper.ratio) * fenceRoot.height + (fenceRoot.damperOpen ? 600 : 0)
 
             Behavior on y {
                 NumberAnimation {
@@ -149,7 +150,8 @@ Node {
             }
 
             FencePanel {
-                scale: Qt.vector3d(1, 0.6, 1)
+                scale: Qt.vector3d(1, guillotineDamper.ratio, 1)
+                isSolid: true
             }
         }
     }
@@ -237,18 +239,10 @@ Node {
         position: Qt.vector3d(0, 0, -fenceRoot.depth / 2)
 
         Repeater3D {
-            model: 5
+            model: 6
             delegate: FencePanel {
                 required property int index
                 position: Qt.vector3d(-2500 + index * 1000, 0, 0)
-            }
-        }
-
-        Repeater3D {
-            model: 2
-            delegate: FencePanel {
-                required property int index
-                position: Qt.vector3d(2500 + index * 1000, 0, 1000)
             }
         }
     }
@@ -271,10 +265,6 @@ Node {
 
         FencePanel {
             position: Qt.vector3d(2500, 0, 0)
-        }
-
-        FencePanel {
-            position: Qt.vector3d(3500, 0, -1000)
         }
     }
 
@@ -307,13 +297,18 @@ Node {
             position: Qt.vector3d(-1000, 0, 0)
         }
 
+        FencePanel {
+            scale: Qt.vector3d(1, 0.45, 1)
+        }
+
         GuillotineDamper {
-            position: Qt.vector3d(0, 0, 1000)
+            position: Qt.vector3d(0, 0, 0)
+            ratio: 0.45
         }
 
         // Middle area is open
         FencePanel {
-            position: Qt.vector3d(1000, 0, -1000)
+            position: Qt.vector3d(1000, 0, 0)
         }
     }
 }

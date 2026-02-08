@@ -163,9 +163,8 @@ Node {
 
                                         GripperModel {
                                             id: robotGripper
-                                            // Gripper is Y-up internally. Flange X is forward.
-                                            // Rotate -90 around Z to align Gripper Y with Flange X.
-                                            eulerRotation.z: -90
+                                            eulerRotation.y: 90
+                                            eulerRotation.z: 90
                                             gripped: robotRoot.gripperGripped
                                         }
                                     }

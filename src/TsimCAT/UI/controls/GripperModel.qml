@@ -4,84 +4,68 @@ import QtQuick3D
 Node {
     id: root
     property bool gripped: false
-    
-    // Debug log to verify signal reception
-    onGrippedChanged: console.info("GripperModel: 'gripped' state changed to", gripped)
+    property real gripperLength: 200
+    property real gripperWidth: 100
 
-    // --- SCALING LOGIC ---
-    // Robot link meshes are in METERS. 
-    // #Cube is 100x100x100 units.
-    // To get 1mm (0.001m), we need scale = 0.001 / 100 = 0.00001
-    readonly property real mm: 0.00001 
-
-    // --- VISUALS ---
-
-    // 1. MAIN BODY (Approx 120x80x80 mm)
     Model {
         source: "#Cube"
-        position: Qt.vector3d(0, 40 * 0.001, 0) // Centered at 40mm height
-        scale: Qt.vector3d(120 * root.mm, 80 * root.mm, 80 * root.mm)
+        scale: Qt.vector3d(root.gripperLength / 100, root.gripperWidth / 100, root.gripperWidth / 100)
         materials: [
             PrincipledMaterial {
-                baseColor: "#2c3e50"
+                baseColor: '#6e6e6e'
                 metalness: 0.6
                 roughness: 0.4
             }
         ]
     }
 
-    // 2. LEFT FINGER (Sliding)
     Node {
         id: leftFinger
-        // Open: -45mm, Closed: -15mm
-        x: (root.gripped ? -15 : -45) * 0.001
-        y: 80 * 0.001
-        z: 0
+        x: root.gripped ? 25 : 75
+        z: root.gripperWidth
 
         Behavior on x {
-            NumberAnimation { duration: 300; easing.type: Easing.InOutQuad }
+            NumberAnimation {
+                duration: 300
+                easing.type: Easing.InOutQuad
+            }
         }
 
-        // Finger Tip (High contrast silver)
         Model {
-            position: Qt.vector3d(0, 40 * 0.001, 0) // 40mm forward from base
+            position: Qt.vector3d(0, root.gripperLength / 2 / 100, 0)
             source: "#Cube"
-            scale: Qt.vector3d(20 * root.mm, 100 * root.mm, 30 * root.mm)
-            materials: [ PrincipledMaterial { baseColor: "#ecf0f1"; metalness: 0.9 } ]
-        }
-        
-        // Grip Pad
-        Model {
-            position: Qt.vector3d(10 * 0.001, 70 * 0.001, 0)
-            source: "#Cube"
-            scale: Qt.vector3d(5 * root.mm, 40 * root.mm, 25 * root.mm)
-            materials: [ PrincipledMaterial { baseColor: "#111111" } ]
+            scale: Qt.vector3d(0.1, 0.4, 0.8)
+            materials: [
+                PrincipledMaterial {
+                    baseColor: "#b1b1b1"
+                    metalness: 0.6
+                }
+            ]
         }
     }
 
-    // 3. RIGHT FINGER (Mirror)
     Node {
         id: rightFinger
-        x: (root.gripped ? 15 : 45) * 0.001
-        y: 80 * 0.001
-        z: 0
+        x: root.gripped ? -25 : -75
+        z: root.gripperWidth
 
         Behavior on x {
-            NumberAnimation { duration: 300; easing.type: Easing.InOutQuad }
+            NumberAnimation {
+                duration: 300
+                easing.type: Easing.InOutQuad
+            }
         }
 
         Model {
-            position: Qt.vector3d(0, 40 * 0.001, 0)
+            position: Qt.vector3d(0, root.gripperLength / 2 / 100, 0)
             source: "#Cube"
-            scale: Qt.vector3d(20 * root.mm, 100 * root.mm, 30 * root.mm)
-            materials: [ PrincipledMaterial { baseColor: "#ecf0f1"; metalness: 0.9 } ]
-        }
-
-        Model {
-            position: Qt.vector3d(-10 * 0.001, 70 * 0.001, 0)
-            source: "#Cube"
-            scale: Qt.vector3d(5 * root.mm, 40 * root.mm, 25 * root.mm)
-            materials: [ PrincipledMaterial { baseColor: "#111111" } ]
+            scale: Qt.vector3d(0.1, 0.4, 0.8)
+            materials: [
+                PrincipledMaterial {
+                    baseColor: '#b1b1b1'
+                    metalness: 0.6
+                }
+            ]
         }
     }
 }
