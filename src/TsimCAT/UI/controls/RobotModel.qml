@@ -15,7 +15,7 @@ Node {
     onGripperGrippedChanged: console.log("RobotModel: gripperGripped changed to " + gripperGripped)
 
     eulerRotation.x: -90
-    scale: Qt.vector3d(2, 2, 2)
+    scale: Qt.vector3d(1.6, 1.6, 1.6)
 
     Node {
         id: robotBase
@@ -143,24 +143,29 @@ Node {
 
                                 Node {
                                     id: flange
-                                    
+
                                     // Mounting Plate (Physical part of the robot)
                                     Model {
                                         source: "#Cylinder"
                                         scale: Qt.vector3d(0.8, 0.1, 0.8)
                                         eulerRotation.z: 90
-                                        materials: [ PrincipledMaterial { baseColor: "#1a1a1a"; metalness: 0.9 } ]
+                                        materials: [
+                                            PrincipledMaterial {
+                                                baseColor: "#1a1a1a"
+                                                metalness: 0.9
+                                            }
+                                        ]
                                     }
 
                                     Node {
                                         id: tool0
                                         position: Qt.vector3d(15, 0, 0) // Offset along X (Forward for Axis 6)
-                                        
+
                                         GripperModel {
                                             id: robotGripper
                                             // Gripper is Y-up internally. Flange X is forward.
                                             // Rotate -90 around Z to align Gripper Y with Flange X.
-                                            eulerRotation.z: -90 
+                                            eulerRotation.z: -90
                                             gripped: robotRoot.gripperGripped
                                         }
                                     }
