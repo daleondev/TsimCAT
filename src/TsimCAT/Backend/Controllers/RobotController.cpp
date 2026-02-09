@@ -109,4 +109,12 @@ namespace backend::controllers
         }
         return false;
     }
+
+    void RobotController::triggerJob(int jobId)
+    {
+        if (m_simulator) {
+            m_simulator->triggerJob(static_cast<uint16_t>(jobId));
+            emit stateChanged();
+        }
+    }
 }

@@ -184,6 +184,25 @@ Control {
                 }
             }
 
+            // --- SIMULATED JOBS ---
+            GroupBox {
+                title: "SIMULATED JOBS"
+                Layout.fillWidth: true
+
+                Flow {
+                    anchors.fill: parent
+                    spacing: 8
+                    
+                    Button { text: "HOME"; onClicked: if (root.robot) root.robot.triggerJob(1); flat: true }
+                    Button { text: "PICK ENTRY"; onClicked: if (root.robot) root.robot.triggerJob(2); flat: true }
+                    Button { text: "PLACE CAM"; onClicked: if (root.robot) root.robot.triggerJob(3); flat: true }
+                    Button { text: "PICK CAM"; onClicked: if (root.robot) root.robot.triggerJob(4); flat: true }
+                    Button { text: "PLACE LASER"; onClicked: if (root.robot) root.robot.triggerJob(5); flat: true }
+                    Button { text: "PICK LASER"; onClicked: if (root.robot) root.robot.triggerJob(6); flat: true }
+                    Button { text: "PLACE EXIT"; onClicked: if (root.robot) root.robot.triggerJob(7); flat: true }
+                }
+            }
+
             // --- KINEMATICS CONTROL ---
             GroupBox {
                 title: "KINEMATICS"

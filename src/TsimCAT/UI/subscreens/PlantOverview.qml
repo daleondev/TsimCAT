@@ -42,6 +42,8 @@ Control {
             backend: root.backend
             damperOpen: damperToggle.checked
             doorOpen: doorToggle.checked
+            gantryX: gantryXSlider.value
+            gantryZ: gantryZSlider.value
         }
 
         // --- OVERLAYS ---
@@ -154,6 +156,48 @@ Control {
                             anchors.leftMargin: 8
                             anchors.verticalCenter: parent.verticalCenter
                         }
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 1
+                        color: "#444"
+                    }
+
+                    Text {
+                        text: "Gantry Axis (mm)"
+                        color: "#a0aec0"
+                        font.pixelSize: 12
+                        font.bold: true
+                    }
+
+                    ColumnLayout {
+                        spacing: 15
+                        Layout.fillWidth: true
+                        EditableValue { 
+                            id: gantryXSlider
+                            label: "X-Axis"; 
+                            value: 0; 
+                            min: -800; 
+                            max: 800; 
+                            Layout.fillWidth: true; 
+                            onUpdated: v => value = v 
+                        }
+                        EditableValue { 
+                            id: gantryZSlider
+                            label: "Z-Axis"; 
+                            value: 80; 
+                            min: 0; 
+                            max: 300; 
+                            Layout.fillWidth: true; 
+                            onUpdated: v => value = v 
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 1
+                        color: "#444"
                     }
 
                     CheckBox {

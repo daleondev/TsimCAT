@@ -3,6 +3,7 @@
 #include "Link/Symbolic/ISymbolicLink.hpp"
 #include "Coroutines/Task.hpp"
 #include <cmath>
+#include <numbers>
 
 namespace core::sim
 {
@@ -23,6 +24,8 @@ namespace core::sim
         m_jointAngles[3] = 0.0;    // Axis 4
         m_jointAngles[4] = 0.0;    // Axis 5
         m_jointAngles[5] = 0.0;    // Axis 6
+
+        for (int i = 0; i < 6; ++i) m_targetJointAngles[i] = m_jointAngles[i];
 
         // Test Kinematics
         std::array<double, 6> rads;
@@ -69,11 +72,62 @@ namespace core::sim
         m_status.nPartTypeMirrored = m_control.nPartType;
         
         if (m_control.bMoveEnable && !m_status.bError) {
-            m_status.bInMotion = 1;
-            m_status.bInHome = 0;
+            // 1. Check if Job ID changed -> Recalculate Target Joints
+            if (m_control.nJobId != m_lastTargetJobId) {
+                m_lastTargetJobId = m_control.nJobId;
+                
+                using std::numbers::pi;
+                Pose target;
+                bool validJob = true;
+
+                switch (m_control.nJobId) {
+                    case 1: target = { 400.0, 0.0, 500.0, 0.0, 0.0, 0.0 }; break;
+                    case 2: target = { 615.0, 650.0, 520.0, 0.0, 0.0, 90.0 * pi / 180.0 }; break;
+                    case 3:
+                    case 4: target = { 1270.0, 550.0, 580.0, 0.0, 0.0, 45.0 * pi / 180.0 }; break;
+                    case 5:
+                    case 6: target = { 1270.0, -550.0, 580.0, 0.0, 0.0, -45.0 * pi / 180.0 }; break;
+                    case 7: target = { 615.0, -690.0, 520.0, 0.0, 0.0, -90.0 * pi / 180.0 }; break;
+                    default: validJob = false; break;
+                }
+
+                if (validJob) {
+                    std::array<double, 6> seed;
+                    for (int i = 0; i < 6; ++i) seed[i] = m_jointAngles[i] * pi / 180.0;
+                    
+                    auto joints = m_kinematics.inverse(target, seed);
+                    if (!joints.empty()) {
+                        for (int i = 0; i < 6; ++i) {
+                            m_targetJointAngles[i] = joints[i] * 180.0 / pi;
+                        }
+                    }
+                }
+            }
+
+            // 2. Interpolate Joint Angles
+            const double jointSpeedDegreesPerSecond = 60.0;
+            const double step = jointSpeedDegreesPerSecond * deltaTimeSeconds;
+            bool reached = true;
+
+            for (int i = 0; i < 6; ++i) {
+                double diff = m_targetJointAngles[i] - m_jointAngles[i];
+                if (std::abs(diff) > step) {
+                    m_jointAngles[i] += std::copysign(step, diff);
+                    reached = false;
+                } else {
+                    m_jointAngles[i] = m_targetJointAngles[i];
+                }
+            }
+
+            m_status.bInMotion = reached ? 0 : 1;
+            m_status.bInHome = (reached && m_control.nJobId == 1) ? 1 : 0;
+
         } else {
             m_status.bInMotion = 0;
-            if (m_control.nJobId == 0) m_status.bInHome = 1;
+            if (m_control.nJobId == 1 && !m_status.bInHome) {
+                // If we are forced to stop but want to be in home, we eventually just arrive there
+                // (or keep last state)
+            }
         }
 
         m_status.nJobIdFeedback = m_control.nJobId;
@@ -184,8 +238,15 @@ namespace core::sim
 
         std::scoped_lock lock(m_mutex);
         for (int i = 0; i < 6; ++i) {
-            m_jointAngles[i] = joints[i] * 180.0 / M_PI;
+            m_jointAngles[i] = joints[i] * 180.0 / std::numbers::pi;
         }
         return true;
+    }
+
+    auto RobotSimulator::triggerJob(uint16_t jobId) -> void
+    {
+        std::scoped_lock lock(m_mutex);
+        m_control.nJobId = jobId;
+        m_control.bMoveEnable = 1; // Auto-enable move for convenience in simulation
     }
 }

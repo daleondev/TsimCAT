@@ -56,6 +56,21 @@ namespace backend
         // 3. Inject into Controllers
         m_laserController = std::make_unique<backend::controllers::LaserController>(m_laserSim, this);
         m_robotController = std::make_unique<backend::controllers::RobotController>(m_robotSim, this);
+
+        // 4. Simulation Loop (10ms ~ 100Hz)
+        [] (Backend* self) -> QCoro::Task<void> {
+            auto lastTime = std::chrono::steady_clock::now();
+            while (true) {
+                auto now = std::chrono::steady_clock::now();
+                double dt = std::chrono::duration<double>(now - lastTime).count();
+                lastTime = now;
+
+                if (self->m_laserSim) self->m_laserSim->update(dt);
+                if (self->m_robotSim) self->m_robotSim->update(dt);
+
+                co_await QCoro::sleepFor(10ms);
+            }
+        }(this);
     }
 
     Backend::~Backend() = default;

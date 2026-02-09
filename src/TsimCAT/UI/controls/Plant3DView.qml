@@ -8,6 +8,8 @@ Item {
     property var backend: null
     property bool damperOpen: false
     property bool doorOpen: false
+    property real gantryX: 0
+    property real gantryZ: 80
 
     View3D {
         id: view
@@ -164,6 +166,8 @@ Item {
                 eulerRotation.x: -90
                 position: Qt.vector3d(2500, 0, -225)
                 frameHeight: 1600
+                xPos: root.gantryX
+                zPos: root.gantryZ
             }
 
             // 7. NEIGHBOR EXIT CONVEYOR
