@@ -40,7 +40,7 @@ Control {
             id: plantView
             anchors.fill: parent
             backend: root.backend
-            damperOpen: damperToggle.checked
+            damperOpen: (root.backend && root.backend.entryConveyor.autoLogic) ? root.backend.entryConveyor.damperOpen : damperToggle.checked
             doorOpen: doorToggle.checked
             gantryX: gantryXSlider.value
             gantryZ: gantryZSlider.value
@@ -135,6 +135,8 @@ Control {
                         text: ""
                         indicator.width: 20
                         indicator.height: 20
+                        enabled: !(root.backend && root.backend.entryConveyor.autoLogic)
+                        checked: (root.backend && root.backend.entryConveyor.autoLogic) ? root.backend.entryConveyor.damperOpen : false
                         Label {
                             text: "Guillotine Damper"
                             color: "white"
@@ -172,8 +174,24 @@ Control {
                     }
 
                     CheckBox {
+                        id: autoLogicToggle
+                        text: ""
+                        checked: root.backend ? root.backend.entryConveyor.autoLogic : false
+                        onToggled: if (root.backend) root.backend.entryConveyor.autoLogic = checked
+                        Label {
+                            text: "Independent Seq. Logic"
+                            color: "#3498db"
+                            font.bold: true
+                            anchors.left: parent.right
+                            anchors.leftMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+
+                    CheckBox {
                         id: beltRunToggle
                         text: ""
+                        enabled: !autoLogicToggle.checked
                         checked: root.backend ? root.backend.entryConveyor.isRunning : true
                         onToggled: if (root.backend) root.backend.entryConveyor.isRunning = checked
                         Label {

@@ -20,6 +20,10 @@ namespace core::sim
             double speed;       // mm/s
             std::vector<double> sensorPositions; // mm from start
             
+            // Logic config
+            int damperSensorIndex{ -1 }; // Index in sensorPositions where damper is
+            int endSensorIndex{ -1 };    // Index in sensorPositions where end is
+
             // ADS Mapping
             std::string adsRunCmd;     // e.g., "MAIN.bEntryRun"
             std::vector<std::string> adsSensorSignals; // e.g., {"MAIN.bEntryS1", ...}
@@ -39,6 +43,7 @@ namespace core::sim
         // Simulation control
         auto spawnPart(uint8_t type) -> void;
         auto clearParts() -> void;
+        auto takePartAtEnd() -> std::optional<Part>;
         
         // State Access
         auto parts() const -> std::vector<Part>;
@@ -53,6 +58,12 @@ namespace core::sim
         auto autoSpawn() const -> bool { return m_autoSpawn; }
         auto setAutoSpawn(bool enable) -> void { m_autoSpawn = enable; }
 
+        auto autoLogic() const -> bool { return m_autoLogic; }
+        auto setAutoLogic(bool enable) -> void { m_autoLogic = enable; }
+
+        auto damperOpen() const -> bool { return m_damperOpen; }
+        auto setDamperOpen(bool open) -> void { m_damperOpen = open; }
+
       private:
         Config m_config;
         std::shared_ptr<link::ILink> m_link;
@@ -62,7 +73,10 @@ namespace core::sim
         bool m_running{ false };     // Simulator thread running
         bool m_beltRunning{ true };  // Physical belt moving
         bool m_autoSpawn{ false };
+        bool m_autoLogic{ false };   // Internal sequence logic
+        bool m_damperOpen{ false };
         double m_autoSpawnTimer{ 0.0 };
+        double m_damperTimer{ 0.0 };
         mutable std::mutex m_mutex;
     };
 }

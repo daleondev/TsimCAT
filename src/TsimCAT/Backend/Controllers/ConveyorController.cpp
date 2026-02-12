@@ -59,6 +59,32 @@ namespace backend::controllers
         }
     }
 
+    bool ConveyorController::autoLogic() const
+    {
+        return m_simulator->autoLogic();
+    }
+
+    void ConveyorController::setAutoLogic(bool enable)
+    {
+        if (m_simulator->autoLogic() != enable) {
+            m_simulator->setAutoLogic(enable);
+            emit stateChanged();
+        }
+    }
+
+    bool ConveyorController::damperOpen() const
+    {
+        return m_simulator->damperOpen();
+    }
+
+    void ConveyorController::setDamperOpen(bool open)
+    {
+        if (m_simulator->damperOpen() != open) {
+            m_simulator->setDamperOpen(open);
+            emit stateChanged();
+        }
+    }
+
     QVariantList ConveyorController::parts() const
     {
         QVariantList list;

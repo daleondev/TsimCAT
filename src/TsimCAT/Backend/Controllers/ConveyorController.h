@@ -20,6 +20,8 @@ namespace backend::controllers
         Q_PROPERTY(double speed READ speed WRITE setSpeed NOTIFY speedChanged)
         Q_PROPERTY(bool isRunning READ isRunning WRITE setRunning NOTIFY stateChanged)
         Q_PROPERTY(bool autoSpawn READ autoSpawn WRITE setAutoSpawn NOTIFY stateChanged)
+        Q_PROPERTY(bool autoLogic READ autoLogic WRITE setAutoLogic NOTIFY stateChanged)
+        Q_PROPERTY(bool damperOpen READ damperOpen WRITE setDamperOpen NOTIFY stateChanged)
         Q_PROPERTY(QVariantList parts READ parts NOTIFY stateChanged)
         Q_PROPERTY(QVariantList sensors READ sensors NOTIFY stateChanged)
 
@@ -36,6 +38,12 @@ namespace backend::controllers
 
         bool autoSpawn() const;
         void setAutoSpawn(bool autoSpawn);
+
+        bool autoLogic() const;
+        void setAutoLogic(bool enable);
+
+        bool damperOpen() const;
+        void setDamperOpen(bool open);
 
         QVariantList parts() const;
         QVariantList sensors() const;

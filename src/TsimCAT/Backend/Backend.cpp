@@ -59,7 +59,9 @@ namespace backend
             .name = "EntryConveyor",
             .length = 1875.0,
             .speed = 250.0,
-            .sensorPositions = { 100.0, 1000.0, 1775.0 },
+            .sensorPositions = { 437.5, 1000.0, 1775.0 }, // Sensor 1 is at damper
+            .damperSensorIndex = 0,
+            .endSensorIndex = 2,
             .adsRunCmd = "MAIN.bEntryConveyorRun",
             .adsSensorSignals = { "MAIN.bEntrySensor1", "MAIN.bEntrySensor2", "MAIN.bEntrySensor3" }
         };
@@ -70,6 +72,7 @@ namespace backend
             .length = 1250.0,
             .speed = 250.0,
             .sensorPositions = { 100.0, 1150.0 },
+            .endSensorIndex = 1,
             .adsRunCmd = "MAIN.bExitConveyorRun",
             .adsSensorSignals = { "MAIN.bExitSensor1", "MAIN.bExitSensor2" }
         };

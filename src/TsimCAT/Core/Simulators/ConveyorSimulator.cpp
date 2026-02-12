@@ -46,7 +46,6 @@ namespace core::sim
             if (m_autoSpawnTimer >= 5.0) { // Spawn every 5 seconds
                 m_autoSpawnTimer = 0.0;
                 
-                // Check if start is clear (local logic within update already has lock)
                 bool clear = true;
                 for (const auto& part : m_parts) {
                     if (part.position < 200.0) { 
@@ -58,7 +57,7 @@ namespace core::sim
                 if (clear) {
                     Part newPart;
                     newPart.id = m_nextPartId++;
-                    newPart.type = (rand() % 2) + 1; // Randomly 1 or 2
+                    newPart.type = (rand() % 2) + 1;
                     newPart.position = 0;
                     newPart.width = 100;
                     newPart.length = 100;
@@ -68,20 +67,7 @@ namespace core::sim
             }
         }
 
-        // 2. Move parts only if belt is running
-        if (m_beltRunning) {
-            for (auto& part : m_parts) {
-                part.position += m_config.speed * deltaTimeSeconds;
-            }
-        }
-
-        // 2. Remove parts that fell off the end
-        m_parts.erase(
-            std::remove_if(m_parts.begin(), m_parts.end(), 
-                [this](const Part& p) { return p.position > m_config.length + p.length; }), 
-            m_parts.end());
-
-        // 3. Update sensor states
+        // 2. Sensor Update (Geometric check)
         for (size_t i = 0; i < m_config.sensorPositions.size(); ++i) {
             double sensorPos = m_config.sensorPositions[i];
             bool blocked = false;
@@ -95,6 +81,48 @@ namespace core::sim
             }
             m_sensorStates[i] = blocked;
         }
+
+        // 3. Autonomous Sequence Logic
+        if (m_autoLogic) {
+            bool partAtDamper = (m_config.damperSensorIndex >= 0 && m_sensorStates[m_config.damperSensorIndex]);
+            bool partAtEnd = (m_config.endSensorIndex >= 0 && m_sensorStates[m_config.endSensorIndex]);
+
+            if (partAtEnd) {
+                m_beltRunning = false; // Stop at end, wait for robot pick
+            }
+            else if (partAtDamper && !m_damperOpen) {
+                m_beltRunning = false; // Stop in front of damper
+                m_damperTimer += deltaTimeSeconds;
+                if (m_damperTimer > 1.0) { // 1s delay to "simulate" detection/PLC logic
+                    m_damperOpen = true;
+                    m_damperTimer = 0;
+                }
+            }
+            else {
+                // If damper was opened but part moved past it, we could close it, 
+                // but usually the next part will trigger it.
+                // For now: Continue if no part blocking progress.
+                m_beltRunning = true;
+                
+                if (!partAtDamper && m_damperOpen) {
+                    // Auto-close damper after part passed
+                    m_damperOpen = false;
+                }
+            }
+        }
+
+        // 4. Move parts only if belt is running
+        if (m_beltRunning) {
+            for (auto& part : m_parts) {
+                part.position += m_config.speed * deltaTimeSeconds;
+            }
+        }
+
+        // 5. Remove parts that fell off the end (Safety cleanup)
+        m_parts.erase(
+            std::remove_if(m_parts.begin(), m_parts.end(), 
+                [this](const Part& p) { return p.position > m_config.length + p.length; }), 
+            m_parts.end());
     }
 
     auto ConveyorSimulator::run() -> coro::Task<void>
@@ -104,23 +132,19 @@ namespace core::sim
 
         while (m_running) {
             if (m_link->status() == link::Status::Connected) {
-                // 1. Read Belt Run Command
                 if (!m_config.adsRunCmd.empty()) {
                     auto runRes = co_await symbolic->read<bool>(m_config.adsRunCmd);
                     if (runRes) {
                         std::scoped_lock lock(m_mutex);
-                        m_beltRunning = *runRes;
+                        // Only override if not in autoLogic mode
+                        if (!m_autoLogic) m_beltRunning = *runRes;
                     }
                 }
 
-                // 2. Write Sensor States
                 for (size_t i = 0; i < m_config.adsSensorSignals.size(); ++i) {
                     if (i < m_sensorStates.size()) {
                         bool state;
-                        {
-                            std::scoped_lock lock(m_mutex);
-                            state = m_sensorStates[i];
-                        }
+                        { std::scoped_lock lock(m_mutex); state = m_sensorStates[i]; }
                         (void)co_await symbolic->write(m_config.adsSensorSignals[i], state);
                     }
                 }
@@ -132,15 +156,9 @@ namespace core::sim
     auto ConveyorSimulator::spawnPart(uint8_t type) -> void
     {
         std::scoped_lock lock(m_mutex);
-        
-        // Spawn at position 0 (centered at start)
-        // Check if start is clear
         for (const auto& part : m_parts) {
-            if (part.position < 150.0) { // Assume 150mm clearance needed
-                return; 
-            }
+            if (part.position < 150.0) return; 
         }
-
         Part newPart;
         newPart.id = m_nextPartId++;
         newPart.type = type;
@@ -148,7 +166,6 @@ namespace core::sim
         newPart.width = 100;
         newPart.length = 100;
         newPart.height = 50;
-        
         m_parts.push_back(newPart);
     }
 
@@ -156,6 +173,24 @@ namespace core::sim
     {
         std::scoped_lock lock(m_mutex);
         m_parts.clear();
+    }
+
+    auto ConveyorSimulator::takePartAtEnd() -> std::optional<Part>
+    {
+        std::scoped_lock lock(m_mutex);
+        if (m_parts.empty()) return std::nullopt;
+
+        // Find part closest to the end
+        auto it = std::max_element(m_parts.begin(), m_parts.end(), 
+            [](const Part& a, const Part& b) { return a.position < b.position; });
+
+        // Check if it's actually near the end (e.g. within 200mm of end sensor)
+        if (it->position > m_config.length - 200.0) {
+            Part p = *it;
+            m_parts.erase(it);
+            return p;
+        }
+        return std::nullopt;
     }
 
     auto ConveyorSimulator::parts() const -> std::vector<Part>
