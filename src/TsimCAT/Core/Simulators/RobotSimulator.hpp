@@ -86,6 +86,9 @@ namespace core::sim
         auto triggerJob(uint16_t jobId) -> void;
 
       private:
+        auto planTrajectory(const std::array<double, 6>& startJoints, 
+                            const std::array<double, 6>& targetJoints) -> std::vector<std::array<double, 6>>;
+
         std::shared_ptr<link::ILink> m_link;
         Kinematics m_kinematics;
 
@@ -95,6 +98,9 @@ namespace core::sim
         double m_targetJointAngles[6]{};
         uint16_t m_lastTargetJobId{ 0 };
         bool m_gripperGripped{ false };
+
+        std::vector<std::array<double, 6>> m_currentTrajectory;
+        size_t m_trajectoryStep{ 0 };
 
         mutable std::mutex m_mutex;
         std::atomic<bool> m_running{ false };

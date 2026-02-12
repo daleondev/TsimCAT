@@ -537,3 +537,124 @@
 19:53:40 INFO [RobotSimulator.cpp:34] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
 16:50:03 INFO [Backend.cpp:24] Backend initialized
 16:50:03 INFO [RobotSimulator.cpp:34] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+17:20:52 INFO [Backend.cpp:24] Backend initialized
+17:20:52 INFO [RobotSimulator.cpp:40] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+17:20:56 INFO [Backend.cpp:112] Screenshot saved to screenshots/Robot_Status.png
+17:20:58 ERRROR [RobotSimulator.cpp:135] RobotSimulator: IK failed for Job 2
+17:21:01 ERRROR [RobotSimulator.cpp:135] RobotSimulator: IK failed for Job 3
+17:21:03 ERRROR [RobotSimulator.cpp:135] RobotSimulator: IK failed for Job 4
+17:21:04 ERRROR [RobotSimulator.cpp:135] RobotSimulator: IK failed for Job 5
+17:21:05 ERRROR [RobotSimulator.cpp:135] RobotSimulator: IK failed for Job 6
+17:21:05 ERRROR [RobotSimulator.cpp:135] RobotSimulator: IK failed for Job 7
+17:21:08 INFO [RobotSimulator.cpp:132] RobotSimulator: Planned blended trajectory for Job 1 with 21 waypoints
+17:21:12 INFO [RobotSimulator.cpp:132] RobotSimulator: Planned blended trajectory for Job 2 with 21 waypoints
+17:21:14 INFO [RobotSimulator.cpp:132] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+17:21:16 INFO [RobotSimulator.cpp:132] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
+17:21:18 ERRROR [RobotSimulator.cpp:135] RobotSimulator: IK failed for Job 5
+17:21:20 ERRROR [RobotSimulator.cpp:135] RobotSimulator: IK failed for Job 6
+17:21:21 ERRROR [RobotSimulator.cpp:135] RobotSimulator: IK failed for Job 7
+17:21:21 INFO [RobotSimulator.cpp:132] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+17:21:23 INFO [RobotSimulator.cpp:132] RobotSimulator: Planned blended trajectory for Job 1 with 21 waypoints
+17:21:24 INFO [RobotSimulator.cpp:132] RobotSimulator: Planned blended trajectory for Job 5 with 21 waypoints
+17:21:27 INFO [RobotSimulator.cpp:132] RobotSimulator: Planned blended trajectory for Job 6 with 39 waypoints
+17:21:29 INFO [RobotSimulator.cpp:132] RobotSimulator: Planned blended trajectory for Job 7 with 39 waypoints
+17:21:32 ERRROR [RobotSimulator.cpp:135] RobotSimulator: IK failed for Job 1
+17:21:35 INFO [RobotSimulator.cpp:132] RobotSimulator: Planned blended trajectory for Job 5 with 39 waypoints
+17:21:37 INFO [RobotSimulator.cpp:132] RobotSimulator: Planned blended trajectory for Job 1 with 21 waypoints
+17:22:09 INFO [Backend.cpp:24] Backend initialized
+17:22:09 INFO [RobotSimulator.cpp:40] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+17:22:12 INFO [Backend.cpp:112] Screenshot saved to screenshots/Robot_Status.png
+17:22:18 INFO [Backend.cpp:112] Screenshot saved to screenshots/Plant_Overview.png
+17:23:21 INFO [Backend.cpp:24] Backend initialized
+17:23:21 INFO [RobotSimulator.cpp:40] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+17:23:28 INFO [Backend.cpp:112] Screenshot saved to screenshots/Robot_Status.png
+17:23:31 INFO [Backend.cpp:112] Screenshot saved to screenshots/Plant_Overview.png
+17:23:47 INFO [Backend.cpp:24] Backend initialized
+17:23:47 INFO [RobotSimulator.cpp:40] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+17:25:53 INFO [Backend.cpp:24] Backend initialized
+17:25:53 INFO [RobotSimulator.cpp:43] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+17:25:59 INFO [Backend.cpp:112] Screenshot saved to screenshots/Robot_Status.png
+17:26:02 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+17:26:04 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 2
+17:26:05 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 3
+17:26:06 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 4
+17:26:06 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 5
+17:26:07 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 6
+17:26:07 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 7
+17:26:07 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 6
+17:26:08 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 5
+17:26:08 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+17:26:08 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 2
+17:26:09 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 3
+17:26:09 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 4
+17:26:09 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 7
+17:26:22 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 2
+17:26:24 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 3
+17:26:25 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 4
+17:26:26 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 5
+17:26:26 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 6
+17:26:27 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 7
+17:26:29 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 2
+17:26:30 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+17:33:58 INFO [Backend.cpp:24] Backend initialized
+17:33:58 INFO [RobotSimulator.cpp:43] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+17:34:01 INFO [Backend.cpp:112] Screenshot saved to screenshots/Robot_Status.png
+17:34:04 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+17:34:06 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+17:34:08 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
+17:34:10 ERRROR [Kinematics.cpp:104] Kinematics: IK failed with error code -5 for Target [X: 1270.000, Y: -550.000, Z: 580.000]
+17:34:10 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 5
+17:34:13 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+17:34:15 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 5 with 39 waypoints
+17:34:18 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+17:34:20 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+17:34:24 ERRROR [Kinematics.cpp:104] Kinematics: IK failed with error code -5 for Target [X: 1270.000, Y: -550.000, Z: 580.000]
+17:34:24 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 5
+17:34:30 ERRROR [Kinematics.cpp:104] Kinematics: IK failed with error code -5 for Target [X: 1270.000, Y: -550.000, Z: 580.000]
+17:34:30 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 6
+17:34:32 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 7 with 21 waypoints
+17:34:37 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 1 with 3 waypoints
+17:34:40 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 2 with 21 waypoints
+17:34:44 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+17:34:46 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+17:34:50 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+17:34:52 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
+17:34:55 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+17:34:57 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 5 with 39 waypoints
+17:35:00 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+17:35:01 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 7 with 39 waypoints
+17:35:06 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+17:35:08 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 5 with 39 waypoints
+17:35:11 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 6 with 39 waypoints
+17:35:13 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 7 with 39 waypoints
+17:35:17 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+17:35:20 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 7 with 39 waypoints
+17:35:22 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+17:35:24 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
+17:35:26 ERRROR [Kinematics.cpp:104] Kinematics: IK failed with error code -5 for Target [X: 1270.000, Y: -550.000, Z: 580.000]
+17:35:26 ERRROR [RobotSimulator.cpp:149] RobotSimulator: IK failed for Job 5
+17:35:44 INFO [Backend.cpp:112] Screenshot saved to screenshots/Plant_Overview.png
+17:35:48 INFO [Backend.cpp:112] Screenshot saved to screenshots/Robot_Status.png
+17:35:50 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+17:35:53 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 7 with 39 waypoints
+17:35:55 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+17:35:57 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 7 with 39 waypoints
+17:35:58 INFO [Backend.cpp:112] Screenshot saved to screenshots/Plant_Overview.png
+17:36:14 INFO [Backend.cpp:112] Screenshot saved to screenshots/Robot_Status.png
+17:36:15 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+17:36:16 INFO [Backend.cpp:112] Screenshot saved to screenshots/Plant_Overview.png
+17:36:17 INFO [Backend.cpp:112] Screenshot saved to screenshots/Robot_Status.png
+17:36:27 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+17:36:28 INFO [Backend.cpp:112] Screenshot saved to screenshots/Plant_Overview.png
+17:36:29 INFO [Backend.cpp:112] Screenshot saved to screenshots/Robot_Status.png
+17:36:32 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 7 with 21 waypoints
+17:36:34 INFO [Backend.cpp:112] Screenshot saved to screenshots/Plant_Overview.png
+17:36:37 INFO [Backend.cpp:112] Screenshot saved to screenshots/Robot_Status.png
+17:36:38 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 1 with 3 waypoints
+17:36:40 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 5 with 39 waypoints
+17:36:42 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+17:36:43 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 7 with 39 waypoints
+17:36:44 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+17:36:47 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+17:36:48 INFO [RobotSimulator.cpp:144] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+17:36:51 INFO [Backend.cpp:112] Screenshot saved to screenshots/Plant_Overview.png

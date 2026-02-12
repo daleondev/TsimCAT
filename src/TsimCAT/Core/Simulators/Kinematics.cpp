@@ -1,4 +1,5 @@
 #include "Kinematics.hpp"
+#include "Logger/Logger.hpp"
 #include <chain.hpp>
 #include <chainfksolverpos_recursive.hpp>
 #include <chainiksolverpos_lma.hpp>
@@ -40,8 +41,11 @@ namespace core::sim
 
             fkSolver = std::make_unique<ChainFkSolverPos_recursive>(chain);
             
-            // LMA solver is more robust for 6DOF than simple NR
-            ikSolver = std::make_unique<ChainIkSolverPos_LMA>(chain);
+            // LMA solver is more robust for 6DOF than simple NR.
+            // Since we use mm, we should provide weights to balance translation and rotation.
+            Eigen::Matrix<double, 6, 1> weights;
+            weights << 1, 1, 1, 0.01, 0.01, 0.01; // Scale down rotation error impact compared to mm translation
+            ikSolver = std::make_unique<ChainIkSolverPos_LMA>(chain, weights, 1e-5, 1000, 1e-12);
         }
     };
 
@@ -97,6 +101,8 @@ namespace core::sim
             return result;
         }
 
+        logger::error("Kinematics: IK failed with error code {} for Target [X: {:.3f}, Y: {:.3f}, Z: {:.3f}]", 
+                      ret, target.x, target.y, target.z);
         return {};
     }
 }
