@@ -7,6 +7,9 @@ Node {
     property real length: 2000
     property real width: 400
     property real height: 800
+    
+    property var conveyorController: null
+    property var sensorPositions: []
 
     readonly property real frameThickness: 50
 
@@ -52,6 +55,41 @@ Node {
                     metalness: 0.8
                 }
             ]
+        }
+    }
+
+    // Sensors (Light Barriers)
+    Repeater3D {
+        model: conveyorRoot.sensorPositions.length
+        delegate: Node {
+            required property int index
+            // Position relative to conveyor center
+            position: Qt.vector3d(conveyorRoot.sensorPositions[index] - conveyorRoot.length / 2, conveyorRoot.height + 60, conveyorRoot.width / 2 - 20)
+            
+            Model {
+                source: "#Sphere"
+                scale: Qt.vector3d(0.2, 0.2, 0.2)
+                materials: [
+                    DefaultMaterial {
+                        diffuseColor: (conveyorRoot.conveyorController && conveyorRoot.conveyorController.sensors[index]) ? "#e74c3c" : "#2ecc71"
+                        emissiveFactor: Qt.vector3d(diffuseColor.r, diffuseColor.g, diffuseColor.b)
+                    }
+                ]
+            }
+        }
+    }
+
+    // Parts
+    Repeater3D {
+        model: conveyorRoot.conveyorController ? conveyorRoot.conveyorController.parts : []
+        delegate: PartModel {
+            required property var modelData
+            // Position relative to conveyor center (assuming 0 is start)
+            position: Qt.vector3d(modelData.position - conveyorRoot.length / 2, conveyorRoot.height + 10, 0)
+            width: modelData.width
+            length: modelData.length
+            height: modelData.height
+            color: modelData.type === 1 ? "#e67e22" : "#3498db"
         }
     }
 }

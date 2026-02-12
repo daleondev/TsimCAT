@@ -104,31 +104,26 @@ namespace core::sim
                         break;
                 }
 
-                                if (validJob) {
+                if (validJob) {
 
-                                    std::array<double, 6> startJoints;
+                    std::array<double, 6> startJoints;
 
-                                    for (int i = 0; i < 6; ++i) startJoints[i] = m_jointAngles[i];
+                    for (int i = 0; i < 6; ++i)
+                        startJoints[i] = m_jointAngles[i];
 
-                
+                    std::array<double, 6> homeJoints = { 0.0, -90.0, 90.0, 0.0, 0.0, 0.0 };
 
-                                    std::array<double, 6> homeJoints = { 0.0, -90.0, 90.0, 0.0, 0.0, 0.0 };
+                    // Get target joints from IK - Use homeJoints as seed since we plan from there
 
-                                    
+                    std::array<double, 6> homeRads;
 
-                                    // Get target joints from IK - Use homeJoints as seed since we plan from there
+                    for (int i = 0; i < 6; ++i)
+                        homeRads[i] = homeJoints[i] * pi / 180.0;
 
-                                    std::array<double, 6> homeRads;
+                    auto targetRadsVec = m_kinematics.inverse(targetPose, homeRads);
 
-                                    for (int i = 0; i < 6; ++i) homeRads[i] = homeJoints[i] * pi / 180.0;
+                    if (!targetRadsVec.empty()) {
 
-                                    
-
-                                    auto targetRadsVec = m_kinematics.inverse(targetPose, homeRads);
-
-                                    if (!targetRadsVec.empty()) {
-
-                
                         std::array<double, 6> targetJoints;
                         for (int i = 0; i < 6; ++i)
                             targetJoints[i] = targetRadsVec[i] * 180.0 / pi;

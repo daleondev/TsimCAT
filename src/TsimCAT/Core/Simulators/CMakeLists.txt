@@ -7,6 +7,7 @@ target_sources(
     LaserSimulator.cpp
     RobotSimulator.cpp
     Kinematics.cpp
+    ConveyorSimulator.cpp
 
     PUBLIC
     FILE_SET HEADERS
@@ -16,6 +17,8 @@ target_sources(
         LaserSimulator.hpp
         RobotSimulator.hpp
         Kinematics.hpp
+        ConveyorSimulator.hpp
+        Part.hpp
         Components/IComponent.hpp
 )
 

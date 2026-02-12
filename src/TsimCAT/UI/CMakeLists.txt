@@ -17,6 +17,7 @@ qt_add_qml_module(TsimCAT_UI
         controls/LaserModel.qml
         controls/CameraModel.qml
         controls/ConveyorModel.qml
+        controls/PartModel.qml
         controls/StationModel.qml
         controls/StationFrameModel.qml
         controls/FenceModel.qml

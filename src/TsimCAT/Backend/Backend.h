@@ -4,6 +4,7 @@
 #include "../Core/Coroutines/coroutine.hpp"
 #include "Controllers/LaserController.h"
 #include "Controllers/RobotController.h"
+#include "Controllers/ConveyorController.h"
 
 #include <QCoroTask>
 #include <QObject>
@@ -12,7 +13,7 @@
 #include <memory>
 
 namespace core::link { class ILink; }
-namespace core::sim { class LaserSimulator; class RobotSimulator; }
+namespace core::sim { class LaserSimulator; class RobotSimulator; class ConveyorSimulator; }
 
 namespace backend
 {
@@ -24,6 +25,8 @@ namespace backend
         Q_PROPERTY(QString asyncTestStatus READ asyncTestStatus NOTIFY asyncTestStatusChanged)
         Q_PROPERTY(backend::controllers::LaserController* laser READ laser CONSTANT)
         Q_PROPERTY(backend::controllers::RobotController* robot READ robot CONSTANT)
+        Q_PROPERTY(backend::controllers::ConveyorController* entryConveyor READ entryConveyor CONSTANT)
+        Q_PROPERTY(backend::controllers::ConveyorController* exitConveyor READ exitConveyor CONSTANT)
 
       public:
         explicit Backend(QObject* parent = nullptr);
@@ -33,6 +36,8 @@ namespace backend
         QString asyncTestStatus() const;
         backend::controllers::LaserController* laser() const;
         backend::controllers::RobotController* robot() const;
+        backend::controllers::ConveyorController* entryConveyor() const;
+        backend::controllers::ConveyorController* exitConveyor() const;
 
         Q_INVOKABLE void runAsyncTest();
         Q_INVOKABLE void captureScreenshot(QObject* item, const QString& filename = QString());
@@ -49,9 +54,13 @@ namespace backend
 
         std::shared_ptr<core::sim::LaserSimulator> m_laserSim;
         std::shared_ptr<core::sim::RobotSimulator> m_robotSim;
+        std::shared_ptr<core::sim::ConveyorSimulator> m_entryConveyorSim;
+        std::shared_ptr<core::sim::ConveyorSimulator> m_exitConveyorSim;
 
         std::unique_ptr<backend::controllers::LaserController> m_laserController;
         std::unique_ptr<backend::controllers::RobotController> m_robotController;
+        std::unique_ptr<backend::controllers::ConveyorController> m_entryConveyorController;
+        std::unique_ptr<backend::controllers::ConveyorController> m_exitConveyorController;
     };
 }
 

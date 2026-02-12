@@ -1,10 +1,12 @@
 #include "Backend.h"
 #include "Controllers/LaserController.h"
 #include "Controllers/RobotController.h"
+#include "Controllers/ConveyorController.h"
 #include "Link/LinkFactory.hpp"
 #include "Logger/Logger.hpp"
 #include "Simulators/LaserSimulator.hpp"
 #include "Simulators/RobotSimulator.hpp"
+#include "Simulators/ConveyorSimulator.hpp"
 #include <QCoroTimer>
 #include <QDateTime>
 #include <QDir>
@@ -53,9 +55,46 @@ namespace backend
         m_laserSim = std::make_shared<core::sim::LaserSimulator>(m_tcpLink);
         m_robotSim = std::make_shared<core::sim::RobotSimulator>(m_adsLink);
 
+        core::sim::ConveyorSimulator::Config entryConfig{
+            .name = "EntryConveyor",
+            .length = 1875.0,
+            .speed = 250.0,
+            .sensorPositions = { 100.0, 1000.0, 1775.0 },
+            .adsRunCmd = "MAIN.bEntryConveyorRun",
+            .adsSensorSignals = { "MAIN.bEntrySensor1", "MAIN.bEntrySensor2", "MAIN.bEntrySensor3" }
+        };
+        m_entryConveyorSim = std::make_shared<core::sim::ConveyorSimulator>(entryConfig, m_adsLink);
+
+        core::sim::ConveyorSimulator::Config exitConfig{
+            .name = "ExitConveyor",
+            .length = 1250.0,
+            .speed = 250.0,
+            .sensorPositions = { 100.0, 1150.0 },
+            .adsRunCmd = "MAIN.bExitConveyorRun",
+            .adsSensorSignals = { "MAIN.bExitSensor1", "MAIN.bExitSensor2" }
+        };
+        m_exitConveyorSim = std::make_shared<core::sim::ConveyorSimulator>(exitConfig, m_adsLink);
+
+        m_entryConveyorSim->start();
+        m_exitConveyorSim->start();
+
+        // Start ADS Sync tasks for conveyors
+        if (m_entryConveyorSim) {
+            [](std::shared_ptr<core::sim::ConveyorSimulator> sim) -> core::coro::Task<void> {
+                co_await sim->run();
+            }(m_entryConveyorSim);
+        }
+        if (m_exitConveyorSim) {
+            [](std::shared_ptr<core::sim::ConveyorSimulator> sim) -> core::coro::Task<void> {
+                co_await sim->run();
+            }(m_exitConveyorSim);
+        }
+
         // 3. Inject into Controllers
         m_laserController = std::make_unique<backend::controllers::LaserController>(m_laserSim, this);
         m_robotController = std::make_unique<backend::controllers::RobotController>(m_robotSim, this);
+        m_entryConveyorController = std::make_unique<backend::controllers::ConveyorController>(m_entryConveyorSim, this);
+        m_exitConveyorController = std::make_unique<backend::controllers::ConveyorController>(m_exitConveyorSim, this);
 
         // 4. Simulation Loop (10ms ~ 100Hz)
         [] (Backend* self) -> QCoro::Task<void> {
@@ -67,6 +106,12 @@ namespace backend
 
                 if (self->m_laserSim) self->m_laserSim->update(dt);
                 if (self->m_robotSim) self->m_robotSim->update(dt);
+                if (self->m_entryConveyorSim) self->m_entryConveyorSim->update(dt);
+                if (self->m_exitConveyorSim) self->m_exitConveyorSim->update(dt);
+
+                // Notify UI about state changes
+                if (self->m_entryConveyorController) emit self->m_entryConveyorController->stateChanged();
+                if (self->m_exitConveyorController) emit self->m_exitConveyorController->stateChanged();
 
                 co_await QCoro::sleepFor(10ms);
             }
@@ -82,6 +127,10 @@ namespace backend
     backend::controllers::LaserController* Backend::laser() const { return m_laserController.get(); }
 
     backend::controllers::RobotController* Backend::robot() const { return m_robotController.get(); }
+
+    backend::controllers::ConveyorController* Backend::entryConveyor() const { return m_entryConveyorController.get(); }
+
+    backend::controllers::ConveyorController* Backend::exitConveyor() const { return m_exitConveyorController.get(); }
 
     void Backend::runAsyncTest() { doAsyncTest(); }
 

@@ -701,3 +701,9 @@
 18:00:28 INFO [RobotSimulator.cpp:155] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
 18:00:30 INFO [RobotSimulator.cpp:155] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
 18:00:32 INFO [RobotSimulator.cpp:155] RobotSimulator: Planned blended trajectory for Job 6 with 39 waypoints
+19:12:20 INFO [Backend.cpp:26] Backend initialized
+19:12:20 INFO [RobotSimulator.cpp:43] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+19:18:14 INFO [Backend.cpp:26] Backend initialized
+19:18:14 INFO [RobotSimulator.cpp:43] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+19:25:14 INFO [Backend.cpp:26] Backend initialized
+19:25:14 INFO [RobotSimulator.cpp:43] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]

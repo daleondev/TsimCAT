@@ -88,6 +88,8 @@ Item {
                 position: Qt.vector3d(-2000, 0, 0)
                 length: 1875
                 height: 700
+                conveyorController: root.backend ? root.backend.entryConveyor : null
+                sensorPositions: [100.0, 1000.0, 1775.0]
             }
 
             // 3. MAIN ROBOT
@@ -158,6 +160,8 @@ Item {
                 position: Qt.vector3d(1750, 0, 0)
                 length: 1250
                 height: 700
+                conveyorController: root.backend ? root.backend.exitConveyor : null
+                sensorPositions: [100.0, 1150.0]
             }
 
             // 6. TRANSFER GANTRY

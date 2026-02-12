@@ -165,6 +165,75 @@ Control {
                     }
 
                     Text {
+                        text: "Conveyor Simulation"
+                        color: "#a0aec0"
+                        font.pixelSize: 12
+                        font.bold: true
+                    }
+
+                    CheckBox {
+                        id: beltRunToggle
+                        text: ""
+                        checked: root.backend ? root.backend.entryConveyor.isRunning : true
+                        onToggled: if (root.backend) root.backend.entryConveyor.isRunning = checked
+                        Label {
+                            text: "Entry Belt Run"
+                            color: "white"
+                            anchors.left: parent.right
+                            anchors.leftMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+
+                    CheckBox {
+                        id: autoSpawnToggle
+                        text: ""
+                        checked: root.backend ? root.backend.entryConveyor.autoSpawn : false
+                        onToggled: if (root.backend) root.backend.entryConveyor.autoSpawn = checked
+                        Label {
+                            text: "Auto-Spawn Parts"
+                            color: "white"
+                            anchors.left: parent.right
+                            anchors.leftMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 10
+                        Button {
+                            text: "Spawn Type 1"
+                            Layout.fillWidth: true
+                            onClicked: if (root.backend) root.backend.entryConveyor.spawnPart(1)
+                        }
+                        Button {
+                            text: "Spawn Type 2"
+                            Layout.fillWidth: true
+                            onClicked: if (root.backend) root.backend.entryConveyor.spawnPart(2)
+                        }
+                    }
+
+                    Button {
+                        text: "Clear All Parts"
+                        Layout.fillWidth: true
+                        palette.button: "#e74c3c"
+                        palette.buttonText: "white"
+                        onClicked: {
+                            if (root.backend) {
+                                root.backend.entryConveyor.clearParts()
+                                root.backend.exitConveyor.clearParts()
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 1
+                        color: "#444"
+                    }
+
+                    Text {
                         text: "Gantry Axis (mm)"
                         color: "#a0aec0"
                         font.pixelSize: 12
