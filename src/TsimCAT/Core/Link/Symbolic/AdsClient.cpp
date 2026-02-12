@@ -5,6 +5,7 @@
 
 #include <atomic>
 #include <cassert>
+#include <iostream>
 #include <mutex>
 #include <print>
 #include <unordered_map>

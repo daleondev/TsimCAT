@@ -26,7 +26,8 @@ target_link_libraries(
     core::coroutines
     core::link
     orocos-kdl
-    eigen
+    Eigen3::Eigen
+    ompl
 )
 
 target_compile_features(

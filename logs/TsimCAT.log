@@ -535,3 +535,5 @@
 19:48:55 INFO [Backend.cpp:112] Screenshot saved to screenshots/Robot_Status.png
 19:53:40 INFO [Backend.cpp:24] Backend initialized
 19:53:40 INFO [RobotSimulator.cpp:34] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+16:50:03 INFO [Backend.cpp:24] Backend initialized
+16:50:03 INFO [RobotSimulator.cpp:34] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]

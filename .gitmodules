@@ -16,6 +16,6 @@
 [submodule "extern/kdl"]
 	path = extern/kdl
 	url = https://github.com/orocos/orocos_kinematics_dynamics.git
-[submodule "extern/eigen"]
-	path = extern/eigen
-	url = https://gitlab.com/libeigen/eigen.git
+[submodule "extern/ompl"]
+	path = extern/ompl
+	url = https://github.com/ompl/ompl.git

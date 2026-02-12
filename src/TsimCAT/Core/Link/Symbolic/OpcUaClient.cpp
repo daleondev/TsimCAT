@@ -4,6 +4,7 @@
 #include "format_utils.hpp"
 
 #include <algorithm>
+#include <iostream>
 #include <print>
 #include <unordered_map>
 #include <variant>
