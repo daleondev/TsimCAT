@@ -77,6 +77,21 @@ cmake --preset debug
 cmake --build --preset debug
 ```
 
+### Runtime Configuration
+Runtime endpoints and simulator parameters are loaded from `config/runtime.json`.
+Per-station local simulation can be configured independently via:
+- `simulation.stationModes.robotInternal`
+- `simulation.stationModes.laserInternal`
+- `simulation.stationModes.entryConveyorInternal`
+- `simulation.stationModes.exitConveyorInternal`
+
+`simulation.localOnly=true` forces all stations to local mode; keep it `false` to control each station individually.
+
+You can override the file path with:
+```powershell
+$env:TSIMCAT_CONFIG = "config/runtime.json"
+```
+
 ### ⚠️ Running (Critical DLL Order)
 To avoid "Entry Point Not Found" errors, the **Compiler's bin directory must be prioritized** over Qt's bin directory in the PATH:
 ```powershell

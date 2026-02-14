@@ -12,6 +12,8 @@ Node {
     property real axis5: 0
     property real axis6: 0
     property bool gripperGripped: false
+    property bool carriedPartVisible: false
+    property int carriedPartType: 0
     onGripperGrippedChanged: console.log("RobotModel: gripperGripped changed to " + gripperGripped)
 
     eulerRotation.x: -90
@@ -166,6 +168,15 @@ Node {
                                             eulerRotation.y: 90
                                             eulerRotation.z: 90
                                             gripped: robotRoot.gripperGripped
+                                        }
+
+                                        PartModel {
+                                            visible: robotRoot.carriedPartVisible
+                                            position: Qt.vector3d(220, 0, 0)
+                                            width: 140
+                                            length: 140
+                                            height: 80
+                                            color: robotRoot.carriedPartType === 2 ? "#3498db" : "#e67e22"
                                         }
                                     }
                                 }

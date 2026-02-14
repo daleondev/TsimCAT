@@ -1,0 +1,84 @@
+{
+    "logging": {
+        "file": "logs/TsimCAT.log"
+    },
+    "ui": {
+        "screenshotDirectory": "screenshots"
+    },
+    "links": {
+        "tcp": {
+            "port": 12345
+        },
+        "ads": {
+            "ip": "127.0.0.1",
+            "remoteNetId": "192.168.167.100.1.1",
+            "localNetId": "192.168.167.100.1.20",
+            "port": 851
+        }
+    },
+    "conveyors": {
+        "entry": {
+            "length": 1875.0,
+            "speed": 250.0,
+            "sensorPositions": [
+                437.5,
+                1000.0,
+                1775.0
+            ],
+            "damperSensorIndex": 0,
+            "endSensorIndex": 2,
+            "adsRunCmd": "MAIN.bEntryConveyorRun",
+            "adsSensorSignals": [
+                "MAIN.bEntrySensor1",
+                "MAIN.bEntrySensor2",
+                "MAIN.bEntrySensor3"
+            ]
+        },
+        "exit": {
+            "length": 1250.0,
+            "speed": 250.0,
+            "sensorPositions": [
+                100.0,
+                1150.0
+            ],
+            "endSensorIndex": 1,
+            "adsRunCmd": "MAIN.bExitConveyorRun",
+            "adsSensorSignals": [
+                "MAIN.bExitSensor1",
+                "MAIN.bExitSensor2"
+            ]
+        },
+        "transfer": {
+            "length": 1250.0,
+            "speed": 250.0,
+            "sensorPositions": [
+                120.0,
+                650.0,
+                1120.0
+            ],
+            "damperSensorIndex": 0,
+            "endSensorIndex": 2,
+            "adsRunCmd": "MAIN.bTransferConveyorRun",
+            "adsSensorSignals": [
+                "MAIN.bTransferSensor1",
+                "MAIN.bTransferSensor2",
+                "MAIN.bTransferSensor3"
+            ]
+        }
+    },
+    "simulation": {
+        "localOnly": false,
+        "stationModes": {
+            "laserInternal": true,
+            "robotInternal": true,
+            "gantryInternal": true,
+            "entryConveyorInternal": true,
+            "exitConveyorInternal": true
+        },
+        "cellFlow": {
+            "enabled": true,
+            "autoStart": true,
+            "inspectionRejectRate": 0.2
+        }
+    }
+}

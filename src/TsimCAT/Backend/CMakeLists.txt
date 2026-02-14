@@ -24,10 +24,14 @@ qt_add_qml_module(TsimCAT_Backend
     SOURCES
         Backend.h
         Backend.cpp
+        RuntimeConfig.h
+        RuntimeConfig.cpp
         Controllers/LaserController.h
         Controllers/LaserController.cpp
         Controllers/RobotController.h
         Controllers/RobotController.cpp
         Controllers/ConveyorController.h
         Controllers/ConveyorController.cpp
+        Controllers/GantryController.h
+        Controllers/GantryController.cpp
 )

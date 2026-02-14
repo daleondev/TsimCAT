@@ -47,6 +47,10 @@ namespace core::sim
 
     auto RobotSimulator::initialize() -> coro::Task<result::Result<void>>
     {
+        if (!m_link || m_internalMode) {
+            co_return result::success();
+        }
+
         if (auto* client = m_link->asClient()) {
             logger::info("RobotSimulator: Connecting to ADS...");
             auto res = co_await client->connect();
@@ -288,6 +292,9 @@ namespace core::sim
 
     auto RobotSimulator::adsStatus() const -> std::string
     {
+        if (m_internalMode) {
+            return "Local";
+        }
         if (!m_link)
             return "No Link";
         switch (m_link->status()) {
@@ -312,11 +319,19 @@ namespace core::sim
 
     auto RobotSimulator::run() -> coro::Task<void>
     {
+        if (m_internalMode || !m_link)
+            co_return;
+
         auto* symbolic = m_link->asSymbolic();
         if (!symbolic)
             co_return;
 
         while (m_running) {
+            if (m_internalMode) {
+                co_await coro::sleep(std::chrono::milliseconds(100));
+                continue;
+            }
+
             // Only communicate if actually connected to avoid floods
             if (m_link->status() == link::Status::Connected) {
                 // 1. Read Commands
@@ -410,5 +425,17 @@ namespace core::sim
         std::scoped_lock lock(m_mutex);
         m_control.nJobId = jobId;
         m_control.bMoveEnable = 1; // Auto-enable move for convenience in simulation
+    }
+
+    auto RobotSimulator::setInternalMode(bool internalMode) -> void
+    {
+        std::scoped_lock lock(m_mutex);
+        m_internalMode = internalMode;
+    }
+
+    auto RobotSimulator::isInternalMode() const -> bool
+    {
+        std::scoped_lock lock(m_mutex);
+        return m_internalMode;
     }
 }

@@ -6,7 +6,8 @@ import QtQuick3D.Helpers
 Item {
     id: root
     property var backend: null
-    property bool damperOpen: false
+    property bool entryDamperOpen: false
+    property bool exitDamperOpen: false
     property bool doorOpen: false
     property real gantryX: 0
     property real gantryZ: 80
@@ -78,7 +79,8 @@ Item {
                 id: fence
                 position: Qt.vector3d(500, 0, 0)
 
-                damperOpen: root.damperOpen
+                entryDamperOpen: root.entryDamperOpen
+                exitDamperOpen: root.exitDamperOpen
                 doorOpen: root.doorOpen
             }
 
@@ -107,6 +109,8 @@ Item {
 
                 // Explicit connection for gripper state
                 gripperGripped: false
+                carriedPartVisible: root.backend ? root.backend.robotCarriedPartVisible : false
+                carriedPartType: root.backend ? root.backend.robotCarriedPartType : 0
                 Connections {
                     target: root.backend ? root.backend.robot : null
                     function onStateChanged() {
@@ -125,6 +129,14 @@ Item {
                     StationModel {
                         color: "#3498db"
                     }
+                    PartModel {
+                        visible: root.backend ? root.backend.cameraPartVisible : false
+                        position: Qt.vector3d(0, 730, 0)
+                        width: 140
+                        length: 140
+                        height: 80
+                        color: (root.backend && root.backend.cameraPartType === 2) ? "#3498db" : "#e67e22"
+                    }
                     StationFrameModel {}
                     CameraModel {
                         position: Qt.vector3d(0, 1950, 0) // Centered on frame crossbar
@@ -137,6 +149,14 @@ Item {
                     position: Qt.vector3d(1000, 0, 0)
                     StationModel {
                         color: "#e74c3c"
+                    }
+                    PartModel {
+                        visible: root.backend ? root.backend.laserPartVisible : false
+                        position: Qt.vector3d(0, 730, 0)
+                        width: 140
+                        length: 140
+                        height: 80
+                        color: (root.backend && root.backend.laserPartType === 2) ? "#3498db" : "#e67e22"
                     }
 
                     // Offset frame to compensate for laser angle
@@ -172,6 +192,9 @@ Item {
                 frameHeight: 1600
                 xPos: root.gantryX
                 zPos: root.gantryZ
+                gripperGripped: (root.backend && root.backend.gantry) ? root.backend.gantry.gripperGripped : false
+                carriedPartVisible: (root.backend && root.backend.gantry) ? root.backend.gantry.hasCarriedPart : false
+                carriedPartType: (root.backend && root.backend.gantry) ? root.backend.gantry.carriedPartType : 0
             }
 
             // 7. NEIGHBOR EXIT CONVEYOR
@@ -180,6 +203,8 @@ Item {
                 position: Qt.vector3d(3250, 0, 0)
                 length: 1250
                 height: 1000
+                conveyorController: root.backend ? root.backend.transferConveyor : null
+                sensorPositions: [120.0, 650.0, 1120.0]
             }
         }
     }

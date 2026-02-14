@@ -10,6 +10,9 @@ Node {
 
     property real xPos: 0
     property real zPos: 80
+    property bool gripperGripped: false
+    property bool carriedPartVisible: false
+    property int carriedPartType: 0
 
     property real frameHeight: 800
     property real frameWidth: 200
@@ -216,6 +219,17 @@ Node {
                     x: -gripperFrameLength / 2
                     eulerRotation.y: -90
                     eulerRotation.z: 90
+                    gripped: gantryRoot.gripperGripped
+                }
+
+                PartModel {
+                    visible: gantryRoot.carriedPartVisible
+                    x: -gripperFrameLength / 2
+                    position.y: 220
+                    width: 140
+                    length: 140
+                    height: 80
+                    color: gantryRoot.carriedPartType === 2 ? "#3498db" : "#e67e22"
                 }
             }
         }
