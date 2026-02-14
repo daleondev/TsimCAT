@@ -8,6 +8,7 @@ target_link_libraries(TsimCAT_Backend
     core::coroutines
     core::link
     core::simulators
+    core::logger
 )
 
 target_compile_features(
@@ -23,4 +24,10 @@ qt_add_qml_module(TsimCAT_Backend
     SOURCES
         Backend.h
         Backend.cpp
+        Controllers/LaserController.h
+        Controllers/LaserController.cpp
+        Controllers/RobotController.h
+        Controllers/RobotController.cpp
+        Controllers/ConveyorController.h
+        Controllers/ConveyorController.cpp
 )

@@ -4,6 +4,7 @@
 #include "format_utils.hpp"
 
 #include <algorithm>
+#include <iostream>
 #include <print>
 #include <unordered_map>
 #include <variant>
@@ -328,9 +329,9 @@ namespace
     };
     constexpr auto getStatus(UA_StatusCode status) -> UaStatus { return static_cast<UaStatus>(status); }
 
-    constexpr auto isGood(UaStatus code) -> bool { return (std::to_underlying(code) & 0xC0000000) == 0; }
-    constexpr auto isUncertain(UaStatus code) -> bool { return (std::to_underlying(code) & 0xC0000000) == 0x40000000; }
-    constexpr auto isBad(UaStatus code) -> bool { return (std::to_underlying(code) & 0xC0000000) == 0x80000000; }
+    constexpr auto isGood(UaStatus code) -> bool { return UA_StatusCode_isGood(std::to_underlying(code)); }
+    constexpr auto isUncertain(UaStatus code) -> bool { return UA_StatusCode_isUncertain(std::to_underlying(code)); }
+    constexpr auto isBad(UaStatus code) -> bool { return UA_StatusCode_isBad(std::to_underlying(code)); }
     // clang-format on
 
     class UaStatusCategory : public std::error_category
@@ -338,7 +339,14 @@ namespace
       public:
         const char* name() const noexcept override { return "AdsError"; }
 
-        std::string message(int ev) const override { return std::format("{:v}", static_cast<UaStatus>(ev)); }
+        std::string message(int ev) const override
+        {
+            static constexpr auto enums{ fmtu::detail::underlying_enumerators<UaStatus>() };
+            if (!std::ranges::contains(enums, static_cast<UaStatusType>(ev))) {
+                return "Unknown";
+            }
+            return std::format("{:v}", static_cast<UaStatus>(ev));
+        }
     };
 
     const std::error_category& ua_category()
@@ -409,6 +417,11 @@ namespace core::link::symbolic
         }
 
         co_return result::success();
+    }
+
+    auto OpcUaClient::status() const -> Status
+    {
+        return m_connected ? Status::Connected : Status::Disconnected;
     }
 
     auto OpcUaClient::disconnect(std::chrono::milliseconds timeout) -> coro::Task<result::Result<void>>

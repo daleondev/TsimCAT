@@ -1,7 +1,7 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import "../icons" as Icons
 
 Rectangle {
     id: root
@@ -33,6 +33,9 @@ Rectangle {
             
             delegate: Button {
                 id: navButton
+                required property int index
+                required property var modelData
+
                 Layout.fillWidth: true
                 flat: true
                 text: modelData.name
@@ -42,13 +45,14 @@ Rectangle {
                     spacing: 15
                     
                     Item {
-                        width: 24; height: 24
+                        Layout.preferredWidth: 24
+                        Layout.preferredHeight: 24
                         Layout.leftMargin: 10
                         
                         Loader {
                             id: iconLoader
                             anchors.centerIn: parent
-                            source: "../icons/" + modelData.icon + ".qml"
+                            source: "../icons/" + navButton.modelData.icon + ".qml"
                             
                             // Define the target color on the loader
                             property color targetColor: navButton.highlighted ? "#3498db" : "white"
@@ -73,11 +77,11 @@ Rectangle {
                 }
 
                 background: Rectangle {
-                    color: parent.pressed ? "#34495e" : (parent.highlighted ? "#1a252f" : "transparent")
+                    color: navButton.pressed ? "#34495e" : (navButton.highlighted ? "#1a252f" : "transparent")
                     radius: 4
                 }
 
-                onClicked: root.currentIndex = index
+                onClicked: root.currentIndex = navButton.index
             }
         }
 

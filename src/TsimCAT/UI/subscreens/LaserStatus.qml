@@ -4,6 +4,7 @@ import QtQuick.Controls
 Control {
     id: root
     property string title: "Laser Status"
+    required property var backend
 
     Column {
         anchors.centerIn: parent
@@ -11,9 +12,58 @@ Control {
         Text {
             text: root.title
             font.pixelSize: 32
-            color: "#333"
+            color: "#333333"
             anchors.horizontalCenter: parent.horizontalCenter
         }
+        
+        Rectangle {
+            width: 400
+            height: 200
+            color: "#f0f0f0"
+            border.color: "#ccc"
+            radius: 5
+            anchors.horizontalCenter: parent.horizontalCenter
+            
+            Column {
+                anchors.centerIn: parent
+                spacing: 10
+                
+                Text {
+                    text: "TCP Server Status:"
+                    font.bold: true
+                }
+                Text {
+                    text: root.backend.laser.tcpStatus
+                    color: root.backend.laser.tcpStatus.includes("Connected") ? "green" : "red"
+                    font.pixelSize: 16
+                }
+                
+                Text {
+                    text: "Last Message:"
+                    font.bold: true
+                    topPadding: 10
+                }
+                Text {
+                    text: root.backend.laser.lastMessage
+                    font.family: "Monospace"
+                    color: "blue"
+                }
+            }
+        }
+
+        Button {
+            text: "Start TCP Server"
+            anchors.horizontalCenter: parent.horizontalCenter
+            enabled: root.backend.laser.tcpStatus === "Disconnected" || root.backend.laser.tcpStatus.startsWith("Start Failed")
+            onClicked: root.backend.laser.startTcpServer()
+        }
+
+        Button {
+            text: "Screenshot"
+            anchors.horizontalCenter: parent.horizontalCenter
+            onClicked: root.backend.captureScreenshot(root)
+        }
+
         Switch {
             text: "Laser Armed"
             anchors.horizontalCenter: parent.horizontalCenter

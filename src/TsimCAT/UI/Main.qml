@@ -26,14 +26,32 @@ ApplicationWindow {
             Layout.fillHeight: true
             Layout.preferredWidth: 240
             footerText: "QCoro Status: " + backend.asyncTestStatus
-            
+
             model: [
-                { name: "Plant Overview", icon: "DashboardIcon" },
-                { name: "Robot Status", icon: "RobotIcon" },
-                { name: "Camera Status", icon: "CameraIcon" },
-                { name: "Laser Status", icon: "LaserIcon" },
-                { name: "Gantry Status", icon: "GantryIcon" },
-                { name: "Process Data", icon: "AnalyticsIcon" }
+                {
+                    name: "Plant Overview",
+                    icon: "DashboardIcon"
+                },
+                {
+                    name: "Robot Status",
+                    icon: "RobotIcon"
+                },
+                {
+                    name: "Camera Status",
+                    icon: "CameraIcon"
+                },
+                {
+                    name: "Laser Status",
+                    icon: "LaserIcon"
+                },
+                {
+                    name: "Gantry Status",
+                    icon: "GantryIcon"
+                },
+                {
+                    name: "Process Data",
+                    icon: "AnalyticsIcon"
+                }
             ]
         }
 
@@ -44,10 +62,22 @@ ApplicationWindow {
             Layout.fillHeight: true
             currentIndex: sidebar.currentIndex
 
-            Subscreens.PlantOverview {}
-            Subscreens.RobotStatus {}
+            onCurrentIndexChanged: {
+                let subscreenName = sidebar.model[currentIndex].name;
+                let safeName = subscreenName.replace(/\s+/g, '_');
+                backend.captureScreenshot(window.contentItem, safeName);
+            }
+
+            Subscreens.PlantOverview {
+                backend: backend
+            }
+            Subscreens.RobotStatus {
+                backend: backend
+            }
             Subscreens.CameraStatus {}
-            Subscreens.LaserStatus {}
+            Subscreens.LaserStatus {
+                backend: backend
+            }
             Subscreens.GantryStatus {}
             Subscreens.ProcessData {}
         }

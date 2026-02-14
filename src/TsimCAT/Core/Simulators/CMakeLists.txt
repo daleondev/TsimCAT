@@ -4,13 +4,21 @@ add_library(core::simulators ALIAS core_simulators)
 target_sources(
     core_simulators
     PRIVATE
-    Simulators.cpp
+    LaserSimulator.cpp
+    RobotSimulator.cpp
+    Kinematics.cpp
+    ConveyorSimulator.cpp
 
     PUBLIC
     FILE_SET HEADERS
     BASE_DIRS ${CMAKE_CURRENT_LIST_DIR}/..
     FILES 
         ISimulator.hpp
+        LaserSimulator.hpp
+        RobotSimulator.hpp
+        Kinematics.hpp
+        ConveyorSimulator.hpp
+        Part.hpp
         Components/IComponent.hpp
 )
 
@@ -20,6 +28,9 @@ target_link_libraries(
     core::common
     core::coroutines
     core::link
+    orocos-kdl
+    Eigen3::Eigen
+    ompl
 )
 
 target_compile_features(

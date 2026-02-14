@@ -9,12 +9,13 @@
 #include <span>
 #include <string_view>
 
-namespace core::link::raw
+namespace core::link
 {
-    class IRawLink
+    class IRawLink : virtual public ILink
     {
       public:
-        virtual ~IRawLink() = default;
+        auto asRaw() -> IRawLink* override { return this; }
+        auto getMode() const -> Mode override { return Mode::Raw; }
 
         virtual auto receiveInto(std::string_view path,
                                  std::span<std::byte> dest,
