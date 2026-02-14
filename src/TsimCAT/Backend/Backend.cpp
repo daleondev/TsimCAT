@@ -35,6 +35,7 @@ namespace backend
         core::logger::info("Backend initialized");
         core::logger::info("{}", configDiagnostics.toStdString());
         m_analyzerOutputFolder = resolveAnalyzerOutputFolder();
+        clearAnalyzerArtifactsOnStartup();
 
         // 1. Create Shared Links
         auto tcpRes = core::link::create(core::link::Role::Server,
@@ -226,6 +227,8 @@ namespace backend
     {
         return m_cellFlow ? static_cast<int>(m_cellFlow->laserPartType()) : 0;
     }
+
+    int Backend::rejectBinCount() const { return m_cellFlow ? m_cellFlow->rejectBinCount() : 0; }
 
     bool Backend::analyzerEnabled() const { return m_runtimeConfig.analyzer.enabled; }
 
@@ -664,6 +667,24 @@ namespace backend
         }
 
         return QDir::current().filePath(m_runtimeConfig.analyzer.outputFolder);
+    }
+
+    void Backend::clearAnalyzerArtifactsOnStartup() const
+    {
+        QDir outputDir(m_analyzerOutputFolder);
+        if (!outputDir.exists()) {
+            outputDir.mkpath(".");
+        }
+
+        QDir framesDir(outputDir.filePath("frames"));
+        if (framesDir.exists()) {
+            framesDir.removeRecursively();
+        }
+
+        const QString tracePath = outputDir.filePath("trace.csv");
+        if (QFileInfo::exists(tracePath)) {
+            QFile::remove(tracePath);
+        }
     }
 
     QCoro::Task<void> Backend::doAsyncTest()

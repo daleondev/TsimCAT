@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick3D
 
@@ -224,7 +225,7 @@ Node {
 
                     PartModel {
                         visible: gantryRoot.carriedPartVisible
-                        position: Qt.vector3d(0, 120, 85)
+                        position: gantryRoot.gripperGripped ? Qt.vector3d(0, 12, 100) : Qt.vector3d(0, 34, 100)
                         width: 140
                         length: 140
                         height: 80

@@ -81,7 +81,28 @@ namespace core::sim
         if (m_autoLogic) {
             bool partAtDamper =
               (m_config.damperSensorIndex >= 0 && m_sensorStates[m_config.damperSensorIndex]);
+            bool partAtDamperClose =
+              (m_config.damperCloseSensorIndex >= 0 &&
+               m_config.damperCloseSensorIndex < static_cast<int>(m_sensorStates.size()) &&
+               m_sensorStates[m_config.damperCloseSensorIndex]);
             bool partAtEnd = (m_config.endSensorIndex >= 0 && m_sensorStates[m_config.endSensorIndex]);
+
+            if (partAtEnd && m_config.consumeAtEndSensor && m_config.endSensorIndex >= 0 &&
+                m_config.endSensorIndex < static_cast<int>(m_config.sensorPositions.size())) {
+                const double endSensorPosition = m_config.sensorPositions[m_config.endSensorIndex];
+                auto it = std::max_element(m_parts.begin(), m_parts.end(), [](const Part& a, const Part& b) {
+                    return a.position < b.position;
+                });
+
+                if (it != m_parts.end()) {
+                    const double partStart = it->position - it->length / 2;
+                    const double partEnd = it->position + it->length / 2;
+                    if (endSensorPosition >= partStart && endSensorPosition <= partEnd) {
+                        m_parts.erase(it);
+                        partAtEnd = false;
+                    }
+                }
+            }
 
             if (partAtEnd) {
                 m_beltRunning = false; // Stop at end, wait for robot pick
@@ -100,9 +121,18 @@ namespace core::sim
                 // For now: Continue if no part blocking progress.
                 m_beltRunning = true;
 
-                if (!partAtDamper && m_damperOpen) {
-                    // Auto-close damper after part passed
+                const bool closeDamper =
+                  m_config.damperCloseSensorIndex >= 0 ? partAtDamperClose : (!partAtDamper);
+
+                if (m_damperOpen && closeDamper) {
+                    // Auto-close damper based on configured close sensor (or default behavior)
                     m_damperOpen = false;
+                    m_damperTimer = 0;
+                }
+
+                if (!partAtDamper) {
+                    // Keep timer deterministic for next opening cycle.
+                    m_damperTimer = 0;
                 }
             }
         }

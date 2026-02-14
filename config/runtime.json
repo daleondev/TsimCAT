@@ -26,6 +26,7 @@
                 1775.0
             ],
             "damperSensorIndex": 0,
+            "damperCloseSensorIndex": 1,
             "endSensorIndex": 2,
             "damperOpenDelaySeconds": 1.0,
             "adsRunCmd": "MAIN.bEntryConveyorRun",
@@ -57,9 +58,11 @@
                 650.0,
                 1120.0
             ],
-            "damperSensorIndex": 0,
+            "damperSensorIndex": 1,
+            "damperCloseSensorIndex": 2,
             "endSensorIndex": 2,
-            "damperOpenDelaySeconds": 0.2,
+            "consumeAtEndSensor": true,
+            "damperOpenDelaySeconds": 0.0,
             "adsRunCmd": "MAIN.bTransferConveyorRun",
             "adsSensorSignals": [
                 "MAIN.bTransferSensor1",

@@ -8,6 +8,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace core::sim
 {
@@ -42,6 +43,7 @@ namespace core::sim
         auto cameraPartType() const -> uint8_t;
         auto hasLaserPart() const -> bool;
         auto laserPartType() const -> uint8_t;
+        auto rejectBinCount() const -> int;
 
       private:
         enum class Stage
@@ -75,6 +77,7 @@ namespace core::sim
         std::optional<Part> m_currentPart;
         std::optional<Part> m_cameraPart;
         std::optional<Part> m_laserPart;
+        std::vector<Part> m_rejectBinParts;
 
         uint16_t m_activeJobId{ 0 };
         bool m_jobInProgress{ false };

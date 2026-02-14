@@ -116,7 +116,9 @@ namespace backend
             applyDouble(object, "speed", config.speed);
             applyDoubleArray(object, "sensorPositions", config.sensorPositions);
             applyInt(object, "damperSensorIndex", config.damperSensorIndex);
+            applyInt(object, "damperCloseSensorIndex", config.damperCloseSensorIndex);
             applyInt(object, "endSensorIndex", config.endSensorIndex);
+            applyBool(object, "consumeAtEndSensor", config.consumeAtEndSensor);
             applyDouble(object, "damperOpenDelaySeconds", config.damperOpenDelaySeconds);
             applyString(object, "adsRunCmd", config.adsRunCmd);
             applyStringArray(object, "adsSensorSignals", config.adsSensorSignals);
@@ -142,6 +144,7 @@ namespace backend
                                  .speed = 250.0,
                                  .sensorPositions = { 437.5, 1000.0, 1775.0 },
                                  .damperSensorIndex = 0,
+                                 .damperCloseSensorIndex = 1,
                                  .endSensorIndex = 2,
                                  .damperOpenDelaySeconds = 1.0,
                                  .adsRunCmd = "MAIN.bEntryConveyorRun",
@@ -162,9 +165,11 @@ namespace backend
             .length = 1250.0,
             .speed = 250.0,
             .sensorPositions = { 120.0, 650.0, 1120.0 },
-            .damperSensorIndex = 0,
+            .damperSensorIndex = 1,
+            .damperCloseSensorIndex = 2,
             .endSensorIndex = 2,
-            .damperOpenDelaySeconds = 0.2,
+            .consumeAtEndSensor = true,
+            .damperOpenDelaySeconds = 0.0,
             .adsRunCmd = "MAIN.bTransferConveyorRun",
             .adsSensorSignals = { "MAIN.bTransferSensor1", "MAIN.bTransferSensor2", "MAIN.bTransferSensor3" }
         };

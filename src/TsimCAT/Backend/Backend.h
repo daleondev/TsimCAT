@@ -64,6 +64,7 @@ namespace backend
         Q_PROPERTY(int cameraPartType READ cameraPartType NOTIFY partVisualizationChanged)
         Q_PROPERTY(bool laserPartVisible READ laserPartVisible NOTIFY partVisualizationChanged)
         Q_PROPERTY(int laserPartType READ laserPartType NOTIFY partVisualizationChanged)
+        Q_PROPERTY(int rejectBinCount READ rejectBinCount NOTIFY partVisualizationChanged)
         Q_PROPERTY(bool analyzerEnabled READ analyzerEnabled CONSTANT)
         Q_PROPERTY(
           bool analyzerCaptureRunning READ analyzerCaptureRunning NOTIFY analyzerCaptureRunningChanged)
@@ -96,6 +97,7 @@ namespace backend
         int cameraPartType() const;
         bool laserPartVisible() const;
         int laserPartType() const;
+        int rejectBinCount() const;
         bool analyzerEnabled() const;
         bool analyzerCaptureRunning() const;
         int analyzerCapturedFrames() const;
@@ -171,6 +173,7 @@ namespace backend
         void updateAnalyzer(double deltaTimeSeconds);
         void writeAnalyzerTraceSample();
         QString resolveAnalyzerOutputFolder() const;
+        void clearAnalyzerArtifactsOnStartup() const;
     };
 }
 

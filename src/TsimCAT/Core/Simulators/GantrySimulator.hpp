@@ -22,6 +22,7 @@ namespace core::sim
             double zDrop{ 20.0 };
             double xSpeed{ 500.0 };
             double zSpeed{ 350.0 };
+            double gripSettleSeconds{ 0.25 };
             bool autoTransfer{ true };
         };
 
@@ -50,6 +51,7 @@ namespace core::sim
             Idle,
             MoveToPickup,
             LowerToPickup,
+            GripAtPickup,
             LiftFromPickup,
             MoveToDrop,
             LowerToDrop,
@@ -71,5 +73,6 @@ namespace core::sim
         bool m_gripperGripped{ false };
         std::optional<Part> m_pendingPickupPart;
         std::optional<Part> m_carriedPart;
+        double m_stageTimer{ 0.0 };
     };
 }

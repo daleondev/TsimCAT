@@ -91,7 +91,7 @@ Item {
                 length: 1875
                 height: 700
                 conveyorController: root.backend ? root.backend.entryConveyor : null
-                sensorPositions: [100.0, 1000.0, 1775.0]
+                sensorPositions: [437.5, 1000.0, 1775.0]
             }
 
             // 3. MAIN ROBOT
@@ -118,6 +118,94 @@ Item {
                     }
                 }
             }
+
+            Node {
+                id: rejectBin
+                position: Qt.vector3d(-850, 0, 1325)
+
+                Model {
+                    position: Qt.vector3d(0, 720, 0)
+                    source: "#Cube"
+                    scale: Qt.vector3d(3.8, 0.12, 2.8)
+                    materials: [
+                        PrincipledMaterial {
+                            baseColor: "#3a3a3a"
+                            metalness: 0.5
+                            roughness: 0.4
+                        }
+                    ]
+                }
+
+                Model {
+                    position: Qt.vector3d(-180, 860, 0)
+                    source: "#Cube"
+                    scale: Qt.vector3d(0.12, 2.8, 2.8)
+                    materials: [
+                        PrincipledMaterial {
+                            baseColor: "#4a4a4a"
+                            metalness: 0.5
+                            roughness: 0.4
+                        }
+                    ]
+                }
+
+                Model {
+                    position: Qt.vector3d(180, 860, 0)
+                    source: "#Cube"
+                    scale: Qt.vector3d(0.12, 2.8, 2.8)
+                    materials: [
+                        PrincipledMaterial {
+                            baseColor: "#4a4a4a"
+                            metalness: 0.5
+                            roughness: 0.4
+                        }
+                    ]
+                }
+
+                Model {
+                    position: Qt.vector3d(0, 860, -135)
+                    source: "#Cube"
+                    scale: Qt.vector3d(3.8, 2.8, 0.12)
+                    materials: [
+                        PrincipledMaterial {
+                            baseColor: "#4a4a4a"
+                            metalness: 0.5
+                            roughness: 0.4
+                        }
+                    ]
+                }
+
+                Model {
+                    position: Qt.vector3d(0, 860, 135)
+                    source: "#Cube"
+                    scale: Qt.vector3d(3.8, 2.8, 0.12)
+                    materials: [
+                        PrincipledMaterial {
+                            baseColor: "#4a4a4a"
+                            metalness: 0.5
+                            roughness: 0.4
+                        }
+                    ]
+                }
+
+                Repeater3D {
+                    model: root.backend ? root.backend.rejectBinCount : 0
+                    delegate: PartModel {
+                        required property int index
+                        readonly property int layer: Math.floor(index / 9)
+                        readonly property int layerIndex: index % 9
+                        readonly property int column: layerIndex % 3
+                        readonly property int row: Math.floor(layerIndex / 3)
+
+                        position: Qt.vector3d((column - 1) * 100, 760 + layer * 84, (row - 1) * 78)
+                        width: 120
+                        length: 120
+                        height: 80
+                        color: index % 2 === 0 ? "#e67e22" : "#3498db"
+                    }
+                }
+            }
+
             // 4. STATIONS
             Node {
                 id: stationsRow

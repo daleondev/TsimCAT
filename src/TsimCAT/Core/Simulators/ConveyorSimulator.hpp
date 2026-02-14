@@ -21,8 +21,10 @@ namespace core::sim
             std::vector<double> sensorPositions; // mm from start
 
             // Logic config
-            int damperSensorIndex{ -1 }; // Index in sensorPositions where damper is
-            int endSensorIndex{ -1 };    // Index in sensorPositions where end is
+            int damperSensorIndex{ -1 };      // Index in sensorPositions where damper is
+            int damperCloseSensorIndex{ -1 }; // Optional close trigger sensor index
+            int endSensorIndex{ -1 };         // Index in sensorPositions where end is
+            bool consumeAtEndSensor{ false }; // Remove parts when they reach end sensor
             double damperOpenDelaySeconds{ 1.0 };
 
             // ADS Mapping

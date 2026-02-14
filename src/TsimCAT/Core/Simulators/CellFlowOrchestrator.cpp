@@ -30,6 +30,7 @@ namespace core::sim
         m_currentPart.reset();
         m_cameraPart.reset();
         m_laserPart.reset();
+        m_rejectBinParts.clear();
         m_activeJobId = 0;
         m_jobInProgress = false;
         m_jobObservedMotion = false;
@@ -65,6 +66,7 @@ namespace core::sim
         m_currentPart.reset();
         m_cameraPart.reset();
         m_laserPart.reset();
+        m_rejectBinParts.clear();
         m_activeJobId = 0;
         m_jobInProgress = false;
         m_jobObservedMotion = false;
@@ -126,6 +128,11 @@ namespace core::sim
                         issueJob(4, Stage::PickCamera);
                     }
                     else {
+                        if (m_cameraPart.has_value()) {
+                            m_currentPart = m_cameraPart;
+                            m_cameraPart.reset();
+                        }
+                        m_robot->setGripper(true);
                         issueJob(1, Stage::RejectPart);
                     }
                 }
@@ -191,6 +198,12 @@ namespace core::sim
 
             case Stage::RejectPart:
                 if (updateJobProgress(Stage::WaitingEntryPart)) {
+                    if (m_currentPart.has_value()) {
+                        if (m_rejectBinParts.size() >= 24) {
+                            m_rejectBinParts.erase(m_rejectBinParts.begin());
+                        }
+                        m_rejectBinParts.push_back(*m_currentPart);
+                    }
                     m_robot->setGripper(false);
                     finishCycle(false);
                 }
@@ -222,6 +235,11 @@ namespace core::sim
     auto CellFlowOrchestrator::laserPartType() const -> uint8_t
     {
         return m_laserPart.has_value() ? m_laserPart->type : 0;
+    }
+
+    auto CellFlowOrchestrator::rejectBinCount() const -> int
+    {
+        return static_cast<int>(m_rejectBinParts.size());
     }
 
     auto CellFlowOrchestrator::statusText() const -> std::string

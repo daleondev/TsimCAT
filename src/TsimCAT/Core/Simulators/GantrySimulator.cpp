@@ -24,6 +24,7 @@ namespace core::sim
     {
         m_running = false;
         m_stage = Stage::Idle;
+        m_stageTimer = 0.0;
         m_pendingPickupPart.reset();
         m_carriedPart.reset();
         m_gripperGripped = false;
@@ -35,12 +36,15 @@ namespace core::sim
             return;
         }
 
+        m_stageTimer += deltaTimeSeconds;
+
         switch (m_stage) {
             case Stage::Idle: {
                 auto part = m_sourceConveyor->peekPartAtEnd();
                 if (part.has_value()) {
                     m_pendingPickupPart = std::move(part);
                     m_stage = Stage::MoveToPickup;
+                    m_stageTimer = 0.0;
                 }
                 break;
             }
@@ -48,11 +52,20 @@ namespace core::sim
             case Stage::MoveToPickup:
                 if (moveAxis(m_xPos, m_config.pickupX, m_config.xSpeed, deltaTimeSeconds)) {
                     m_stage = Stage::LowerToPickup;
+                    m_stageTimer = 0.0;
                 }
                 break;
 
             case Stage::LowerToPickup:
                 if (moveAxis(m_zPos, m_config.zPickup, m_config.zSpeed, deltaTimeSeconds)) {
+                    m_gripperGripped = true;
+                    m_stage = Stage::GripAtPickup;
+                    m_stageTimer = 0.0;
+                }
+                break;
+
+            case Stage::GripAtPickup:
+                if (m_stageTimer >= m_config.gripSettleSeconds) {
                     if (auto taken = m_sourceConveyor->takePartAtEnd(); taken.has_value()) {
                         m_carriedPart = std::move(taken);
                     }
@@ -60,26 +73,29 @@ namespace core::sim
                         m_carriedPart = m_pendingPickupPart;
                     }
                     m_pendingPickupPart.reset();
-                    m_gripperGripped = true;
                     m_stage = Stage::LiftFromPickup;
+                    m_stageTimer = 0.0;
                 }
                 break;
 
             case Stage::LiftFromPickup:
                 if (moveAxis(m_zPos, m_config.zHome, m_config.zSpeed, deltaTimeSeconds)) {
                     m_stage = Stage::MoveToDrop;
+                    m_stageTimer = 0.0;
                 }
                 break;
 
             case Stage::MoveToDrop:
                 if (moveAxis(m_xPos, m_config.dropX, m_config.xSpeed, deltaTimeSeconds)) {
                     m_stage = Stage::LowerToDrop;
+                    m_stageTimer = 0.0;
                 }
                 break;
 
             case Stage::LowerToDrop:
                 if (moveAxis(m_zPos, m_config.zDrop, m_config.zSpeed, deltaTimeSeconds)) {
                     m_stage = Stage::ReleaseAtDrop;
+                    m_stageTimer = 0.0;
                 }
                 break;
 
@@ -90,11 +106,13 @@ namespace core::sim
                 m_carriedPart.reset();
                 m_gripperGripped = false;
                 m_stage = Stage::LiftHome;
+                m_stageTimer = 0.0;
                 break;
 
             case Stage::LiftHome:
                 if (moveAxis(m_zPos, m_config.zHome, m_config.zSpeed, deltaTimeSeconds)) {
                     m_stage = Stage::Idle;
+                    m_stageTimer = 0.0;
                 }
                 break;
         }
@@ -126,6 +144,8 @@ namespace core::sim
                 return "Move to pickup";
             case Stage::LowerToPickup:
                 return "Lower to pickup";
+            case Stage::GripAtPickup:
+                return "Grip pickup";
             case Stage::LiftFromPickup:
                 return "Lift from pickup";
             case Stage::MoveToDrop:
