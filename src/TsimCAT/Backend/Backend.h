@@ -9,8 +9,13 @@
 #include "RuntimeConfig.h"
 
 #include <QCoroTask>
+#include <QElapsedTimer>
+#include <QFile>
 #include <QObject>
+#include <QPointer>
+#include <QQuickItem>
 #include <QString>
+#include <QTimer>
 #include <QtQml/qqmlregistration.h>
 #include <memory>
 
@@ -59,6 +64,12 @@ namespace backend
         Q_PROPERTY(int cameraPartType READ cameraPartType NOTIFY partVisualizationChanged)
         Q_PROPERTY(bool laserPartVisible READ laserPartVisible NOTIFY partVisualizationChanged)
         Q_PROPERTY(int laserPartType READ laserPartType NOTIFY partVisualizationChanged)
+        Q_PROPERTY(bool analyzerEnabled READ analyzerEnabled CONSTANT)
+        Q_PROPERTY(
+          bool analyzerCaptureRunning READ analyzerCaptureRunning NOTIFY analyzerCaptureRunningChanged)
+        Q_PROPERTY(
+          int analyzerCapturedFrames READ analyzerCapturedFrames NOTIFY analyzerCaptureProgressChanged)
+        Q_PROPERTY(QString analyzerOutputFolder READ analyzerOutputFolder CONSTANT)
 
       public:
         explicit Backend(QObject* parent = nullptr);
@@ -85,6 +96,10 @@ namespace backend
         int cameraPartType() const;
         bool laserPartVisible() const;
         int laserPartType() const;
+        bool analyzerEnabled() const;
+        bool analyzerCaptureRunning() const;
+        int analyzerCapturedFrames() const;
+        QString analyzerOutputFolder() const;
         void setLocalRobotMode(bool enabled);
         void setLocalLaserMode(bool enabled);
         void setLocalGantryMode(bool enabled);
@@ -96,6 +111,8 @@ namespace backend
         Q_INVOKABLE void startInternalCellFlow();
         Q_INVOKABLE void stopInternalCellFlow();
         Q_INVOKABLE bool setStationLocalMode(const QString& station, bool enabled);
+        Q_INVOKABLE bool startAnalyzerCapture(QObject* item);
+        Q_INVOKABLE void stopAnalyzerCapture();
 
       signals:
         void asyncTestStatusChanged();
@@ -103,6 +120,8 @@ namespace backend
         void internalCellFlowStatusChanged();
         void stationModesChanged();
         void partVisualizationChanged();
+        void analyzerCaptureRunningChanged();
+        void analyzerCaptureProgressChanged();
 
       private:
         QCoro::Task<void> doAsyncTest();
@@ -134,11 +153,24 @@ namespace backend
         bool m_entryConveyorCommTaskStarted{ false };
         bool m_exitConveyorCommTaskStarted{ false };
 
+        bool m_analyzerRunning{ false };
+        bool m_analyzerFrameCapturePending{ false };
+        int m_analyzerCapturedFrames{ 0 };
+        double m_analyzerFrameAccumulator{ 0.0 };
+        double m_analyzerTraceAccumulator{ 0.0 };
+        QString m_analyzerOutputFolder;
+        QPointer<QQuickItem> m_analyzerTargetItem;
+        QFile m_analyzerTraceFile;
+        QElapsedTimer m_analyzerElapsed;
+
         void ensureRobotCommTask();
         void ensureLaserCommTask();
         void ensureEntryConveyorCommTask();
         void ensureExitConveyorCommTask();
         void updateCellFlowStatusText();
+        void updateAnalyzer(double deltaTimeSeconds);
+        void writeAnalyzerTraceSample();
+        QString resolveAnalyzerOutputFolder() const;
     };
 }
 

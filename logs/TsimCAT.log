@@ -880,3 +880,65 @@
 20:08:35 INFO [CellFlowOrchestrator.cpp:296] CellFlowOrchestrator cycle completed (accepted)
 20:08:35 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
 20:08:36 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+20:20:09 INFO [Backend.cpp:35] Backend initialized
+20:20:09 INFO [Backend.cpp:36] Loaded runtime config from 'config/runtime.json'.
+20:20:09 INFO [RobotSimulator.cpp:43] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+20:20:09 INFO [CellFlowOrchestrator.cpp:58] CellFlowOrchestrator started
+20:20:23 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+20:20:24 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+20:20:26 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
+20:20:27 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 5 with 39 waypoints
+20:20:29 INFO [LaserSimulator.cpp:57] LaserSimulator: Job finished
+20:20:29 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 6 with 39 waypoints
+20:20:31 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 7 with 39 waypoints
+20:20:32 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+20:20:33 INFO [CellFlowOrchestrator.cpp:296] CellFlowOrchestrator cycle completed (accepted)
+20:20:33 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+20:20:34 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+20:20:37 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
+20:20:38 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 5 with 39 waypoints
+20:20:40 INFO [LaserSimulator.cpp:57] LaserSimulator: Job finished
+20:20:40 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 6 with 39 waypoints
+20:20:41 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 7 with 39 waypoints
+20:20:43 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+20:20:44 INFO [CellFlowOrchestrator.cpp:296] CellFlowOrchestrator cycle completed (accepted)
+20:20:44 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+20:20:45 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+20:20:47 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
+20:20:48 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 5 with 39 waypoints
+20:20:50 INFO [LaserSimulator.cpp:57] LaserSimulator: Job finished
+20:20:50 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 6 with 39 waypoints
+20:29:45 INFO [Backend.cpp:35] Backend initialized
+20:29:45 INFO [Backend.cpp:36] Loaded runtime config from 'config/runtime.json'.
+20:29:45 INFO [RobotSimulator.cpp:43] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+20:29:45 INFO [CellFlowOrchestrator.cpp:58] CellFlowOrchestrator started
+20:29:59 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+20:30:01 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+20:30:03 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+20:30:04 INFO [CellFlowOrchestrator.cpp:299] CellFlowOrchestrator cycle completed (rejected)
+20:30:06 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+20:30:08 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+20:30:10 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+20:30:11 INFO [CellFlowOrchestrator.cpp:299] CellFlowOrchestrator cycle completed (rejected)
+20:30:13 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+20:30:15 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+20:30:17 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
+20:30:18 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 5 with 39 waypoints
+20:30:20 INFO [LaserSimulator.cpp:57] LaserSimulator: Job finished
+20:30:20 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 6 with 39 waypoints
+20:30:21 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 7 with 39 waypoints
+20:30:23 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+20:30:24 INFO [CellFlowOrchestrator.cpp:299] CellFlowOrchestrator cycle completed (accepted)
+20:30:24 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+20:30:25 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+20:30:27 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
+20:30:28 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 5 with 39 waypoints
+20:30:31 INFO [LaserSimulator.cpp:57] LaserSimulator: Job finished
+20:30:31 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 6 with 39 waypoints
+20:30:32 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 7 with 39 waypoints
+20:30:33 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+20:30:34 INFO [CellFlowOrchestrator.cpp:299] CellFlowOrchestrator cycle completed (accepted)
+20:30:34 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+20:30:35 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+20:30:38 INFO [RobotSimulator.cpp:154] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+20:30:38 INFO [CellFlowOrchestrator.cpp:299] CellFlowOrchestrator cycle completed (rejected)

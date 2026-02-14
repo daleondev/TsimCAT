@@ -23,6 +23,7 @@ namespace core::sim
             // Logic config
             int damperSensorIndex{ -1 }; // Index in sensorPositions where damper is
             int endSensorIndex{ -1 };    // Index in sensorPositions where end is
+            double damperOpenDelaySeconds{ 1.0 };
 
             // ADS Mapping
             std::string adsRunCmd;                     // e.g., "MAIN.bEntryRun"
@@ -43,6 +44,7 @@ namespace core::sim
         // Simulation control
         auto spawnPart(uint8_t type) -> void;
         auto clearParts() -> void;
+        auto peekPartAtEnd() const -> std::optional<Part>;
         auto takePartAtEnd() -> std::optional<Part>;
 
         // State Access

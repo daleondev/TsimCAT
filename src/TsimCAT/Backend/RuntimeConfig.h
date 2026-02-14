@@ -30,6 +30,18 @@ namespace backend
         CellFlowConfig cellFlow;
     };
 
+    struct AnalyzerConfig
+    {
+        bool enabled{ false };
+        bool autoStart{ true };
+        bool saveFrames{ true };
+        bool saveTrace{ true };
+        int frameIntervalMs{ 250 };
+        int traceIntervalMs{ 100 };
+        int maxFrames{ 240 };
+        QString outputFolder{ QStringLiteral("analysis/session") };
+    };
+
     struct RuntimeConfig
     {
         std::string loggerFilePath;
@@ -42,6 +54,7 @@ namespace backend
         core::sim::ConveyorSimulator::Config exitConveyor;
         core::sim::ConveyorSimulator::Config transferConveyor;
         SimulationConfig simulation;
+        AnalyzerConfig analyzer;
 
         static RuntimeConfig defaults();
 

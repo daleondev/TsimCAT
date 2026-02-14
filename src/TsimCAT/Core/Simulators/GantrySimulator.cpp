@@ -24,6 +24,9 @@ namespace core::sim
     {
         m_running = false;
         m_stage = Stage::Idle;
+        m_pendingPickupPart.reset();
+        m_carriedPart.reset();
+        m_gripperGripped = false;
     }
 
     auto GantrySimulator::update(double deltaTimeSeconds) -> void
@@ -34,9 +37,9 @@ namespace core::sim
 
         switch (m_stage) {
             case Stage::Idle: {
-                auto part = m_sourceConveyor->takePartAtEnd();
+                auto part = m_sourceConveyor->peekPartAtEnd();
                 if (part.has_value()) {
-                    m_carriedPart = std::move(part);
+                    m_pendingPickupPart = std::move(part);
                     m_stage = Stage::MoveToPickup;
                 }
                 break;
@@ -50,6 +53,13 @@ namespace core::sim
 
             case Stage::LowerToPickup:
                 if (moveAxis(m_zPos, m_config.zPickup, m_config.zSpeed, deltaTimeSeconds)) {
+                    if (auto taken = m_sourceConveyor->takePartAtEnd(); taken.has_value()) {
+                        m_carriedPart = std::move(taken);
+                    }
+                    else {
+                        m_carriedPart = m_pendingPickupPart;
+                    }
+                    m_pendingPickupPart.reset();
                     m_gripperGripped = true;
                     m_stage = Stage::LiftFromPickup;
                 }

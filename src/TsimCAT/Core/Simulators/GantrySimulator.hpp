@@ -69,6 +69,7 @@ namespace core::sim
         double m_xPos{ 0.0 };
         double m_zPos{ 0.0 };
         bool m_gripperGripped{ false };
+        std::optional<Part> m_pendingPickupPart;
         std::optional<Part> m_carriedPart;
     };
 }

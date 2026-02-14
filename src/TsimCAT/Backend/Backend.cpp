@@ -13,8 +13,10 @@
 #include <QCoroTimer>
 #include <QDateTime>
 #include <QDir>
+#include <QFileInfo>
 #include <QQuickItem>
 #include <QQuickItemGrabResult>
+#include <QTextStream>
 #include <chrono>
 
 using namespace std::chrono_literals;
@@ -32,6 +34,7 @@ namespace backend
         core::logger::Logger::instance().init(m_runtimeConfig.loggerFilePath);
         core::logger::info("Backend initialized");
         core::logger::info("{}", configDiagnostics.toStdString());
+        m_analyzerOutputFolder = resolveAnalyzerOutputFolder();
 
         // 1. Create Shared Links
         auto tcpRes = core::link::create(core::link::Role::Server,
@@ -155,6 +158,7 @@ namespace backend
                 if (self->m_gantryController)
                     emit self->m_gantryController->stateChanged();
                 emit self->partVisualizationChanged();
+                self->updateAnalyzer(dt);
 
                 co_await QCoro::sleepFor(10ms);
             }
@@ -222,6 +226,14 @@ namespace backend
     {
         return m_cellFlow ? static_cast<int>(m_cellFlow->laserPartType()) : 0;
     }
+
+    bool Backend::analyzerEnabled() const { return m_runtimeConfig.analyzer.enabled; }
+
+    bool Backend::analyzerCaptureRunning() const { return m_analyzerRunning; }
+
+    int Backend::analyzerCapturedFrames() const { return m_analyzerCapturedFrames; }
+
+    QString Backend::analyzerOutputFolder() const { return m_analyzerOutputFolder; }
 
     void Backend::setLocalRobotMode(bool enabled)
     {
@@ -413,6 +425,75 @@ namespace backend
         return false;
     }
 
+    bool Backend::startAnalyzerCapture(QObject* item)
+    {
+        if (!m_runtimeConfig.analyzer.enabled) {
+            core::logger::warn("Analyzer capture start requested but analyzer.enabled=false");
+            return false;
+        }
+
+        auto* quickItem = qobject_cast<QQuickItem*>(item);
+        if (!quickItem) {
+            core::logger::error("startAnalyzerCapture: target item is null or not a QQuickItem");
+            return false;
+        }
+
+        if (m_analyzerRunning) {
+            return true;
+        }
+
+        QDir outputDir(m_analyzerOutputFolder);
+        if (!outputDir.exists()) {
+            outputDir.mkpath(".");
+        }
+
+        if (m_runtimeConfig.analyzer.saveFrames) {
+            outputDir.mkpath("frames");
+        }
+
+        if (m_runtimeConfig.analyzer.saveTrace) {
+            m_analyzerTraceFile.setFileName(outputDir.filePath("trace.csv"));
+            if (m_analyzerTraceFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+                QTextStream stream(&m_analyzerTraceFile);
+                stream << "timestamp_ms,cell_flow,robot_motion,robot_gripped,robot_job,gantry_x,gantry_z,"
+                          "gantry_gripped,entry_parts,exit_parts,transfer_parts,entry_damper,exit_damper\n";
+                stream.flush();
+            }
+            else {
+                core::logger::error("Failed to open analyzer trace file at {}",
+                                    m_analyzerTraceFile.fileName().toStdString());
+            }
+        }
+
+        m_analyzerTargetItem = quickItem;
+        m_analyzerCapturedFrames = 0;
+        m_analyzerFrameAccumulator = 0.0;
+        m_analyzerTraceAccumulator = 0.0;
+        m_analyzerFrameCapturePending = false;
+        m_analyzerRunning = true;
+        m_analyzerElapsed.restart();
+        emit analyzerCaptureRunningChanged();
+        emit analyzerCaptureProgressChanged();
+        return true;
+    }
+
+    void Backend::stopAnalyzerCapture()
+    {
+        if (!m_analyzerRunning) {
+            return;
+        }
+
+        m_analyzerRunning = false;
+        m_analyzerFrameCapturePending = false;
+        m_analyzerTargetItem = nullptr;
+
+        if (m_analyzerTraceFile.isOpen()) {
+            m_analyzerTraceFile.close();
+        }
+
+        emit analyzerCaptureRunningChanged();
+    }
+
     void Backend::ensureRobotCommTask()
     {
         if (m_robotCommTaskStarted || !m_robotSim || m_runtimeConfig.simulation.robot.internal) {
@@ -489,6 +570,100 @@ namespace backend
             m_internalCellFlowStatus = status;
             emit internalCellFlowStatusChanged();
         }
+    }
+
+    void Backend::updateAnalyzer(double deltaTimeSeconds)
+    {
+        if (!m_analyzerRunning) {
+            return;
+        }
+
+        m_analyzerFrameAccumulator += deltaTimeSeconds;
+        m_analyzerTraceAccumulator += deltaTimeSeconds;
+
+        if (m_runtimeConfig.analyzer.saveTrace &&
+            m_analyzerTraceAccumulator * 1000.0 >= m_runtimeConfig.analyzer.traceIntervalMs) {
+            m_analyzerTraceAccumulator = 0.0;
+            writeAnalyzerTraceSample();
+        }
+
+        if (!m_runtimeConfig.analyzer.saveFrames || m_analyzerFrameCapturePending || !m_analyzerTargetItem) {
+            return;
+        }
+
+        if (m_analyzerFrameAccumulator * 1000.0 < m_runtimeConfig.analyzer.frameIntervalMs) {
+            return;
+        }
+        m_analyzerFrameAccumulator = 0.0;
+        m_analyzerFrameCapturePending = true;
+
+        auto outputDir = QDir(m_analyzerOutputFolder);
+        const auto frameIndex = m_analyzerCapturedFrames;
+        const auto framePath =
+          outputDir.filePath(QString("frames/frame_%1.png").arg(frameIndex, 6, 10, QLatin1Char('0')));
+
+        auto result = m_analyzerTargetItem->grabToImage();
+        if (!result) {
+            m_analyzerFrameCapturePending = false;
+            return;
+        }
+
+        connect(result.data(), &QQuickItemGrabResult::ready, this, [this, result, framePath]() {
+            const bool saved = result->saveToFile(framePath);
+            if (!saved) {
+                core::logger::error("Failed to save analyzer frame to {}", framePath.toStdString());
+            }
+            m_analyzerCapturedFrames += saved ? 1 : 0;
+            m_analyzerFrameCapturePending = false;
+            emit analyzerCaptureProgressChanged();
+
+            if (m_runtimeConfig.analyzer.maxFrames > 0 &&
+                m_analyzerCapturedFrames >= m_runtimeConfig.analyzer.maxFrames) {
+                stopAnalyzerCapture();
+            }
+        }, Qt::SingleShotConnection);
+    }
+
+    void Backend::writeAnalyzerTraceSample()
+    {
+        if (!m_analyzerTraceFile.isOpen()) {
+            return;
+        }
+
+        const qint64 timestampMs = m_analyzerElapsed.isValid() ? m_analyzerElapsed.elapsed() : 0;
+        const auto robotStatus = m_robotSim ? m_robotSim->status() : core::sim::RobotStatus{};
+        const auto robotGripped = m_robotSim ? m_robotSim->isGripperGripped() : false;
+        const auto gantryX = m_gantrySim ? m_gantrySim->xPos() : 0.0;
+        const auto gantryZ = m_gantrySim ? m_gantrySim->zPos() : 0.0;
+        const auto gantryGripped = m_gantrySim ? m_gantrySim->gripperGripped() : false;
+        const auto entryParts = m_entryConveyorSim ? m_entryConveyorSim->parts().size() : 0;
+        const auto exitParts = m_exitConveyorSim ? m_exitConveyorSim->parts().size() : 0;
+        const auto transferParts = m_transferConveyorSim ? m_transferConveyorSim->parts().size() : 0;
+        const auto entryDamper = m_entryConveyorSim ? m_entryConveyorSim->damperOpen() : false;
+        const auto exitDamper = m_transferConveyorSim ? m_transferConveyorSim->damperOpen() : false;
+
+        QTextStream stream(&m_analyzerTraceFile);
+        stream << timestampMs << "," << internalCellFlowStatus() << ","
+               << static_cast<int>(robotStatus.bInMotion) << "," << static_cast<int>(robotGripped) << ","
+               << robotStatus.nJobIdFeedback << "," << gantryX << "," << gantryZ << ","
+               << static_cast<int>(gantryGripped) << "," << entryParts << "," << exitParts << ","
+               << transferParts << "," << static_cast<int>(entryDamper) << "," << static_cast<int>(exitDamper)
+               << "\n";
+        stream.flush();
+    }
+
+    QString Backend::resolveAnalyzerOutputFolder() const
+    {
+        if (m_runtimeConfig.analyzer.outputFolder.isEmpty()) {
+            return QStringLiteral("analysis/session");
+        }
+
+        QFileInfo info(m_runtimeConfig.analyzer.outputFolder);
+        if (info.isAbsolute()) {
+            return info.absoluteFilePath();
+        }
+
+        return QDir::current().filePath(m_runtimeConfig.analyzer.outputFolder);
     }
 
     QCoro::Task<void> Backend::doAsyncTest()

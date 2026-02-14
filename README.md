@@ -85,6 +85,15 @@ Per-station local simulation can be configured independently via:
 - `simulation.stationModes.entryConveyorInternal`
 - `simulation.stationModes.exitConveyorInternal`
 
+Analyzer capture can be configured via `analyzer`:
+- `enabled`: Enable/disable analyzer helper pipeline.
+- `autoStart`: Start capture automatically on app launch.
+- `saveFrames`: Write cyclic PNG frames.
+- `saveTrace`: Write CSV state trace (`trace.csv`).
+- `frameIntervalMs` / `traceIntervalMs`: Capture cadence.
+- `maxFrames`: Automatic stop after N frames.
+- `outputFolder`: Output directory for frames and trace.
+
 `simulation.localOnly=true` forces all stations to local mode; keep it `false` to control each station individually.
 
 You can override the file path with:

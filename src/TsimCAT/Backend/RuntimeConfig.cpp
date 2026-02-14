@@ -117,6 +117,7 @@ namespace backend
             applyDoubleArray(object, "sensorPositions", config.sensorPositions);
             applyInt(object, "damperSensorIndex", config.damperSensorIndex);
             applyInt(object, "endSensorIndex", config.endSensorIndex);
+            applyDouble(object, "damperOpenDelaySeconds", config.damperOpenDelaySeconds);
             applyString(object, "adsRunCmd", config.adsRunCmd);
             applyStringArray(object, "adsSensorSignals", config.adsSensorSignals);
         }
@@ -142,6 +143,7 @@ namespace backend
                                  .sensorPositions = { 437.5, 1000.0, 1775.0 },
                                  .damperSensorIndex = 0,
                                  .endSensorIndex = 2,
+                                 .damperOpenDelaySeconds = 1.0,
                                  .adsRunCmd = "MAIN.bEntryConveyorRun",
                                  .adsSensorSignals = {
                                    "MAIN.bEntrySensor1", "MAIN.bEntrySensor2", "MAIN.bEntrySensor3" } };
@@ -162,6 +164,7 @@ namespace backend
             .sensorPositions = { 120.0, 650.0, 1120.0 },
             .damperSensorIndex = 0,
             .endSensorIndex = 2,
+            .damperOpenDelaySeconds = 0.2,
             .adsRunCmd = "MAIN.bTransferConveyorRun",
             .adsSensorSignals = { "MAIN.bTransferSensor1", "MAIN.bTransferSensor2", "MAIN.bTransferSensor3" }
         };
@@ -175,6 +178,15 @@ namespace backend
         config.simulation.cellFlow.enabled = true;
         config.simulation.cellFlow.autoStart = true;
         config.simulation.cellFlow.inspectionRejectRate = 0.2;
+
+        config.analyzer.enabled = false;
+        config.analyzer.autoStart = true;
+        config.analyzer.saveFrames = true;
+        config.analyzer.saveTrace = true;
+        config.analyzer.frameIntervalMs = 250;
+        config.analyzer.traceIntervalMs = 100;
+        config.analyzer.maxFrames = 240;
+        config.analyzer.outputFolder = QStringLiteral("analysis/session");
 
         return config;
     }
@@ -258,6 +270,16 @@ namespace backend
             config.simulation.entryConveyor.internal = true;
             config.simulation.exitConveyor.internal = true;
         }
+
+        const auto analyzer = asObject(root, "analyzer");
+        applyBool(analyzer, "enabled", config.analyzer.enabled);
+        applyBool(analyzer, "autoStart", config.analyzer.autoStart);
+        applyBool(analyzer, "saveFrames", config.analyzer.saveFrames);
+        applyBool(analyzer, "saveTrace", config.analyzer.saveTrace);
+        applyInt(analyzer, "frameIntervalMs", config.analyzer.frameIntervalMs);
+        applyInt(analyzer, "traceIntervalMs", config.analyzer.traceIntervalMs);
+        applyInt(analyzer, "maxFrames", config.analyzer.maxFrames);
+        applyString(analyzer, "outputFolder", config.analyzer.outputFolder);
 
         if (diagnostics) {
             *diagnostics = QStringLiteral("Loaded runtime config from '%1'.").arg(path);

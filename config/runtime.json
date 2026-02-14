@@ -27,6 +27,7 @@
             ],
             "damperSensorIndex": 0,
             "endSensorIndex": 2,
+            "damperOpenDelaySeconds": 1.0,
             "adsRunCmd": "MAIN.bEntryConveyorRun",
             "adsSensorSignals": [
                 "MAIN.bEntrySensor1",
@@ -58,6 +59,7 @@
             ],
             "damperSensorIndex": 0,
             "endSensorIndex": 2,
+            "damperOpenDelaySeconds": 0.2,
             "adsRunCmd": "MAIN.bTransferConveyorRun",
             "adsSensorSignals": [
                 "MAIN.bTransferSensor1",
@@ -80,5 +82,15 @@
             "autoStart": true,
             "inspectionRejectRate": 0.2
         }
+    },
+    "analyzer": {
+        "enabled": true,
+        "autoStart": true,
+        "saveFrames": true,
+        "saveTrace": true,
+        "frameIntervalMs": 250,
+        "traceIntervalMs": 100,
+        "maxFrames": 240,
+        "outputFolder": "analysis/session"
     }
 }

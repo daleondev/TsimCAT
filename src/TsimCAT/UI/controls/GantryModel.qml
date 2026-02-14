@@ -216,20 +216,20 @@ Node {
                 }
 
                 GripperModel {
+                    id: gantryGripper
                     x: -gripperFrameLength / 2
                     eulerRotation.y: -90
                     eulerRotation.z: 90
                     gripped: gantryRoot.gripperGripped
-                }
 
-                PartModel {
-                    visible: gantryRoot.carriedPartVisible
-                    x: -gripperFrameLength / 2
-                    position.y: 220
-                    width: 140
-                    length: 140
-                    height: 80
-                    color: gantryRoot.carriedPartType === 2 ? "#3498db" : "#e67e22"
+                    PartModel {
+                        visible: gantryRoot.carriedPartVisible
+                        position: Qt.vector3d(0, 120, 85)
+                        width: 140
+                        length: 140
+                        height: 80
+                        color: gantryRoot.carriedPartType === 2 ? "#3498db" : "#e67e22"
+                    }
                 }
             }
         }

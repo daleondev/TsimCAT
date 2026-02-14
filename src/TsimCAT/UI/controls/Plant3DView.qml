@@ -131,7 +131,7 @@ Item {
                     }
                     PartModel {
                         visible: root.backend ? root.backend.cameraPartVisible : false
-                        position: Qt.vector3d(0, 730, 0)
+                        position: Qt.vector3d(0, 815, 0)
                         width: 140
                         length: 140
                         height: 80
@@ -152,7 +152,7 @@ Item {
                     }
                     PartModel {
                         visible: root.backend ? root.backend.laserPartVisible : false
-                        position: Qt.vector3d(0, 730, 0)
+                        position: Qt.vector3d(0, 815, 0)
                         width: 140
                         length: 140
                         height: 80

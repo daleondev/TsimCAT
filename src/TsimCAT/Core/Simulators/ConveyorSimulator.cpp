@@ -89,7 +89,7 @@ namespace core::sim
             else if (partAtDamper && !m_damperOpen) {
                 m_beltRunning = false; // Stop in front of damper
                 m_damperTimer += deltaTimeSeconds;
-                if (m_damperTimer > 1.0) { // 1s delay to "simulate" detection/PLC logic
+                if (m_damperTimer > m_config.damperOpenDelaySeconds) {
                     m_damperOpen = true;
                     m_damperTimer = 0;
                 }
@@ -194,6 +194,22 @@ namespace core::sim
             Part p = *it;
             m_parts.erase(it);
             return p;
+        }
+        return std::nullopt;
+    }
+
+    auto ConveyorSimulator::peekPartAtEnd() const -> std::optional<Part>
+    {
+        std::scoped_lock lock(m_mutex);
+        if (m_parts.empty())
+            return std::nullopt;
+
+        auto it = std::max_element(m_parts.begin(), m_parts.end(), [](const Part& a, const Part& b) {
+            return a.position < b.position;
+        });
+
+        if (it->position > m_config.length - 200.0) {
+            return *it;
         }
         return std::nullopt;
     }

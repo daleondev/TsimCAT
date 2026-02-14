@@ -88,7 +88,7 @@ namespace core::sim
                 break;
 
             case Stage::WaitingEntryPart: {
-                auto part = m_entryConveyor->takePartAtEnd();
+                auto part = m_entryConveyor->peekPartAtEnd();
                 if (part.has_value()) {
                     m_currentPart = std::move(part);
                     issueJob(2, Stage::PickEntry);
@@ -98,6 +98,9 @@ namespace core::sim
 
             case Stage::PickEntry:
                 if (updateJobProgress(Stage::PlaceCamera)) {
+                    if (auto pickedPart = m_entryConveyor->takePartAtEnd(); pickedPart.has_value()) {
+                        m_currentPart = std::move(pickedPart);
+                    }
                     m_robot->setGripper(true);
                     issueJob(3, Stage::PlaceCamera);
                 }
