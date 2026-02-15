@@ -18,6 +18,13 @@ Node {
         baseColor: '#f67828'
     }
 
+    PrincipledMaterial {
+        id: panelMaterial
+        baseColor: "#2b2b2b"
+        metalness: 0.7
+        roughness: 0.35
+    }
+
     // Common Material for frame/posts
     PrincipledMaterial {
         id: fenceMaterial
@@ -209,6 +216,159 @@ Node {
         }
     }
 
+    component SmallDoorControlPanel: Node {
+        id: smallPanel
+
+        Model {
+            source: "#Cube"
+            scale: Qt.vector3d(1.4, 1.1, 0.14)
+            materials: [panelMaterial]
+        }
+
+        Model {
+            objectName: "doorUnlockButton"
+            pickable: true
+            source: "#Cylinder"
+            eulerRotation.x: 90
+            position: Qt.vector3d(-35, 20, 14)
+            scale: Qt.vector3d(0.28, 0.12, 0.28)
+            materials: [
+                PrincipledMaterial {
+                    baseColor: "#3498db"
+                    metalness: 0.2
+                    roughness: 0.25
+                }
+            ]
+        }
+
+        Model {
+            objectName: "doorStartButton"
+            pickable: true
+            source: "#Cylinder"
+            eulerRotation.x: 90
+            position: Qt.vector3d(35, 20, 14)
+            scale: Qt.vector3d(0.28, 0.12, 0.28)
+            materials: [
+                PrincipledMaterial {
+                    baseColor: "#2ecc71"
+                    metalness: 0.2
+                    roughness: 0.25
+                }
+            ]
+        }
+    }
+
+    component MainControlPanel: Node {
+        id: mainPanel
+
+        Model {
+            source: "#Cube"
+            scale: Qt.vector3d(3.2, 4.6, 0.18)
+            materials: [panelMaterial]
+        }
+
+        Model {
+            objectName: "mainStartButton"
+            pickable: true
+            source: "#Cylinder"
+            eulerRotation.x: 90
+            position: Qt.vector3d(-45, 140, 16)
+            scale: Qt.vector3d(0.3, 0.12, 0.3)
+            materials: [
+                PrincipledMaterial {
+                    baseColor: "#2ecc71"
+                }
+            ]
+        }
+
+        Model {
+            objectName: "mainStopAfterCycleButton"
+            pickable: true
+            source: "#Cylinder"
+            eulerRotation.x: 90
+            position: Qt.vector3d(45, 140, 16)
+            scale: Qt.vector3d(0.3, 0.12, 0.3)
+            materials: [
+                PrincipledMaterial {
+                    baseColor: "#f1c40f"
+                }
+            ]
+        }
+
+        Model {
+            objectName: "mainStopNowButton"
+            pickable: true
+            source: "#Cylinder"
+            eulerRotation.x: 90
+            position: Qt.vector3d(-45, 50, 16)
+            scale: Qt.vector3d(0.3, 0.12, 0.3)
+            materials: [
+                PrincipledMaterial {
+                    baseColor: "#e74c3c"
+                }
+            ]
+        }
+
+        Node {
+            objectName: "modeKeyswitch"
+
+            Model {
+                source: "#Cylinder"
+                eulerRotation.x: 90
+                position: Qt.vector3d(45, 50, 12)
+                scale: Qt.vector3d(0.2, 0.08, 0.2)
+                materials: [
+                    PrincipledMaterial {
+                        baseColor: "#95a5a6"
+                        metalness: 0.8
+                    }
+                ]
+            }
+
+            Model {
+                source: "#Cube"
+                position: Qt.vector3d(45, 50, 23)
+                scale: Qt.vector3d(0.08, 0.08, 0.3)
+                eulerRotation.y: -25
+                materials: [
+                    PrincipledMaterial {
+                        baseColor: "#f5d76e"
+                        metalness: 0.8
+                    }
+                ]
+            }
+        }
+
+        Model {
+            objectName: "mainEmergencyStop"
+            pickable: true
+            source: "#Cylinder"
+            eulerRotation.x: 90
+            position: Qt.vector3d(0, -80, 24)
+            scale: Qt.vector3d(0.55, 0.2, 0.55)
+            materials: [
+                PrincipledMaterial {
+                    baseColor: "#c0392b"
+                    metalness: 0.1
+                    roughness: 0.4
+                }
+            ]
+        }
+
+        Model {
+            source: "#Cylinder"
+            eulerRotation.x: 90
+            position: Qt.vector3d(0, -80, 12)
+            scale: Qt.vector3d(0.62, 0.08, 0.62)
+            materials: [
+                PrincipledMaterial {
+                    baseColor: "#f1c40f"
+                    metalness: 0.2
+                }
+            ]
+        }
+    }
+
     component SafetyDoor: Node {
         id: safetyDoor
 
@@ -230,6 +390,10 @@ Node {
             DoorHandle {
                 objectName: "safetyDoorHandle"
                 position: Qt.vector3d(-fenceRoot.fencePanelWidth + 50, 1000, 30)
+            }
+
+            SmallDoorControlPanel {
+                position: Qt.vector3d(-fenceRoot.fencePanelWidth + 230, 1000, 20)
             }
         }
     }
@@ -263,6 +427,10 @@ Node {
 
         SafetyDoor {
             position: Qt.vector3d(1500, 0, 0)
+        }
+
+        MainControlPanel {
+            position: Qt.vector3d(-500, 900, -20)
         }
 
         FencePanel {
