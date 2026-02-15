@@ -124,6 +124,11 @@ namespace core::sim
                     static std::mt19937 rng{ std::random_device{}() };
                     static std::uniform_real_distribution<double> dist(0.0, 1.0);
                     const bool accepted = dist(rng) >= m_config.inspectionRejectRate;
+
+                    if (m_cameraPart.has_value()) {
+                        m_cameraPart->type = accepted ? static_cast<uint8_t>(2) : static_cast<uint8_t>(1);
+                    }
+
                     if (accepted) {
                         issueJob(4, Stage::PickCamera);
                     }

@@ -73,6 +73,11 @@ namespace backend
         m_transferConveyorSim =
           std::make_shared<core::sim::ConveyorSimulator>(m_runtimeConfig.transferConveyor, m_adsLink);
         core::sim::GantrySimulator::Config gantryConfig{};
+        gantryConfig.pickupX = -225.0;
+        gantryConfig.dropX = 245.0;
+        gantryConfig.targetDropPosition = 120.0;
+        gantryConfig.zPickup = -120.0;
+        gantryConfig.zDrop = -10.0;
         m_gantrySim = std::make_shared<core::sim::GantrySimulator>(
           m_exitConveyorSim, m_transferConveyorSim, gantryConfig);
 

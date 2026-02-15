@@ -45,6 +45,7 @@ namespace core::sim
 
         // Simulation control
         auto spawnPart(uint8_t type) -> void;
+        auto spawnPartAtPosition(uint8_t type, double position) -> void;
         auto clearParts() -> void;
         auto peekPartAtEnd() const -> std::optional<Part>;
         auto takePartAtEnd() -> std::optional<Part>;

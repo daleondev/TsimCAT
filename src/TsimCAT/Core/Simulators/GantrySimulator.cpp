@@ -101,7 +101,7 @@ namespace core::sim
 
             case Stage::ReleaseAtDrop:
                 if (m_carriedPart.has_value()) {
-                    m_targetConveyor->spawnPart(m_carriedPart->type);
+                    m_targetConveyor->spawnPartAtPosition(m_carriedPart->type, m_config.targetDropPosition);
                 }
                 m_carriedPart.reset();
                 m_gripperGripped = false;

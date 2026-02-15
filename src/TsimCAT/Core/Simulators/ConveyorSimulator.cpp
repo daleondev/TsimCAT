@@ -202,6 +202,30 @@ namespace core::sim
         m_parts.push_back(newPart);
     }
 
+    auto ConveyorSimulator::spawnPartAtPosition(uint8_t type, double position) -> void
+    {
+        std::scoped_lock lock(m_mutex);
+
+        Part newPart;
+        newPart.id = m_nextPartId++;
+        newPart.type = type;
+        newPart.width = 140;
+        newPart.length = 140;
+        newPart.height = 80;
+
+        const double minPosition = newPart.length * 0.5;
+        const double maxPosition = m_config.length - newPart.length * 0.5;
+        newPart.position = std::clamp(position, minPosition, maxPosition);
+
+        for (const auto& part : m_parts) {
+            if (std::abs(part.position - newPart.position) < (newPart.length * 0.8)) {
+                return;
+            }
+        }
+
+        m_parts.push_back(newPart);
+    }
+
     auto ConveyorSimulator::clearParts() -> void
     {
         std::scoped_lock lock(m_mutex);

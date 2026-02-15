@@ -124,9 +124,9 @@ Item {
                 position: Qt.vector3d(-850, 0, 1325)
 
                 Model {
-                    position: Qt.vector3d(0, 720, 0)
+                    position: Qt.vector3d(0, 8, 0)
                     source: "#Cube"
-                    scale: Qt.vector3d(3.8, 0.12, 2.8)
+                    scale: Qt.vector3d(5.0, 0.16, 3.8)
                     materials: [
                         PrincipledMaterial {
                             baseColor: "#3a3a3a"
@@ -137,9 +137,9 @@ Item {
                 }
 
                 Model {
-                    position: Qt.vector3d(-180, 860, 0)
+                    position: Qt.vector3d(-244, 188, 0)
                     source: "#Cube"
-                    scale: Qt.vector3d(0.12, 2.8, 2.8)
+                    scale: Qt.vector3d(0.12, 3.6, 3.8)
                     materials: [
                         PrincipledMaterial {
                             baseColor: "#4a4a4a"
@@ -150,9 +150,9 @@ Item {
                 }
 
                 Model {
-                    position: Qt.vector3d(180, 860, 0)
+                    position: Qt.vector3d(244, 188, 0)
                     source: "#Cube"
-                    scale: Qt.vector3d(0.12, 2.8, 2.8)
+                    scale: Qt.vector3d(0.12, 3.6, 3.8)
                     materials: [
                         PrincipledMaterial {
                             baseColor: "#4a4a4a"
@@ -163,9 +163,9 @@ Item {
                 }
 
                 Model {
-                    position: Qt.vector3d(0, 860, -135)
+                    position: Qt.vector3d(0, 188, -184)
                     source: "#Cube"
-                    scale: Qt.vector3d(3.8, 2.8, 0.12)
+                    scale: Qt.vector3d(5.0, 3.6, 0.12)
                     materials: [
                         PrincipledMaterial {
                             baseColor: "#4a4a4a"
@@ -176,9 +176,9 @@ Item {
                 }
 
                 Model {
-                    position: Qt.vector3d(0, 860, 135)
+                    position: Qt.vector3d(0, 188, 184)
                     source: "#Cube"
-                    scale: Qt.vector3d(3.8, 2.8, 0.12)
+                    scale: Qt.vector3d(5.0, 3.6, 0.12)
                     materials: [
                         PrincipledMaterial {
                             baseColor: "#4a4a4a"
@@ -197,11 +197,11 @@ Item {
                         readonly property int column: layerIndex % 3
                         readonly property int row: Math.floor(layerIndex / 3)
 
-                        position: Qt.vector3d((column - 1) * 100, 760 + layer * 84, (row - 1) * 78)
+                        position: Qt.vector3d((column - 1) * 130, 52 + layer * 84, (row - 1) * 98)
                         width: 120
                         length: 120
                         height: 80
-                        color: index % 2 === 0 ? "#e67e22" : "#3498db"
+                        color: "#8f8f8f"
                     }
                 }
             }
@@ -223,7 +223,7 @@ Item {
                         width: 140
                         length: 140
                         height: 80
-                        color: (root.backend && root.backend.cameraPartType === 2) ? "#3498db" : "#e67e22"
+                        color: (root.backend && root.backend.cameraPartType === 2) ? "#2ecc71" : "#8f8f8f"
                     }
                     StationFrameModel {}
                     CameraModel {
@@ -244,7 +244,7 @@ Item {
                         width: 140
                         length: 140
                         height: 80
-                        color: (root.backend && root.backend.laserPartType === 2) ? "#3498db" : "#e67e22"
+                        color: (root.backend && root.backend.laserPartType === 2) ? "#2ecc71" : "#8f8f8f"
                     }
 
                     // Offset frame to compensate for laser angle

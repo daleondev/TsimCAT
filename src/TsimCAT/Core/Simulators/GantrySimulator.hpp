@@ -17,8 +17,9 @@ namespace core::sim
         {
             double pickupX{ -450.0 };
             double dropX{ 450.0 };
+            double targetDropPosition{ 120.0 };
             double zHome{ 220.0 };
-            double zPickup{ 20.0 };
+            double zPickup{ -30.0 };
             double zDrop{ 20.0 };
             double xSpeed{ 500.0 };
             double zSpeed{ 350.0 };

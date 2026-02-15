@@ -18,7 +18,7 @@ Node {
     property real frameHeight: 800
     property real frameWidth: 200
 
-    property real xAxisLength: 800
+    property real xAxisLength: 1000
     property real xAxisWidth: 85
 
     property real zAxisLength: 400
@@ -229,7 +229,7 @@ Node {
                         width: 140
                         length: 140
                         height: 80
-                        color: gantryRoot.carriedPartType === 2 ? "#3498db" : "#e67e22"
+                        color: gantryRoot.carriedPartType === 2 ? "#2ecc71" : "#8f8f8f"
                     }
                 }
             }
