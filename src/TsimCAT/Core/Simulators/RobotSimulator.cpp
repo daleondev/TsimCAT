@@ -14,7 +14,13 @@
 namespace core::sim
 {
     RobotSimulator::RobotSimulator(std::shared_ptr<link::ILink> link)
+      : RobotSimulator(std::move(link), AdsSymbols{})
+    {
+    }
+
+    RobotSimulator::RobotSimulator(std::shared_ptr<link::ILink> link, AdsSymbols adsSymbols)
       : m_link(std::move(link))
+      , m_adsSymbols(std::move(adsSymbols))
     {
         // Initial hardware-like state
         m_status.bInHome = 1;
@@ -335,7 +341,7 @@ namespace core::sim
             // Only communicate if actually connected to avoid floods
             if (m_link->status() == link::Status::Connected) {
                 // 1. Read Commands
-                auto ctrlRes = co_await symbolic->read<RobotControl>("MAIN.stRobotControl");
+                auto ctrlRes = co_await symbolic->read<RobotControl>(m_adsSymbols.controlSymbol);
                 if (ctrlRes) {
                     std::scoped_lock lock(m_mutex);
                     m_control = *ctrlRes;
@@ -347,7 +353,7 @@ namespace core::sim
                     std::scoped_lock lock(m_mutex);
                     s = m_status;
                 }
-                (void)co_await symbolic->write("MAIN.stRobotStatus", s);
+                (void)co_await symbolic->write(m_adsSymbols.statusSymbol, s);
             }
             else {
                 // Throttled wait when disconnected

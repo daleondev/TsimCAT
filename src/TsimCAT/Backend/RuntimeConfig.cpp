@@ -66,28 +66,6 @@ namespace backend
             }
         }
 
-        void applyDoubleArray(const QJsonObject& object, const char* key, std::vector<double>& target)
-        {
-            const auto value = object.value(QLatin1StringView(key));
-            if (!value.isArray()) {
-                return;
-            }
-
-            std::vector<double> values;
-            const auto array = value.toArray();
-            values.reserve(static_cast<size_t>(array.size()));
-            for (const auto& item : array) {
-                if (!item.isDouble()) {
-                    return;
-                }
-                values.push_back(item.toDouble());
-            }
-
-            if (!values.empty()) {
-                target = std::move(values);
-            }
-        }
-
         void applyStringArray(const QJsonObject& object, const char* key, std::vector<std::string>& target)
         {
             const auto value = object.value(QLatin1StringView(key));
@@ -110,27 +88,15 @@ namespace backend
             }
         }
 
-        void applyConveyor(const QJsonObject& object, core::sim::ConveyorSimulator::Config& config)
-        {
-            applyDouble(object, "length", config.length);
-            applyDouble(object, "speed", config.speed);
-            applyDoubleArray(object, "sensorPositions", config.sensorPositions);
-            applyInt(object, "damperSensorIndex", config.damperSensorIndex);
-            applyInt(object, "damperCloseSensorIndex", config.damperCloseSensorIndex);
-            applyInt(object, "endSensorIndex", config.endSensorIndex);
-            applyBool(object, "consumeAtEndSensor", config.consumeAtEndSensor);
-            applyDouble(object, "damperOpenDelaySeconds", config.damperOpenDelaySeconds);
-            applyString(object, "adsRunCmd", config.adsRunCmd);
-            applyStringArray(object, "adsSensorSignals", config.adsSensorSignals);
-        }
     }
 
     RuntimeConfig RuntimeConfig::defaults()
     {
         RuntimeConfig config{};
 
-        config.loggerFilePath = "logs/TsimCAT.log";
-        config.screenshotDirectory = QStringLiteral("screenshots");
+        config.paths.logDirectory = QStringLiteral("logs");
+        config.paths.logFileName = QStringLiteral("TsimCAT.log");
+        config.paths.analysisDirectory = QStringLiteral("analysis/session");
 
         config.tcpLink.port = 12345;
 
@@ -138,41 +104,6 @@ namespace backend
         config.adsLink.remoteNetId = "192.168.167.100.1.1";
         config.adsLink.localNetId = "192.168.167.100.1.20";
         config.adsLink.port = 851;
-
-        config.entryConveyor = { .name = "EntryConveyor",
-                                 .length = 1875.0,
-                                 .speed = 250.0,
-                                 .sensorPositions = { 437.5, 1000.0, 1775.0 },
-                                 .damperSensorIndex = 0,
-                                 .damperCloseSensorIndex = 1,
-                                 .endSensorIndex = 2,
-                                 .damperOpenDelaySeconds = 1.0,
-                                 .adsRunCmd = "MAIN.bEntryConveyorRun",
-                                 .adsSensorSignals = {
-                                   "MAIN.bEntrySensor1", "MAIN.bEntrySensor2", "MAIN.bEntrySensor3" } };
-
-        config.exitConveyor = { .name = "ExitConveyor",
-                                .length = 1250.0,
-                                .speed = 250.0,
-                                .sensorPositions = { 100.0, 1150.0 },
-                                .damperSensorIndex = -1,
-                                .endSensorIndex = 1,
-                                .adsRunCmd = "MAIN.bExitConveyorRun",
-                                .adsSensorSignals = { "MAIN.bExitSensor1", "MAIN.bExitSensor2" } };
-
-        config.transferConveyor = {
-            .name = "TransferConveyor",
-            .length = 1250.0,
-            .speed = 250.0,
-            .sensorPositions = { 120.0, 650.0, 1120.0 },
-            .damperSensorIndex = 1,
-            .damperCloseSensorIndex = 2,
-            .endSensorIndex = 2,
-            .consumeAtEndSensor = true,
-            .damperOpenDelaySeconds = 0.0,
-            .adsRunCmd = "MAIN.bTransferConveyorRun",
-            .adsSensorSignals = { "MAIN.bTransferSensor1", "MAIN.bTransferSensor2", "MAIN.bTransferSensor3" }
-        };
 
         config.simulation.localOnly = false;
         config.simulation.laser.internal = true;
@@ -191,7 +122,7 @@ namespace backend
         config.analyzer.frameIntervalMs = 250;
         config.analyzer.traceIntervalMs = 100;
         config.analyzer.maxFrames = 240;
-        config.analyzer.outputFolder = QStringLiteral("analysis/session");
+        config.analyzer.outputFolder = config.paths.analysisDirectory;
 
         return config;
     }
@@ -227,11 +158,11 @@ namespace backend
 
         const auto root = doc.object();
 
-        const auto logging = asObject(root, "logging");
-        applyString(logging, "file", config.loggerFilePath);
-
-        const auto ui = asObject(root, "ui");
-        applyString(ui, "screenshotDirectory", config.screenshotDirectory);
+        const auto paths = asObject(root, "paths");
+        applyString(paths, "logDirectory", config.paths.logDirectory);
+        applyString(paths, "logFileName", config.paths.logFileName);
+        applyString(paths, "analysisDirectory", config.paths.analysisDirectory);
+        config.analyzer.outputFolder = config.paths.analysisDirectory;
 
         const auto links = asObject(root, "links");
         const auto tcp = asObject(links, "tcp");
@@ -243,15 +174,30 @@ namespace backend
         applyString(ads, "localNetId", config.adsLink.localNetId);
         applyUInt16(ads, "port", config.adsLink.port);
 
-        const auto conveyors = asObject(root, "conveyors");
-        const auto entry = asObject(conveyors, "entry");
-        applyConveyor(entry, config.entryConveyor);
+        const auto adsVariables = asObject(root, "adsVariables");
+        const auto adsRobot = asObject(adsVariables, "robot");
+        applyString(adsRobot, "control", config.adsVariables.robot.control);
+        applyString(adsRobot, "status", config.adsVariables.robot.status);
 
-        const auto exit = asObject(conveyors, "exit");
-        applyConveyor(exit, config.exitConveyor);
+        const auto adsConveyors = asObject(adsVariables, "conveyors");
+        applyString(adsConveyors, "entryRun", config.adsVariables.conveyors.entryRun);
+        applyStringArray(adsConveyors, "entrySensors", config.adsVariables.conveyors.entrySensors);
+        applyString(adsConveyors, "exitRun", config.adsVariables.conveyors.exitRun);
+        applyStringArray(adsConveyors, "exitSensors", config.adsVariables.conveyors.exitSensors);
+        applyString(adsConveyors, "transferRun", config.adsVariables.conveyors.transferRun);
+        applyStringArray(adsConveyors, "transferSensors", config.adsVariables.conveyors.transferSensors);
 
-        const auto transfer = asObject(conveyors, "transfer");
-        applyConveyor(transfer, config.transferConveyor);
+        const auto adsFuture = asObject(adsVariables, "future");
+        applyString(adsFuture, "cameraTrigger", config.adsVariables.future.cameraTrigger);
+        applyString(adsFuture, "cameraResult", config.adsVariables.future.cameraResult);
+        applyString(adsFuture, "laserStart", config.adsVariables.future.laserStart);
+        applyString(adsFuture, "laserDone", config.adsVariables.future.laserDone);
+        applyString(adsFuture, "gantryPosX", config.adsVariables.future.gantryPosX);
+        applyString(adsFuture, "gantryPosZ", config.adsVariables.future.gantryPosZ);
+        applyString(adsFuture, "gantryGripCmd", config.adsVariables.future.gantryGripCmd);
+        applyString(adsFuture, "gantryGripFb", config.adsVariables.future.gantryGripFb);
+        applyString(adsFuture, "safetyDoorClosed", config.adsVariables.future.safetyDoorClosed);
+        applyString(adsFuture, "safetyEStopOk", config.adsVariables.future.safetyEStopOk);
 
         const auto simulation = asObject(root, "simulation");
         applyBool(simulation, "localOnly", config.simulation.localOnly);
@@ -285,6 +231,10 @@ namespace backend
         applyInt(analyzer, "traceIntervalMs", config.analyzer.traceIntervalMs);
         applyInt(analyzer, "maxFrames", config.analyzer.maxFrames);
         applyString(analyzer, "outputFolder", config.analyzer.outputFolder);
+
+        if (config.analyzer.outputFolder.isEmpty()) {
+            config.analyzer.outputFolder = config.paths.analysisDirectory;
+        }
 
         if (diagnostics) {
             *diagnostics = QStringLiteral("Loaded runtime config from '%1'.").arg(path);

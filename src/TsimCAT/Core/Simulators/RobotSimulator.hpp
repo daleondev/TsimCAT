@@ -60,7 +60,14 @@ namespace core::sim
     class RobotSimulator : public ISimulator
     {
       public:
-        explicit RobotSimulator(std::shared_ptr<link::ILink> link);
+                struct AdsSymbols
+                {
+                        std::string controlSymbol{ "MAIN.stRobotControl" };
+                        std::string statusSymbol{ "MAIN.stRobotStatus" };
+                };
+
+                explicit RobotSimulator(std::shared_ptr<link::ILink> link);
+                RobotSimulator(std::shared_ptr<link::ILink> link, AdsSymbols adsSymbols);
         ~RobotSimulator() override;
 
         auto name() const -> std::string override { return "Robot"; }
@@ -92,6 +99,7 @@ namespace core::sim
                             const std::array<double, 6>& targetJoints) -> std::vector<std::array<double, 6>>;
 
         std::shared_ptr<link::ILink> m_link;
+        AdsSymbols m_adsSymbols;
         Kinematics m_kinematics;
 
         RobotControl m_control{};

@@ -1,9 +1,8 @@
 {
-    "logging": {
-        "file": "logs/TsimCAT.log"
-    },
-    "ui": {
-        "screenshotDirectory": "screenshots"
+    "paths": {
+        "logDirectory": "logs",
+        "logFileName": "TsimCAT.log",
+        "analysisDirectory": "analysis/session"
     },
     "links": {
         "tcp": {
@@ -14,61 +13,6 @@
             "remoteNetId": "192.168.167.100.1.1",
             "localNetId": "192.168.167.100.1.20",
             "port": 851
-        }
-    },
-    "conveyors": {
-        "entry": {
-            "length": 1875.0,
-            "speed": 250.0,
-            "sensorPositions": [
-                437.5,
-                1000.0,
-                1775.0
-            ],
-            "damperSensorIndex": 0,
-            "damperCloseSensorIndex": 1,
-            "endSensorIndex": 2,
-            "damperOpenDelaySeconds": 1.0,
-            "adsRunCmd": "MAIN.bEntryConveyorRun",
-            "adsSensorSignals": [
-                "MAIN.bEntrySensor1",
-                "MAIN.bEntrySensor2",
-                "MAIN.bEntrySensor3"
-            ]
-        },
-        "exit": {
-            "length": 1250.0,
-            "speed": 250.0,
-            "sensorPositions": [
-                100.0,
-                1150.0
-            ],
-            "endSensorIndex": 1,
-            "adsRunCmd": "MAIN.bExitConveyorRun",
-            "adsSensorSignals": [
-                "MAIN.bExitSensor1",
-                "MAIN.bExitSensor2"
-            ]
-        },
-        "transfer": {
-            "length": 1250.0,
-            "speed": 250.0,
-            "sensorPositions": [
-                120.0,
-                650.0,
-                1120.0
-            ],
-            "damperSensorIndex": 1,
-            "damperCloseSensorIndex": 2,
-            "endSensorIndex": 2,
-            "consumeAtEndSensor": true,
-            "damperOpenDelaySeconds": 0.0,
-            "adsRunCmd": "MAIN.bTransferConveyorRun",
-            "adsSensorSignals": [
-                "MAIN.bTransferSensor1",
-                "MAIN.bTransferSensor2",
-                "MAIN.bTransferSensor3"
-            ]
         }
     },
     "simulation": {
@@ -87,7 +31,7 @@
         }
     },
     "analyzer": {
-        "enabled": true,
+        "enabled": false,
         "autoStart": true,
         "saveFrames": true,
         "saveTrace": true,
@@ -95,5 +39,42 @@
         "traceIntervalMs": 100,
         "maxFrames": 240,
         "outputFolder": "analysis/session"
+    },
+    "adsVariables": {
+        "robot": {
+            "control": "MAIN.stRobotControl",
+            "status": "MAIN.stRobotStatus"
+        },
+        "conveyors": {
+            "entryRun": "MAIN.bEntryConveyorRun",
+            "entrySensors": [
+                "MAIN.bEntrySensor1",
+                "MAIN.bEntrySensor2",
+                "MAIN.bEntrySensor3"
+            ],
+            "exitRun": "MAIN.bExitConveyorRun",
+            "exitSensors": [
+                "MAIN.bExitSensor1",
+                "MAIN.bExitSensor2"
+            ],
+            "transferRun": "MAIN.bTransferConveyorRun",
+            "transferSensors": [
+                "MAIN.bTransferSensor1",
+                "MAIN.bTransferSensor2",
+                "MAIN.bTransferSensor3"
+            ]
+        },
+        "future": {
+            "cameraTrigger": "MAIN.bCameraTrigger",
+            "cameraResult": "MAIN.nCameraResult",
+            "laserStart": "MAIN.bLaserStart",
+            "laserDone": "MAIN.bLaserDone",
+            "gantryPosX": "MAIN.fGantryPosX",
+            "gantryPosZ": "MAIN.fGantryPosZ",
+            "gantryGripCmd": "MAIN.bGantryGripCmd",
+            "gantryGripFb": "MAIN.bGantryGripFb",
+            "safetyDoorClosed": "MAIN.bSafetyDoorClosed",
+            "safetyEStopOk": "MAIN.bEStopOk"
+        }
     }
 }

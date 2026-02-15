@@ -31,7 +31,7 @@ namespace backend
         m_runtimeConfig = RuntimeConfig::loadFromFile(configPath, &configDiagnostics);
 
         // Initialize logger
-        core::logger::Logger::instance().init(m_runtimeConfig.loggerFilePath);
+        core::logger::Logger::instance().init(m_runtimeConfig.loggerFilePath());
         core::logger::info("Backend initialized");
         core::logger::info("{}", configDiagnostics.toStdString());
         m_analyzerOutputFolder = resolveAnalyzerOutputFolder();
@@ -62,16 +62,59 @@ namespace backend
 
         // 2. Create Simulators
         m_laserSim = std::make_shared<core::sim::LaserSimulator>(m_tcpLink);
-        m_robotSim = std::make_shared<core::sim::RobotSimulator>(m_adsLink);
+        m_robotSim = std::make_shared<core::sim::RobotSimulator>(
+          m_adsLink,
+          core::sim::RobotSimulator::AdsSymbols{ .controlSymbol = m_runtimeConfig.adsVariables.robot.control,
+                                                 .statusSymbol = m_runtimeConfig.adsVariables.robot.status });
         m_laserSim->setInternalMode(m_runtimeConfig.simulation.laser.internal);
         m_robotSim->setInternalMode(m_runtimeConfig.simulation.robot.internal);
 
-        m_entryConveyorSim =
-          std::make_shared<core::sim::ConveyorSimulator>(m_runtimeConfig.entryConveyor, m_adsLink);
-        m_exitConveyorSim =
-          std::make_shared<core::sim::ConveyorSimulator>(m_runtimeConfig.exitConveyor, m_adsLink);
+        auto entryConveyorConfig =
+          core::sim::ConveyorSimulator::Config{ .name = "EntryConveyor",
+                                                .length = 1875.0,
+                                                .speed = 250.0,
+                                                .sensorPositions = { 437.5, 1000.0, 1775.0 },
+                                                .damperSensorIndex = 0,
+                                                .damperCloseSensorIndex = 1,
+                                                .endSensorIndex = 2,
+                                                .consumeAtEndSensor = false,
+                                                .damperOpenDelaySeconds = 1.0,
+                                                .adsRunCmd = m_runtimeConfig.adsVariables.conveyors.entryRun,
+                                                .adsSensorSignals =
+                                                  m_runtimeConfig.adsVariables.conveyors.entrySensors };
+
+        auto exitConveyorConfig =
+          core::sim::ConveyorSimulator::Config{ .name = "ExitConveyor",
+                                                .length = 1250.0,
+                                                .speed = 250.0,
+                                                .sensorPositions = { 100.0, 1150.0 },
+                                                .damperSensorIndex = -1,
+                                                .damperCloseSensorIndex = -1,
+                                                .endSensorIndex = 1,
+                                                .consumeAtEndSensor = false,
+                                                .damperOpenDelaySeconds = 1.0,
+                                                .adsRunCmd = m_runtimeConfig.adsVariables.conveyors.exitRun,
+                                                .adsSensorSignals =
+                                                  m_runtimeConfig.adsVariables.conveyors.exitSensors };
+
+        auto transferConveyorConfig = core::sim::ConveyorSimulator::Config{
+            .name = "TransferConveyor",
+            .length = 1250.0,
+            .speed = 250.0,
+            .sensorPositions = { 120.0, 650.0, 1120.0 },
+            .damperSensorIndex = 1,
+            .damperCloseSensorIndex = 2,
+            .endSensorIndex = 2,
+            .consumeAtEndSensor = true,
+            .damperOpenDelaySeconds = 0.0,
+            .adsRunCmd = m_runtimeConfig.adsVariables.conveyors.transferRun,
+            .adsSensorSignals = m_runtimeConfig.adsVariables.conveyors.transferSensors
+        };
+
+        m_entryConveyorSim = std::make_shared<core::sim::ConveyorSimulator>(entryConveyorConfig, m_adsLink);
+        m_exitConveyorSim = std::make_shared<core::sim::ConveyorSimulator>(exitConveyorConfig, m_adsLink);
         m_transferConveyorSim =
-          std::make_shared<core::sim::ConveyorSimulator>(m_runtimeConfig.transferConveyor, m_adsLink);
+          std::make_shared<core::sim::ConveyorSimulator>(transferConveyorConfig, m_adsLink);
         core::sim::GantrySimulator::Config gantryConfig{};
         gantryConfig.pickupX = -225.0;
         gantryConfig.dropX = 245.0;
@@ -348,9 +391,6 @@ namespace backend
         if (result) {
             connect(result.data(), &QQuickItemGrabResult::ready, this, [this, result, filename]() {
                 QDir dir("screenshots");
-                if (!m_runtimeConfig.screenshotDirectory.isEmpty()) {
-                    dir = QDir(m_runtimeConfig.screenshotDirectory);
-                }
                 if (!dir.exists())
                     dir.mkpath(".");
 
