@@ -6,11 +6,16 @@ namespace core::sim
 {
     struct Part
     {
-        uint32_t id;
-        uint8_t type;
-        double position; // Position along the conveyor length (mm)
-        double width;    // Width of the part (mm)
-        double length;   // Length of the part (mm)
-        double height;   // Height of the part (mm)
+        uint32_t id{ 0 };
+        uint8_t type{ 0 };
+        double position{ 0.0 }; // Position along the conveyor length (mm)
+        double width{ 0.0 };    // Width of the part (mm)
+        double length{ 0.0 };   // Length of the part (mm)
+        double height{ 0.0 };   // Height of the part (mm)
+
+        bool cameraProcessed{ false };
+        bool cameraAccepted{ false };
+        bool laserProcessing{ false };
+        bool laserProcessed{ false };
     };
 }

@@ -1,170 +1,715 @@
-11:25:58 INFO [Backend.cpp:38] Backend initialized
-11:25:58 INFO [Backend.cpp:39] Loaded runtime config from 'config/runtime.json'.
-11:25:58 INFO [TraceLogger.cpp:75] TraceLogger initialized at C:/Users/Dev.Windows-Desktop/Desktop/TwinCAT/TsimCAT/analysis/session/protocol_trace.jsonl
-11:25:58 DEBUG [TraceLogger.cpp:200] TRACE backend lifecycle session_started
-11:25:58 INFO [RobotSimulator.cpp:50] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
-11:25:58 DEBUG [TraceLogger.cpp:200] TRACE laser lifecycle internal_mode_changed
-11:25:58 DEBUG [TraceLogger.cpp:200] TRACE robot lifecycle internal_mode_changed
-11:25:58 INFO [CellFlowOrchestrator.cpp:95] CellFlowOrchestrator started
-11:25:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle started
-11:26:12 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow entry_part_detected
-11:26:12 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:26:12 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:26:12 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
-11:26:12 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
-11:26:12 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:26:13 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:26:13 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:26:13 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
-11:26:13 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
-11:26:13 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:26:14 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:26:15 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow inspection_accepted
-11:26:15 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:26:15 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:26:15 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
-11:26:15 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
-11:26:15 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:26:16 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:26:16 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:26:16 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 5 with 39 waypoints
-11:26:16 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
-11:26:16 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:26:17 DEBUG [TraceLogger.cpp:200] TRACE laser flow local_marking_started
-11:26:17 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow laser_mark_started
-11:26:17 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:26:18 INFO [LaserSimulator.cpp:71] LaserSimulator: Job finished
-11:26:18 DEBUG [TraceLogger.cpp:200] TRACE laser state marking_done
-11:26:18 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:26:18 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:26:18 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 6 with 39 waypoints
-11:26:18 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
-11:26:18 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:26:18 DEBUG [TraceLogger.cpp:200] TRACE robot lifecycle internal_mode_changed
-11:26:18 INFO [CellFlowOrchestrator.cpp:118] CellFlowOrchestrator stopped
-11:26:18 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle stopped
-11:26:23 DEBUG [TraceLogger.cpp:200] TRACE robot lifecycle internal_mode_changed
-11:26:25 INFO [CellFlowOrchestrator.cpp:95] CellFlowOrchestrator started
-11:26:25 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle started
-11:26:25 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow entry_part_detected
-11:26:25 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:26:25 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:26:26 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
-11:26:26 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
-11:26:26 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:26:27 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:26:27 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:26:27 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
-11:26:27 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
-11:26:27 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:26:28 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:26:29 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow inspection_accepted
-11:26:29 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:26:29 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:26:29 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
-11:26:29 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
-11:26:29 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:26:30 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:26:30 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:26:30 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 5 with 39 waypoints
-11:26:30 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
-11:26:30 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:26:30 DEBUG [TraceLogger.cpp:200] TRACE robot lifecycle internal_mode_changed
-11:26:30 INFO [CellFlowOrchestrator.cpp:118] CellFlowOrchestrator stopped
-11:26:30 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle stopped
-11:26:33 DEBUG [TraceLogger.cpp:200] TRACE robot lifecycle internal_mode_changed
-11:26:36 INFO [CellFlowOrchestrator.cpp:95] CellFlowOrchestrator started
-11:26:36 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle started
-11:26:36 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow entry_part_detected
-11:26:36 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:26:36 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:26:36 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
-11:26:36 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
-11:26:36 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:26:38 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:26:38 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:26:38 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
-11:26:38 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
-11:26:38 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:26:39 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:26:39 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow inspection_accepted
-11:26:39 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:26:39 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:26:40 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
-11:26:40 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
-11:26:40 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:26:40 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:26:40 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:26:41 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 5 with 39 waypoints
-11:26:41 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
-11:26:41 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:26:41 DEBUG [TraceLogger.cpp:200] TRACE laser flow local_marking_started
-11:26:41 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow laser_mark_started
-11:26:41 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:26:42 INFO [LaserSimulator.cpp:71] LaserSimulator: Job finished
-11:26:42 DEBUG [TraceLogger.cpp:200] TRACE laser state marking_done
-11:26:42 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:26:42 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:26:43 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 6 with 39 waypoints
-11:26:43 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
-11:26:43 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:26:43 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:26:43 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:26:44 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 7 with 39 waypoints
-11:26:44 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
-11:26:44 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:26:44 INFO [CellFlowOrchestrator.cpp:118] CellFlowOrchestrator stopped
-11:26:44 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle stopped
-11:27:15 WARNING [Backend.cpp:473] Cannot start internal cell flow: one or more stations are not in local mode
-11:27:20 INFO [CellFlowOrchestrator.cpp:95] CellFlowOrchestrator started
-11:27:20 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle started
-11:27:20 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow entry_part_detected
-11:27:20 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:27:20 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:27:21 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
-11:27:21 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
-11:27:21 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:27:22 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:27:22 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:27:22 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
-11:27:22 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
-11:27:22 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:27:23 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:27:24 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow inspection_accepted
-11:27:24 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:27:24 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:27:24 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
-11:27:24 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
-11:27:24 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:27:25 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:27:25 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:27:25 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 5 with 39 waypoints
-11:27:25 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
-11:27:25 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:27:26 DEBUG [TraceLogger.cpp:200] TRACE laser flow local_marking_started
-11:27:26 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow laser_mark_started
-11:27:26 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:27:27 INFO [LaserSimulator.cpp:71] LaserSimulator: Job finished
-11:27:27 DEBUG [TraceLogger.cpp:200] TRACE laser state marking_done
-11:27:27 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:27:27 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:27:27 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 6 with 39 waypoints
-11:27:27 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
-11:27:27 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:27:28 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:27:28 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:27:28 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 7 with 39 waypoints
-11:27:28 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
-11:27:28 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:27:29 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:27:29 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:27:29 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
-11:27:29 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
-11:27:29 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
-11:27:30 INFO [CellFlowOrchestrator.cpp:433] CellFlowOrchestrator cycle completed (accepted)
-11:27:30 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow cycle_completed
-11:27:30 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle cycle_started
-11:27:30 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow entry_part_detected
-11:27:30 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
-11:27:30 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
-11:27:30 DEBUG [TraceLogger.cpp:200] TRACE backend lifecycle session_stopped
+12:20:53 INFO [Backend.cpp:38] Backend initialized
+12:20:53 INFO [Backend.cpp:39] Loaded runtime config from 'config/runtime.json'.
+12:20:53 INFO [TraceLogger.cpp:75] TraceLogger initialized at C:/Users/Dev.Windows-Desktop/Desktop/TwinCAT/TsimCAT/analysis/session/protocol_trace.jsonl
+12:20:53 DEBUG [TraceLogger.cpp:200] TRACE backend lifecycle session_started
+12:20:53 INFO [RobotSimulator.cpp:50] RobotSimulator: Initial Pose [X: 905.000, Y: 0.000, Z: 1080.000]
+12:20:53 DEBUG [TraceLogger.cpp:200] TRACE laser lifecycle internal_mode_changed
+12:20:53 DEBUG [TraceLogger.cpp:200] TRACE robot lifecycle internal_mode_changed
+12:20:53 INFO [CellFlowOrchestrator.cpp:95] CellFlowOrchestrator started
+12:20:53 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle started
+12:20:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol camera_internal_mode_changed
+12:21:06 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow entry_part_detected
+12:21:06 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:06 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:07 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+12:21:07 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:07 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:07 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:07 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:07 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+12:21:07 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:07 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:08 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:09 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle camera_remote_wait_no_result
+12:21:10 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle camera_remote_wait_no_result
+12:21:11 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle camera_remote_wait_no_result
+12:21:12 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle camera_remote_wait_no_result
+12:21:12 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle camera_remote_wait_no_result
+12:21:13 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle camera_remote_wait_no_result
+12:21:13 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol camera_internal_mode_changed
+12:21:13 INFO [Backend.cpp:703] All stations local after camera re-enabled; preserving in-flight flow state
+12:21:14 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow inspection_rejected
+12:21:14 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:14 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:14 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+12:21:14 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:14 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:15 INFO [CellFlowOrchestrator.cpp:621] CellFlowOrchestrator cycle completed (rejected)
+12:21:15 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow cycle_completed
+12:21:15 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle cycle_started
+12:21:15 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow entry_part_detected
+12:21:15 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:15 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:15 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+12:21:15 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:15 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:16 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:16 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:16 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+12:21:16 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:16 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:17 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:18 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow inspection_accepted
+12:21:18 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:18 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:18 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
+12:21:18 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:18 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:19 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:19 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:19 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 5 with 39 waypoints
+12:21:19 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:19 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:20 DEBUG [TraceLogger.cpp:200] TRACE laser flow local_marking_started
+12:21:20 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow laser_mark_started
+12:21:20 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:20 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:20 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+12:21:20 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:20 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:20 INFO [CellFlowOrchestrator.cpp:621] CellFlowOrchestrator cycle completed (accepted)
+12:21:20 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow cycle_completed
+12:21:20 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle cycle_started
+12:21:21 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol camera_internal_mode_changed
+12:21:21 INFO [LaserSimulator.cpp:71] LaserSimulator: Job finished
+12:21:21 DEBUG [TraceLogger.cpp:200] TRACE laser state marking_done
+12:21:21 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow laser_part_processed
+12:21:21 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:21 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:21 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 6 with 39 waypoints
+12:21:21 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:21 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:21 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:21 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:22 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 7 with 39 waypoints
+12:21:22 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:22 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:23 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:23 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:23 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+12:21:23 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:23 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:23 INFO [CellFlowOrchestrator.cpp:621] CellFlowOrchestrator cycle completed (accepted)
+12:21:23 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow cycle_completed
+12:21:23 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle cycle_started
+12:21:23 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow entry_part_detected
+12:21:23 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:23 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:23 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+12:21:23 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:23 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:24 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:24 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:24 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+12:21:24 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:24 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:25 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:26 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle camera_remote_wait_no_result
+12:21:27 DEBUG [TraceLogger.cpp:200] TRACE gantry flow pickup_requested
+12:21:27 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol camera_internal_mode_changed
+12:21:27 INFO [Backend.cpp:703] All stations local after camera re-enabled; preserving in-flight flow state
+12:21:27 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow inspection_accepted
+12:21:27 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:27 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:27 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
+12:21:27 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:27 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:28 DEBUG [TraceLogger.cpp:200] TRACE gantry state part_gripped
+12:21:28 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:28 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:28 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 5 with 39 waypoints
+12:21:28 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:28 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:29 DEBUG [TraceLogger.cpp:200] TRACE laser flow local_marking_started
+12:21:29 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow laser_mark_started
+12:21:29 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:29 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:29 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+12:21:29 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:29 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:30 INFO [CellFlowOrchestrator.cpp:621] CellFlowOrchestrator cycle completed (accepted)
+12:21:30 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow cycle_completed
+12:21:30 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle cycle_started
+12:21:30 INFO [LaserSimulator.cpp:71] LaserSimulator: Job finished
+12:21:30 DEBUG [TraceLogger.cpp:200] TRACE laser state marking_done
+12:21:30 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow laser_part_processed
+12:21:30 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:30 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:30 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 6 with 39 waypoints
+12:21:30 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:30 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:31 DEBUG [TraceLogger.cpp:200] TRACE gantry flow part_dropped
+12:21:31 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:31 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:31 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 7 with 39 waypoints
+12:21:31 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:31 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:32 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:32 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:32 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+12:21:32 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:32 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:33 INFO [CellFlowOrchestrator.cpp:621] CellFlowOrchestrator cycle completed (accepted)
+12:21:33 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow cycle_completed
+12:21:33 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle cycle_started
+12:21:33 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow entry_part_detected
+12:21:33 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:33 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:33 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+12:21:33 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:33 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:34 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:34 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:34 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+12:21:34 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:34 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:35 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:35 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow inspection_rejected
+12:21:35 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:35 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:35 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+12:21:35 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:35 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:36 DEBUG [TraceLogger.cpp:200] TRACE gantry flow pickup_requested
+12:21:36 INFO [CellFlowOrchestrator.cpp:621] CellFlowOrchestrator cycle completed (rejected)
+12:21:36 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow cycle_completed
+12:21:36 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle cycle_started
+12:21:38 DEBUG [TraceLogger.cpp:200] TRACE gantry state part_gripped
+12:21:39 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow entry_part_detected
+12:21:39 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:39 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:40 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+12:21:40 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:40 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:40 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:40 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:40 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+12:21:40 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:40 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:41 DEBUG [TraceLogger.cpp:200] TRACE gantry flow part_dropped
+12:21:41 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:42 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow inspection_accepted
+12:21:42 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:42 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:42 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
+12:21:42 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:42 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:43 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:43 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:43 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 5 with 39 waypoints
+12:21:43 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:43 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:44 DEBUG [TraceLogger.cpp:200] TRACE laser flow local_marking_started
+12:21:44 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow laser_mark_started
+12:21:44 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:44 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:44 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+12:21:44 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:44 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:45 INFO [CellFlowOrchestrator.cpp:621] CellFlowOrchestrator cycle completed (accepted)
+12:21:45 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow cycle_completed
+12:21:45 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle cycle_started
+12:21:45 INFO [LaserSimulator.cpp:71] LaserSimulator: Job finished
+12:21:45 DEBUG [TraceLogger.cpp:200] TRACE laser state marking_done
+12:21:45 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow laser_part_processed
+12:21:45 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:45 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:45 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 6 with 39 waypoints
+12:21:45 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:45 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:46 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:46 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:46 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 7 with 39 waypoints
+12:21:46 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:46 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:47 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:47 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:47 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+12:21:47 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:47 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:48 INFO [CellFlowOrchestrator.cpp:621] CellFlowOrchestrator cycle completed (accepted)
+12:21:48 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow cycle_completed
+12:21:48 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle cycle_started
+12:21:48 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow entry_part_detected
+12:21:48 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:48 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:48 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+12:21:48 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:48 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:49 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:49 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:49 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+12:21:49 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:49 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:50 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:51 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow inspection_accepted
+12:21:51 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:51 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:51 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
+12:21:51 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:51 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:51 DEBUG [TraceLogger.cpp:200] TRACE laser lifecycle internal_mode_changed
+12:21:51 DEBUG [TraceLogger.cpp:200] TRACE gantry flow pickup_requested
+12:21:52 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:52 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:52 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 5 with 39 waypoints
+12:21:52 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:52 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:53 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_remote_handoff
+12:21:53 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:53 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:53 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+12:21:53 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:53 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:53 DEBUG [TraceLogger.cpp:200] TRACE gantry state part_gripped
+12:21:53 INFO [CellFlowOrchestrator.cpp:621] CellFlowOrchestrator cycle completed (accepted)
+12:21:53 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow cycle_completed
+12:21:53 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle cycle_started
+12:21:54 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow entry_part_detected
+12:21:54 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:54 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:55 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+12:21:55 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:55 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:55 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:55 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:55 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+12:21:55 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:55 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:56 DEBUG [TraceLogger.cpp:200] TRACE gantry flow part_dropped
+12:21:56 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:57 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow inspection_accepted
+12:21:57 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:21:57 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:21:57 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
+12:21:57 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:21:57 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:58 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:21:59 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE laser lifecycle internal_mode_changed
+12:22:00 INFO [Backend.cpp:703] All stations local after laser re-enabled; preserving in-flight flow state
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE laser flow local_marking_started
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow laser_mark_started
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:00 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:01 INFO [LaserSimulator.cpp:71] LaserSimulator: Job finished
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE laser state marking_done
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow laser_part_processed
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:01 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 6 with 39 waypoints
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:01 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:02 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:02 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:02 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 7 with 39 waypoints
+12:22:02 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:02 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:03 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:03 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:03 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+12:22:03 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:03 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:04 INFO [CellFlowOrchestrator.cpp:621] CellFlowOrchestrator cycle completed (accepted)
+12:22:04 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow cycle_completed
+12:22:04 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle camera_part_preserved_across_cycle
+12:22:04 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle cycle_started
+12:22:04 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:04 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:04 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
+12:22:04 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:04 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:05 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:05 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:05 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 5 with 39 waypoints
+12:22:05 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:05 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:06 DEBUG [TraceLogger.cpp:200] TRACE laser flow local_marking_started
+12:22:06 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow laser_mark_started
+12:22:06 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:06 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:06 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+12:22:06 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:06 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:07 INFO [CellFlowOrchestrator.cpp:621] CellFlowOrchestrator cycle completed (accepted)
+12:22:07 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow cycle_completed
+12:22:07 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle cycle_started
+12:22:07 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow entry_part_detected
+12:22:07 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:07 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:07 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+12:22:07 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:07 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:07 INFO [LaserSimulator.cpp:71] LaserSimulator: Job finished
+12:22:07 DEBUG [TraceLogger.cpp:200] TRACE laser state marking_done
+12:22:07 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow laser_part_processed
+12:22:07 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:07 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:08 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+12:22:08 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:08 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:08 DEBUG [TraceLogger.cpp:200] TRACE gantry flow pickup_requested
+12:22:09 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:09 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow inspection_accepted
+12:22:09 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:09 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:09 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
+12:22:09 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:09 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:10 DEBUG [TraceLogger.cpp:200] TRACE gantry state part_gripped
+12:22:10 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:10 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:10 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:10 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:10 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 6 with 39 waypoints
+12:22:10 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:10 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:11 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:11 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:11 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 7 with 39 waypoints
+12:22:11 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:11 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:12 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:12 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:12 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+12:22:12 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:12 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:12 DEBUG [TraceLogger.cpp:200] TRACE gantry flow part_dropped
+12:22:13 INFO [CellFlowOrchestrator.cpp:621] CellFlowOrchestrator cycle completed (accepted)
+12:22:13 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow cycle_completed
+12:22:13 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle camera_part_preserved_across_cycle
+12:22:13 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle cycle_started
+12:22:13 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:13 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:13 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
+12:22:13 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:13 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:14 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:14 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:14 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 5 with 39 waypoints
+12:22:14 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:14 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:15 DEBUG [TraceLogger.cpp:200] TRACE laser flow local_marking_started
+12:22:15 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow laser_mark_started
+12:22:15 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:15 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:15 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+12:22:15 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:15 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:15 INFO [CellFlowOrchestrator.cpp:621] CellFlowOrchestrator cycle completed (accepted)
+12:22:15 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow cycle_completed
+12:22:15 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle cycle_started
+12:22:15 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow entry_part_detected
+12:22:15 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:15 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:16 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 2 with 39 waypoints
+12:22:16 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:16 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:16 INFO [LaserSimulator.cpp:71] LaserSimulator: Job finished
+12:22:16 DEBUG [TraceLogger.cpp:200] TRACE laser state marking_done
+12:22:16 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow laser_part_processed
+12:22:16 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:16 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:16 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 3 with 39 waypoints
+12:22:16 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:16 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:17 DEBUG [TraceLogger.cpp:200] TRACE gantry flow pickup_requested
+12:22:17 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:18 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow inspection_accepted
+12:22:18 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:18 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:18 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
+12:22:18 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:18 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:19 DEBUG [TraceLogger.cpp:200] TRACE gantry state part_gripped
+12:22:19 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle laser_station_busy_wait
+12:22:19 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:19 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:19 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:19 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 6 with 39 waypoints
+12:22:19 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:19 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:20 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:20 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:20 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 7 with 39 waypoints
+12:22:20 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:20 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:21 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:21 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:21 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 1 with 39 waypoints
+12:22:21 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:21 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:21 DEBUG [TraceLogger.cpp:200] TRACE gantry flow part_dropped
+12:22:22 INFO [CellFlowOrchestrator.cpp:621] CellFlowOrchestrator cycle completed (accepted)
+12:22:22 DEBUG [TraceLogger.cpp:200] TRACE cell_flow flow cycle_completed
+12:22:22 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle camera_part_preserved_across_cycle
+12:22:22 DEBUG [TraceLogger.cpp:200] TRACE cell_flow lifecycle cycle_started
+12:22:22 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:22 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:22 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 4 with 39 waypoints
+12:22:22 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:22 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:23 DEBUG [TraceLogger.cpp:200] TRACE robot flow job_triggered
+12:22:23 DEBUG [TraceLogger.cpp:200] TRACE cell_flow protocol robot_job_issued
+12:22:23 INFO [RobotSimulator.cpp:179] RobotSimulator: Planned blended trajectory for Job 5 with 39 waypoints
+12:22:23 DEBUG [TraceLogger.cpp:200] TRACE robot state trajectory_planned
+12:22:23 DEBUG [TraceLogger.cpp:200] TRACE cell_flow state stage_changed
+12:22:24 DEBUG [TraceLogger.cpp:200] TRACE backend lifecycle session_stopped

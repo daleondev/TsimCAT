@@ -23,6 +23,7 @@ namespace backend
     struct SimulationConfig
     {
         bool localOnly{ true };
+        StationModeConfig camera;
         StationModeConfig laser;
         StationModeConfig robot;
         StationModeConfig gantry;

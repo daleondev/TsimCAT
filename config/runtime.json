@@ -18,6 +18,7 @@
     "simulation": {
         "localOnly": false,
         "stationModes": {
+            "cameraInternal": true,
             "laserInternal": true,
             "robotInternal": true,
             "gantryInternal": true,

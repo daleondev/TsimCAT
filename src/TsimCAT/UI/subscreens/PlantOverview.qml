@@ -233,6 +233,13 @@ Control {
                     }
 
                     Switch {
+                        text: "Camera local simulation"
+                        checked: root.backend ? root.backend.localCameraMode : false
+                        onToggled: if (root.backend)
+                            root.backend.localCameraMode = checked
+                    }
+
+                    Switch {
                         text: "Entry conveyor local simulation"
                         checked: root.backend ? root.backend.localEntryConveyorMode : false
                         onToggled: if (root.backend)
@@ -257,7 +264,7 @@ Control {
                         id: internalFlowSwitch
                         text: "Run full local sequence"
                         checked: root.backend ? root.backend.internalCellFlowRunning : false
-                        enabled: root.backend ? (root.backend.localRobotMode && root.backend.localLaserMode && root.backend.localEntryConveyorMode && root.backend.localExitConveyorMode) : false
+                        enabled: root.backend ? (root.backend.internalCellFlowRunning || (root.backend.localRobotMode && root.backend.localCameraMode && root.backend.localLaserMode && root.backend.localEntryConveyorMode && root.backend.localExitConveyorMode)) : false
                         onToggled: {
                             if (!root.backend)
                                 return;
@@ -276,7 +283,7 @@ Control {
                     }
 
                     Text {
-                        text: root.backend ? ("Modes  R:" + (root.backend.localRobotMode ? "L" : "E") + "  L:" + (root.backend.localLaserMode ? "L" : "E") + "  C1:" + (root.backend.localEntryConveyorMode ? "L" : "E") + "  C2:" + (root.backend.localExitConveyorMode ? "L" : "E")) : "Modes: N/A"
+                        text: root.backend ? ("Modes  R:" + (root.backend.localRobotMode ? "L" : "E") + "  Cam:" + (root.backend.localCameraMode ? "L" : "E") + "  L:" + (root.backend.localLaserMode ? "L" : "E") + "  C1:" + (root.backend.localEntryConveyorMode ? "L" : "E") + "  C2:" + (root.backend.localExitConveyorMode ? "L" : "E")) : "Modes: N/A"
                         color: "#cbd5e1"
                         font.pixelSize: 10
                     }

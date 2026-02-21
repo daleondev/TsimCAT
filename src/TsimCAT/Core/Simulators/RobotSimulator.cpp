@@ -480,6 +480,13 @@ namespace core::sim
     auto RobotSimulator::triggerJob(uint16_t jobId) -> void
     {
         std::scoped_lock lock(m_mutex);
+        if (!m_internalMode) {
+            logger::TraceLogger::instance().emit(logger::TraceCategory::Lifecycle,
+                                                 "robot",
+                                                 "job_trigger_ignored_remote_mode",
+                                                 { logger::traceField("job_id", static_cast<int>(jobId)) });
+            return;
+        }
         m_control.nJobId = jobId;
         m_control.bMoveEnable = 1; // Auto-enable move for convenience in simulation
         logger::TraceLogger::instance().emit(logger::TraceCategory::Flow,
@@ -491,7 +498,24 @@ namespace core::sim
     auto RobotSimulator::setInternalMode(bool internalMode) -> void
     {
         std::scoped_lock lock(m_mutex);
+        if (m_internalMode == internalMode) {
+            return;
+        }
+
         m_internalMode = internalMode;
+        if (!m_internalMode) {
+            m_control.nJobId = 0;
+            m_control.bMoveEnable = 0;
+            m_currentTrajectory.clear();
+            m_trajectoryStep = 0;
+            m_lastTargetJobId = 0;
+            m_status.bInMotion = 0;
+            m_status.nJobIdFeedback = 0;
+            logger::TraceLogger::instance().emit(logger::TraceCategory::State,
+                                                 "robot",
+                                                 "local_motion_quiesced",
+                                                 { logger::traceField("reason", "switched_to_remote_mode") });
+        }
         logger::TraceLogger::instance().emit(logger::TraceCategory::Lifecycle,
                                              "robot",
                                              "internal_mode_changed",

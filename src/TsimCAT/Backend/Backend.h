@@ -51,6 +51,8 @@ namespace backend
         Q_PROPERTY(
           QString internalCellFlowStatus READ internalCellFlowStatus NOTIFY internalCellFlowStatusChanged)
         Q_PROPERTY(bool localRobotMode READ localRobotMode WRITE setLocalRobotMode NOTIFY stationModesChanged)
+        Q_PROPERTY(
+          bool localCameraMode READ localCameraMode WRITE setLocalCameraMode NOTIFY stationModesChanged)
         Q_PROPERTY(bool localLaserMode READ localLaserMode WRITE setLocalLaserMode NOTIFY stationModesChanged)
         Q_PROPERTY(
           bool localGantryMode READ localGantryMode WRITE setLocalGantryMode NOTIFY stationModesChanged)
@@ -87,6 +89,7 @@ namespace backend
         bool internalCellFlowRunning() const;
         QString internalCellFlowStatus() const;
         bool localRobotMode() const;
+        bool localCameraMode() const;
         bool localLaserMode() const;
         bool localGantryMode() const;
         bool localEntryConveyorMode() const;
@@ -103,6 +106,7 @@ namespace backend
         int analyzerCapturedFrames() const;
         QString analyzerOutputFolder() const;
         void setLocalRobotMode(bool enabled);
+        void setLocalCameraMode(bool enabled);
         void setLocalLaserMode(bool enabled);
         void setLocalGantryMode(bool enabled);
         void setLocalEntryConveyorMode(bool enabled);
@@ -169,6 +173,8 @@ namespace backend
         void ensureLaserCommTask();
         void ensureEntryConveyorCommTask();
         void ensureExitConveyorCommTask();
+        bool allStationsLocal() const;
+        void resyncInternalCellFlowOnLocalReenable(const char* stationName);
         void updateCellFlowStatusText();
         void updateAnalyzer(double deltaTimeSeconds);
         void writeAnalyzerTraceSample();

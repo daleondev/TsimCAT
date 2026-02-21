@@ -129,6 +129,33 @@ namespace core::sim
             return;
         }
 
+        if (m_laserPart.has_value() && !m_laserPart->laserProcessed) {
+            if (m_laser->state() == LaserSimulator::State::Done) {
+                m_laserPart->laserProcessed = true;
+                m_laserPart->laserProcessing = false;
+                m_laser->acknowledgeDone();
+                logger::TraceLogger::instance().event(logger::TraceCategory::Flow,
+                                                      "cell_flow",
+                                                      "laser_part_processed",
+                                                      { logger::traceField("cycle_id", m_cycleId),
+                                                        logger::traceField("seq", ++m_eventSeq),
+                                                        logger::traceField("part_id", m_laserPart->id) });
+            }
+            else if (m_laser->isInternalMode() && !m_laserPart->laserProcessing) {
+                if (m_laser->startLocalMarking(m_config.laserMarkDurationSeconds)) {
+                    m_laserPart->laserProcessing = true;
+                    logger::TraceLogger::instance().event(
+                      logger::TraceCategory::Flow,
+                      "cell_flow",
+                      "laser_mark_started",
+                      { logger::traceField("cycle_id", m_cycleId),
+                        logger::traceField("seq", ++m_eventSeq),
+                        logger::traceField("part_id", m_laserPart->id),
+                        logger::traceField("duration_s", m_config.laserMarkDurationSeconds) });
+                }
+            }
+        }
+
         m_stageTimer += deltaTimeSeconds;
 
         if (m_stage != m_lastTracedStage) {
@@ -147,6 +174,66 @@ namespace core::sim
                 break;
 
             case Stage::WaitingEntryPart: {
+                if (m_laserPart.has_value() && m_laserPart->laserProcessed) {
+                    issueJob(6, Stage::PickLaser);
+                    break;
+                }
+
+                if (m_currentPart.has_value() && m_robot->isGripperGripped()) {
+                    if (!m_cameraPart.has_value()) {
+                        issueJob(3, Stage::PlaceCamera);
+                    }
+                    else {
+                        logger::TraceLogger::instance().event(
+                          logger::TraceCategory::Lifecycle,
+                          "cell_flow",
+                          "camera_station_busy_wait",
+                          { logger::traceField("cycle_id", m_cycleId),
+                            logger::traceField("seq", ++m_eventSeq),
+                            logger::traceField("carried_part_id", m_currentPart->id),
+                            logger::traceField("camera_part_id", m_cameraPart->id) });
+                    }
+                    break;
+                }
+
+                if (m_cameraPart.has_value()) {
+                    if (!m_cameraPart->cameraProcessed) {
+                        logger::TraceLogger::instance().event(
+                          logger::TraceCategory::Lifecycle,
+                          "cell_flow",
+                          "camera_inspection_resume",
+                          { logger::traceField("cycle_id", m_cycleId),
+                            logger::traceField("seq", ++m_eventSeq),
+                            logger::traceField("camera_part_id", m_cameraPart->id) });
+                        m_stage = Stage::Inspecting;
+                        m_stageTimer = 0.0;
+                        break;
+                    }
+
+                    if (m_cameraPart->cameraAccepted) {
+                        if (m_laserPart.has_value()) {
+                            logger::TraceLogger::instance().event(
+                              logger::TraceCategory::Lifecycle,
+                              "cell_flow",
+                              "laser_station_busy_wait",
+                              { logger::traceField("cycle_id", m_cycleId),
+                                logger::traceField("seq", ++m_eventSeq),
+                                logger::traceField("camera_part_id", m_cameraPart->id),
+                                logger::traceField("laser_part_id", m_laserPart->id) });
+                            break;
+                        }
+
+                        issueJob(4, Stage::PickCamera);
+                        break;
+                    }
+
+                    m_currentPart = m_cameraPart;
+                    m_cameraPart.reset();
+                    m_robot->setGripper(true);
+                    issueJob(1, Stage::RejectPart);
+                    break;
+                }
+
                 auto part = m_entryConveyor->peekPartAtEnd();
                 if (part.has_value()) {
                     m_currentPart = std::move(part);
@@ -175,6 +262,21 @@ namespace core::sim
 
             case Stage::PlaceCamera:
                 if (updateJobProgress(Stage::Inspecting)) {
+                    if (m_cameraPart.has_value()) {
+                        logger::TraceLogger::instance().event(
+                          logger::TraceCategory::Invariant,
+                          "cell_flow",
+                          "camera_slot_occupied_on_place",
+                          { logger::traceField("cycle_id", m_cycleId),
+                            logger::traceField("seq", ++m_eventSeq),
+                            logger::traceField("camera_part_id", m_cameraPart->id),
+                            logger::traceField("carried_part_id",
+                                               m_currentPart.has_value() ? m_currentPart->id : 0) });
+                        m_stage = Stage::WaitingEntryPart;
+                        m_stageTimer = 0.0;
+                        break;
+                    }
+
                     if (m_currentPart.has_value()) {
                         m_cameraPart = m_currentPart;
                     }
@@ -186,11 +288,26 @@ namespace core::sim
 
             case Stage::Inspecting:
                 if (m_stageTimer >= m_config.inspectionDurationSeconds) {
+                    if (!m_config.cameraInternal) {
+                        logger::TraceLogger::instance().event(
+                          logger::TraceCategory::Lifecycle,
+                          "cell_flow",
+                          "camera_remote_wait_no_result",
+                          { logger::traceField("cycle_id", m_cycleId),
+                            logger::traceField("seq", ++m_eventSeq),
+                            logger::traceField("camera_part_id",
+                                               m_cameraPart.has_value() ? m_cameraPart->id : 0) });
+                        m_stageTimer = 0.0;
+                        break;
+                    }
+
                     static std::mt19937 rng{ std::random_device{}() };
                     static std::uniform_real_distribution<double> dist(0.0, 1.0);
                     const bool accepted = dist(rng) >= m_config.inspectionRejectRate;
 
                     if (m_cameraPart.has_value()) {
+                        m_cameraPart->cameraProcessed = true;
+                        m_cameraPart->cameraAccepted = accepted;
                         m_cameraPart->type = accepted ? static_cast<uint8_t>(2) : static_cast<uint8_t>(1);
                     }
 
@@ -225,6 +342,20 @@ namespace core::sim
             case Stage::PickCamera:
                 if (updateJobProgress(Stage::PlaceLaser)) {
                     if (m_cameraPart.has_value()) {
+                        if (m_laserPart.has_value()) {
+                            logger::TraceLogger::instance().event(
+                              logger::TraceCategory::Lifecycle,
+                              "cell_flow",
+                              "laser_station_busy_wait",
+                              { logger::traceField("cycle_id", m_cycleId),
+                                logger::traceField("seq", ++m_eventSeq),
+                                logger::traceField("camera_part_id", m_cameraPart->id),
+                                logger::traceField("laser_part_id", m_laserPart->id) });
+                            m_stage = Stage::WaitingEntryPart;
+                            m_stageTimer = 0.0;
+                            break;
+                        }
+
                         m_currentPart = m_cameraPart;
                         m_cameraPart.reset();
                     }
@@ -235,36 +366,65 @@ namespace core::sim
 
             case Stage::PlaceLaser:
                 if (updateJobProgress(Stage::Marking)) {
+                    if (m_laserPart.has_value()) {
+                        logger::TraceLogger::instance().event(
+                          logger::TraceCategory::Invariant,
+                          "cell_flow",
+                          "laser_slot_occupied_on_place",
+                          { logger::traceField("cycle_id", m_cycleId),
+                            logger::traceField("seq", ++m_eventSeq),
+                            logger::traceField("laser_part_id", m_laserPart->id),
+                            logger::traceField("carried_part_id",
+                                               m_currentPart.has_value() ? m_currentPart->id : 0) });
+                        m_stage = Stage::WaitingEntryPart;
+                        m_stageTimer = 0.0;
+                        break;
+                    }
+
                     if (m_currentPart.has_value()) {
                         m_laserPart = m_currentPart;
+                        m_laserPart->laserProcessing = false;
+                        m_laserPart->laserProcessed = false;
                     }
                     m_robot->setGripper(false);
-                    if (m_laser->startLocalMarking(m_config.laserMarkDurationSeconds)) {
-                        logger::TraceLogger::instance().emit(
+                    if (!m_laser->isInternalMode()) {
+                        logger::TraceLogger::instance().event(
+                          logger::TraceCategory::Lifecycle,
+                          "cell_flow",
+                          "laser_remote_handoff",
+                          { logger::traceField("cycle_id", m_cycleId),
+                            logger::traceField("seq", ++m_eventSeq),
+                            logger::traceField("part_id", m_laserPart.has_value() ? m_laserPart->id : 0) });
+                        issueJob(1, Stage::ReturnHome);
+                    }
+                    else if (m_laserPart.has_value() &&
+                             m_laser->startLocalMarking(m_config.laserMarkDurationSeconds)) {
+                        m_laserPart->laserProcessing = true;
+                        logger::TraceLogger::instance().event(
                           logger::TraceCategory::Flow,
                           "cell_flow",
                           "laser_mark_started",
                           { logger::traceField("cycle_id", m_cycleId),
                             logger::traceField("seq", ++m_eventSeq),
+                            logger::traceField("part_id", m_laserPart->id),
                             logger::traceField("duration_s", m_config.laserMarkDurationSeconds) });
-                        m_stage = Stage::Marking;
-                        m_stageTimer = 0.0;
+                        issueJob(1, Stage::ReturnHome);
                     }
                     else {
-                        logger::TraceLogger::instance().emit(logger::TraceCategory::Invariant,
-                                                             "cell_flow",
-                                                             "laser_mark_start_failed",
-                                                             { logger::traceField("cycle_id", m_cycleId),
-                                                               logger::traceField("seq", ++m_eventSeq) });
+                        logger::TraceLogger::instance().event(
+                          logger::TraceCategory::Invariant,
+                          "cell_flow",
+                          "laser_mark_start_failed",
+                          { logger::traceField("cycle_id", m_cycleId),
+                            logger::traceField("seq", ++m_eventSeq),
+                            logger::traceField("part_id", m_laserPart.has_value() ? m_laserPart->id : 0) });
                     }
                 }
                 break;
 
             case Stage::Marking:
-                if (m_laser->state() == LaserSimulator::State::Done) {
-                    m_laser->acknowledgeDone();
-                    issueJob(6, Stage::PickLaser);
-                }
+                m_stage = Stage::WaitingEntryPart;
+                m_stageTimer = 0.0;
                 break;
 
             case Stage::PickLaser:
@@ -310,6 +470,21 @@ namespace core::sim
     }
 
     auto CellFlowOrchestrator::isRunning() const -> bool { return m_running; }
+
+    auto CellFlowOrchestrator::setCameraInternalMode(bool internalMode) -> void
+    {
+        if (m_config.cameraInternal == internalMode) {
+            return;
+        }
+
+        m_config.cameraInternal = internalMode;
+        logger::TraceLogger::instance().event(logger::TraceCategory::Protocol,
+                                              "cell_flow",
+                                              "camera_internal_mode_changed",
+                                              { logger::traceField("cycle_id", m_cycleId),
+                                                logger::traceField("seq", ++m_eventSeq),
+                                                logger::traceField("internal", internalMode) });
+    }
 
     auto CellFlowOrchestrator::hasRobotPart() const -> bool
     {
@@ -374,6 +549,19 @@ namespace core::sim
 
     auto CellFlowOrchestrator::issueJob(uint16_t jobId, Stage nextStage) -> void
     {
+        if (!m_robot->isInternalMode()) {
+            logger::TraceLogger::instance().emit(logger::TraceCategory::Lifecycle,
+                                                 "cell_flow",
+                                                 "robot_remote_handoff",
+                                                 { logger::traceField("cycle_id", m_cycleId),
+                                                   logger::traceField("seq", ++m_eventSeq),
+                                                   logger::traceField("job_id", static_cast<int>(jobId)),
+                                                   logger::traceField("next_stage", stageName(nextStage)) });
+            m_jobInProgress = false;
+            m_jobObservedMotion = false;
+            return;
+        }
+
         m_robot->triggerJob(jobId);
         m_activeJobId = jobId;
         m_jobInProgress = true;
@@ -426,8 +614,8 @@ namespace core::sim
     {
         const auto completedCycleId = m_cycleId;
         m_currentPart.reset();
-        m_cameraPart.reset();
-        m_laserPart.reset();
+        const bool preservedCameraPart = m_cameraPart.has_value();
+        const auto preservedCameraPartId = preservedCameraPart ? m_cameraPart->id : 0;
         m_stage = Stage::WaitingEntryPart;
         m_stageTimer = 0.0;
         logger::info("CellFlowOrchestrator cycle completed ({})", accepted ? "accepted" : "rejected");
@@ -439,6 +627,16 @@ namespace core::sim
             logger::traceField("seq", ++m_eventSeq),
             logger::traceField("accepted", accepted),
             logger::traceField("reject_bin_count", static_cast<int>(m_rejectBinParts.size())) });
+
+        if (preservedCameraPart) {
+            logger::TraceLogger::instance().event(
+              logger::TraceCategory::Lifecycle,
+              "cell_flow",
+              "camera_part_preserved_across_cycle",
+              { logger::traceField("completed_cycle_id", completedCycleId),
+                logger::traceField("seq", ++m_eventSeq),
+                logger::traceField("camera_part_id", preservedCameraPartId) });
+        }
 
         ++m_cycleId;
         m_eventSeq = 0;

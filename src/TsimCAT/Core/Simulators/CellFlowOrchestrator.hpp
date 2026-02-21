@@ -18,6 +18,7 @@ namespace core::sim
         struct Config
         {
             bool enabled{ true };
+            bool cameraInternal{ true };
             double inspectionRejectRate{ 0.2 };
             bool autoSpawnEntry{ true };
             bool autoLogicConveyors{ true };
@@ -34,6 +35,7 @@ namespace core::sim
         auto start() -> void;
         auto stop() -> void;
         auto update(double deltaTimeSeconds) -> void;
+        auto setCameraInternalMode(bool internalMode) -> void;
 
         auto isRunning() const -> bool;
         auto statusText() const -> std::string;

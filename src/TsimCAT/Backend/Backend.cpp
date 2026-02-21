@@ -195,6 +195,7 @@ namespace backend
 
         core::sim::CellFlowOrchestrator::Config flowConfig{};
         flowConfig.enabled = m_runtimeConfig.simulation.cellFlow.enabled;
+        flowConfig.cameraInternal = m_runtimeConfig.simulation.camera.internal;
         flowConfig.inspectionRejectRate = m_runtimeConfig.simulation.cellFlow.inspectionRejectRate;
         flowConfig.autoLogicConveyors = true;
         flowConfig.autoSpawnEntry = true;
@@ -202,8 +203,9 @@ namespace backend
           m_entryConveyorSim, m_exitConveyorSim, m_robotSim, m_laserSim, flowConfig);
 
         if (m_runtimeConfig.simulation.cellFlow.enabled && m_runtimeConfig.simulation.cellFlow.autoStart &&
-            m_runtimeConfig.simulation.robot.internal && m_runtimeConfig.simulation.laser.internal &&
-            m_runtimeConfig.simulation.gantry.internal && m_runtimeConfig.simulation.entryConveyor.internal &&
+            m_runtimeConfig.simulation.camera.internal && m_runtimeConfig.simulation.robot.internal &&
+            m_runtimeConfig.simulation.laser.internal && m_runtimeConfig.simulation.gantry.internal &&
+            m_runtimeConfig.simulation.entryConveyor.internal &&
             m_runtimeConfig.simulation.exitConveyor.internal) {
             startInternalCellFlow();
         }
@@ -294,6 +296,8 @@ namespace backend
 
     bool Backend::localRobotMode() const { return m_runtimeConfig.simulation.robot.internal; }
 
+    bool Backend::localCameraMode() const { return m_runtimeConfig.simulation.camera.internal; }
+
     bool Backend::localLaserMode() const { return m_runtimeConfig.simulation.laser.internal; }
 
     bool Backend::localGantryMode() const { return m_runtimeConfig.simulation.gantry.internal; }
@@ -344,8 +348,25 @@ namespace backend
             m_robotSim->setInternalMode(enabled);
         }
         ensureRobotCommTask();
-        if (!enabled && m_internalCellFlowRunning) {
-            stopInternalCellFlow();
+        if (enabled) {
+            resyncInternalCellFlowOnLocalReenable("robot");
+        }
+        emit stationModesChanged();
+        updateCellFlowStatusText();
+    }
+
+    void Backend::setLocalCameraMode(bool enabled)
+    {
+        if (m_runtimeConfig.simulation.camera.internal == enabled) {
+            return;
+        }
+
+        m_runtimeConfig.simulation.camera.internal = enabled;
+        if (m_cellFlow) {
+            m_cellFlow->setCameraInternalMode(enabled);
+        }
+        if (enabled) {
+            resyncInternalCellFlowOnLocalReenable("camera");
         }
         emit stationModesChanged();
         updateCellFlowStatusText();
@@ -362,8 +383,8 @@ namespace backend
             m_laserSim->setInternalMode(enabled);
         }
         ensureLaserCommTask();
-        if (!enabled && m_internalCellFlowRunning) {
-            stopInternalCellFlow();
+        if (enabled) {
+            resyncInternalCellFlowOnLocalReenable("laser");
         }
         emit stationModesChanged();
         updateCellFlowStatusText();
@@ -379,8 +400,8 @@ namespace backend
         if (m_gantrySim) {
             m_gantrySim->setAutoTransfer(enabled);
         }
-        if (!enabled && m_internalCellFlowRunning) {
-            stopInternalCellFlow();
+        if (enabled) {
+            resyncInternalCellFlowOnLocalReenable("gantry");
         }
         emit stationModesChanged();
         updateCellFlowStatusText();
@@ -396,10 +417,17 @@ namespace backend
         if (m_entryConveyorSim) {
             m_entryConveyorSim->setInternalMode(enabled);
             m_entryConveyorSim->setAutoLogic(enabled);
+            if (!enabled) {
+                m_entryConveyorSim->setAutoSpawn(false);
+                m_entryConveyorSim->setRunning(false);
+            }
+            else {
+                m_entryConveyorSim->setRunning(true);
+            }
         }
         ensureEntryConveyorCommTask();
-        if (!enabled && m_internalCellFlowRunning) {
-            stopInternalCellFlow();
+        if (enabled) {
+            resyncInternalCellFlowOnLocalReenable("entry_conveyor");
         }
         emit stationModesChanged();
         updateCellFlowStatusText();
@@ -415,10 +443,17 @@ namespace backend
         if (m_exitConveyorSim) {
             m_exitConveyorSim->setInternalMode(enabled);
             m_exitConveyorSim->setAutoLogic(enabled);
+            if (!enabled) {
+                m_exitConveyorSim->setAutoSpawn(false);
+                m_exitConveyorSim->setRunning(false);
+            }
+            else {
+                m_exitConveyorSim->setRunning(true);
+            }
         }
         ensureExitConveyorCommTask();
-        if (!enabled && m_internalCellFlowRunning) {
-            stopInternalCellFlow();
+        if (enabled) {
+            resyncInternalCellFlowOnLocalReenable("exit_conveyor");
         }
         emit stationModesChanged();
         updateCellFlowStatusText();
@@ -467,7 +502,7 @@ namespace backend
             return;
         }
         if (!m_runtimeConfig.simulation.robot.internal || !m_runtimeConfig.simulation.laser.internal ||
-            !m_runtimeConfig.simulation.gantry.internal ||
+            !m_runtimeConfig.simulation.camera.internal || !m_runtimeConfig.simulation.gantry.internal ||
             !m_runtimeConfig.simulation.entryConveyor.internal ||
             !m_runtimeConfig.simulation.exitConveyor.internal) {
             core::logger::warn("Cannot start internal cell flow: one or more stations are not in local mode");
@@ -499,6 +534,10 @@ namespace backend
         const auto normalized = station.trimmed().toLower();
         if (normalized == "robot") {
             setLocalRobotMode(enabled);
+            return true;
+        }
+        if (normalized == "camera") {
+            setLocalCameraMode(enabled);
             return true;
         }
         if (normalized == "laser") {
@@ -645,18 +684,41 @@ namespace backend
         }(m_exitConveyorSim);
     }
 
+    bool Backend::allStationsLocal() const
+    {
+        return m_runtimeConfig.simulation.robot.internal && m_runtimeConfig.simulation.camera.internal &&
+               m_runtimeConfig.simulation.laser.internal && m_runtimeConfig.simulation.gantry.internal &&
+               m_runtimeConfig.simulation.entryConveyor.internal &&
+               m_runtimeConfig.simulation.exitConveyor.internal;
+    }
+
+    void Backend::resyncInternalCellFlowOnLocalReenable(const char* stationName)
+    {
+        if (!m_internalCellFlowRunning || !m_cellFlow || !allStationsLocal()) {
+            return;
+        }
+
+        core::logger::info("All stations local after {} re-enabled; preserving in-flight flow state",
+                           stationName);
+        m_internalCellFlowStatus = QString::fromStdString(m_cellFlow->statusText());
+        emit internalCellFlowStatusChanged();
+    }
+
     void Backend::updateCellFlowStatusText()
     {
+        const bool allLocal = allStationsLocal();
+
         QString status;
         if (m_internalCellFlowRunning && m_cellFlow) {
-            status = QString::fromStdString(m_cellFlow->statusText());
+            if (allLocal) {
+                status = QString::fromStdString(m_cellFlow->statusText());
+            }
+            else {
+                status = QStringLiteral("%1 (Hybrid mode: remote station active)")
+                           .arg(QString::fromStdString(m_cellFlow->statusText()));
+            }
         }
         else {
-            const bool allLocal = m_runtimeConfig.simulation.robot.internal &&
-                                  m_runtimeConfig.simulation.laser.internal &&
-                                  m_runtimeConfig.simulation.gantry.internal &&
-                                  m_runtimeConfig.simulation.entryConveyor.internal &&
-                                  m_runtimeConfig.simulation.exitConveyor.internal;
             status = allLocal ? QStringLiteral("Idle")
                               : QStringLiteral("Disabled (requires local mode for all stations)");
         }

@@ -106,6 +106,7 @@ namespace backend
         config.adsLink.port = 851;
 
         config.simulation.localOnly = false;
+        config.simulation.camera.internal = true;
         config.simulation.laser.internal = true;
         config.simulation.robot.internal = true;
         config.simulation.gantry.internal = true;
@@ -214,6 +215,7 @@ namespace backend
         applyBool(simulation, "localOnly", config.simulation.localOnly);
 
         const auto stationModes = asObject(simulation, "stationModes");
+        applyBool(stationModes, "cameraInternal", config.simulation.camera.internal);
         applyBool(stationModes, "laserInternal", config.simulation.laser.internal);
         applyBool(stationModes, "robotInternal", config.simulation.robot.internal);
         applyBool(stationModes, "gantryInternal", config.simulation.gantry.internal);
@@ -226,6 +228,7 @@ namespace backend
         applyDouble(cellFlow, "inspectionRejectRate", config.simulation.cellFlow.inspectionRejectRate);
 
         if (config.simulation.localOnly) {
+            config.simulation.camera.internal = true;
             config.simulation.laser.internal = true;
             config.simulation.robot.internal = true;
             config.simulation.gantry.internal = true;
