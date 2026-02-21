@@ -50,6 +50,20 @@ namespace backend
         QString analysisDirectory{ QStringLiteral("analysis/session") };
     };
 
+    struct TraceConfig
+    {
+        bool enabled{ true };
+        bool enableProtocol{ true };
+        bool enableState{ true };
+        bool enableFlow{ true };
+        bool enableInvariant{ true };
+        bool mirrorToHumanLog{ true };
+        int sampleIntervalMs{ 0 };
+        QString outputFolder{ QStringLiteral("analysis/session") };
+        QString fileName{ QStringLiteral("protocol_trace.jsonl") };
+        std::vector<std::string> stationFilter;
+    };
+
     struct AdsVariableConfig
     {
         struct Robot
@@ -61,14 +75,16 @@ namespace backend
         struct Conveyors
         {
             std::string entryRun{ "MAIN.bEntryConveyorRun" };
-            std::vector<std::string> entrySensors{ "MAIN.bEntrySensor1", "MAIN.bEntrySensor2",
+            std::vector<std::string> entrySensors{ "MAIN.bEntrySensor1",
+                                                   "MAIN.bEntrySensor2",
                                                    "MAIN.bEntrySensor3" };
 
             std::string exitRun{ "MAIN.bExitConveyorRun" };
             std::vector<std::string> exitSensors{ "MAIN.bExitSensor1", "MAIN.bExitSensor2" };
 
             std::string transferRun{ "MAIN.bTransferConveyorRun" };
-            std::vector<std::string> transferSensors{ "MAIN.bTransferSensor1", "MAIN.bTransferSensor2",
+            std::vector<std::string> transferSensors{ "MAIN.bTransferSensor1",
+                                                      "MAIN.bTransferSensor2",
                                                       "MAIN.bTransferSensor3" };
         } conveyors;
 
@@ -95,6 +111,7 @@ namespace backend
         core::link::LinkConfig adsLink;
         SimulationConfig simulation;
         AnalyzerConfig analyzer;
+        TraceConfig trace;
         AdsVariableConfig adsVariables;
 
         auto loggerFilePath() const -> std::string

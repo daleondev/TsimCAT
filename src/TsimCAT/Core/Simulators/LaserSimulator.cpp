@@ -1,6 +1,7 @@
 #include "LaserSimulator.hpp"
 #include "Link/Raw/IRawLink.hpp"
 #include "Logger/Logger.hpp"
+#include "Logger/TraceLogger.hpp"
 #include <algorithm>
 #include <array>
 #include <format>
@@ -17,6 +18,11 @@ namespace core::sim
     auto LaserSimulator::initialize() -> coro::Task<result::Result<void>>
     {
         if (!m_link || m_internalMode) {
+            logger::TraceLogger::instance().emit(
+              logger::TraceCategory::Lifecycle,
+              "laser",
+              "initialize_skipped",
+              { logger::traceField("reason", !m_link ? "no_link" : "internal_mode") });
             co_return result::success();
         }
 
@@ -24,10 +30,18 @@ namespace core::sim
             auto res = server->start();
             if (!res) {
                 logger::error("LaserSimulator: Failed to start server: {}", res.error().message());
+                logger::TraceLogger::instance().emit(logger::TraceCategory::Protocol,
+                                                     "laser",
+                                                     "server_start_failed",
+                                                     { logger::traceField("error", res.error().message()) });
                 co_return std::unexpected(res.error());
             }
             else {
                 logger::info("LaserSimulator: Server started");
+                logger::TraceLogger::instance().emit(logger::TraceCategory::Lifecycle,
+                                                     "laser",
+                                                     "server_started",
+                                                     { logger::traceField("status", "listening") });
             }
         }
         co_return result::success();
@@ -55,6 +69,10 @@ namespace core::sim
                 m_state = State::Done;
                 m_laserDonePending = true;
                 logger::info("LaserSimulator: Job finished");
+                logger::TraceLogger::instance().emit(logger::TraceCategory::State,
+                                                     "laser",
+                                                     "marking_done",
+                                                     { logger::traceField("state", "done") });
             }
         }
     }
@@ -130,10 +148,19 @@ namespace core::sim
             auto acceptRes = co_await server->accept();
             if (!acceptRes) {
                 logger::warn("LaserSimulator: Accept failed: {}", acceptRes.error().message());
+                logger::TraceLogger::instance().emit(
+                  logger::TraceCategory::Protocol,
+                  "laser",
+                  "accept_failed",
+                  { logger::traceField("error", acceptRes.error().message()) });
                 continue;
             }
 
             logger::info("LaserSimulator: PLC connected");
+            logger::TraceLogger::instance().emit(logger::TraceCategory::Lifecycle,
+                                                 "laser",
+                                                 "plc_connected",
+                                                 { logger::traceField("status", "connected") });
 
             while (m_running && m_link->status() == link::Status::Connected) {
                 std::array<std::byte, 1024> buffer;
@@ -149,15 +176,30 @@ namespace core::sim
                             std::scoped_lock lock(m_mutex);
                             m_lastMessage = msg;
                         }
+                        logger::TraceLogger::instance().emit(
+                          logger::TraceCategory::Protocol,
+                          "laser",
+                          "tcp_rx",
+                          { logger::traceField("payload", msg),
+                            logger::traceField("bytes", static_cast<int>(bytes)) });
                         co_await handleCommand(msg);
                     }
                     else {
                         logger::info("LaserSimulator: PLC disconnected (EOF)");
+                        logger::TraceLogger::instance().emit(logger::TraceCategory::Lifecycle,
+                                                             "laser",
+                                                             "plc_disconnected",
+                                                             { logger::traceField("reason", "eof") });
                         break;
                     }
                 }
                 else if (readRes.error() != std::errc::timed_out) {
                     logger::info("LaserSimulator: PLC disconnected (Error: {})", readRes.error().message());
+                    logger::TraceLogger::instance().emit(
+                      logger::TraceCategory::Lifecycle,
+                      "laser",
+                      "plc_disconnected",
+                      { logger::traceField("reason", readRes.error().message()) });
                     break;
                 }
 
@@ -181,6 +223,10 @@ namespace core::sim
     {
         std::scoped_lock lock(m_mutex);
         m_internalMode = internalMode;
+        logger::TraceLogger::instance().emit(logger::TraceCategory::Lifecycle,
+                                             "laser",
+                                             "internal_mode_changed",
+                                             { logger::traceField("internal", internalMode) });
     }
 
     auto LaserSimulator::isInternalMode() const -> bool
@@ -193,12 +239,21 @@ namespace core::sim
     {
         std::scoped_lock lock(m_mutex);
         if (!m_internalMode || m_state == State::Laser) {
+            logger::TraceLogger::instance().emit(logger::TraceCategory::Invariant,
+                                                 "laser",
+                                                 "local_marking_rejected",
+                                                 { logger::traceField("internal", m_internalMode),
+                                                   logger::traceField("state", static_cast<int>(m_state)) });
             return false;
         }
 
         m_state = State::Laser;
         m_workTimer = std::max(0.1, durationSeconds);
         m_laserDonePending = false;
+        logger::TraceLogger::instance().emit(logger::TraceCategory::Flow,
+                                             "laser",
+                                             "local_marking_started",
+                                             { logger::traceField("duration_s", durationSeconds) });
         return true;
     }
 
@@ -263,6 +318,12 @@ namespace core::sim
 
         logger::debug("LaserSimulator TX: {}", status);
         (void)co_await raw->sendFrom("", std::as_bytes(std::span{ status.data(), status.size() }));
+        logger::TraceLogger::instance().emit(
+          logger::TraceCategory::Protocol,
+          "laser",
+          "tcp_tx",
+          { logger::traceField("payload", status),
+            logger::traceField("bytes", static_cast<int>(status.size())) });
     }
 
     auto LaserSimulator::transitionTo(State newState) -> coro::Task<void>
@@ -271,6 +332,11 @@ namespace core::sim
             std::scoped_lock lock(m_mutex);
             m_state = newState;
         }
+
+        logger::TraceLogger::instance().emit(logger::TraceCategory::State,
+                                             "laser",
+                                             "state_transition",
+                                             { logger::traceField("new_state", stateString()) });
 
         // Auto-responses based on state
         switch (newState) {

@@ -1,11 +1,44 @@
 #include "CellFlowOrchestrator.hpp"
 
 #include "Logger/Logger.hpp"
+#include "Logger/TraceLogger.hpp"
 
 #include <random>
 
 namespace core::sim
 {
+    auto CellFlowOrchestrator::stageName(Stage stage) -> std::string_view
+    {
+        switch (stage) {
+            case Stage::Idle:
+                return "Idle";
+            case Stage::WaitingEntryPart:
+                return "WaitingEntryPart";
+            case Stage::PickEntry:
+                return "PickEntry";
+            case Stage::PlaceCamera:
+                return "PlaceCamera";
+            case Stage::Inspecting:
+                return "Inspecting";
+            case Stage::PickCamera:
+                return "PickCamera";
+            case Stage::PlaceLaser:
+                return "PlaceLaser";
+            case Stage::Marking:
+                return "Marking";
+            case Stage::PickLaser:
+                return "PickLaser";
+            case Stage::PlaceExit:
+                return "PlaceExit";
+            case Stage::ReturnHome:
+                return "ReturnHome";
+            case Stage::RejectPart:
+                return "RejectPart";
+            default:
+                return "Unknown";
+        }
+    }
+
     CellFlowOrchestrator::CellFlowOrchestrator(std::shared_ptr<ConveyorSimulator> entryConveyor,
                                                std::shared_ptr<ConveyorSimulator> exitConveyor,
                                                std::shared_ptr<RobotSimulator> robot,
@@ -35,6 +68,9 @@ namespace core::sim
         m_jobInProgress = false;
         m_jobObservedMotion = false;
         m_stageTimer = 0.0;
+        ++m_cycleId;
+        m_eventSeq = 0;
+        m_lastTracedStage = m_stage;
 
         if (m_robot) {
             m_robot->setGripper(false);
@@ -57,6 +93,11 @@ namespace core::sim
         }
 
         logger::info("CellFlowOrchestrator started");
+        logger::TraceLogger::instance().emit(
+          logger::TraceCategory::Lifecycle,
+          "cell_flow",
+          "started",
+          { logger::traceField("cycle_id", m_cycleId), logger::traceField("stage", stageName(m_stage)) });
     }
 
     auto CellFlowOrchestrator::stop() -> void
@@ -75,6 +116,11 @@ namespace core::sim
             m_robot->setGripper(false);
         }
         logger::info("CellFlowOrchestrator stopped");
+        logger::TraceLogger::instance().emit(
+          logger::TraceCategory::Lifecycle,
+          "cell_flow",
+          "stopped",
+          { logger::traceField("cycle_id", m_cycleId), logger::traceField("stage", stageName(m_stage)) });
     }
 
     auto CellFlowOrchestrator::update(double deltaTimeSeconds) -> void
@@ -85,6 +131,17 @@ namespace core::sim
 
         m_stageTimer += deltaTimeSeconds;
 
+        if (m_stage != m_lastTracedStage) {
+            logger::TraceLogger::instance().emit(logger::TraceCategory::State,
+                                                 "cell_flow",
+                                                 "stage_changed",
+                                                 { logger::traceField("cycle_id", m_cycleId),
+                                                   logger::traceField("seq", ++m_eventSeq),
+                                                   logger::traceField("from", stageName(m_lastTracedStage)),
+                                                   logger::traceField("to", stageName(m_stage)) });
+            m_lastTracedStage = m_stage;
+        }
+
         switch (m_stage) {
             case Stage::Idle:
                 break;
@@ -93,6 +150,14 @@ namespace core::sim
                 auto part = m_entryConveyor->peekPartAtEnd();
                 if (part.has_value()) {
                     m_currentPart = std::move(part);
+                    logger::TraceLogger::instance().emit(
+                      logger::TraceCategory::Flow,
+                      "cell_flow",
+                      "entry_part_detected",
+                      { logger::traceField("cycle_id", m_cycleId),
+                        logger::traceField("seq", ++m_eventSeq),
+                        logger::traceField("part_id", m_currentPart->id),
+                        logger::traceField("part_type", static_cast<int>(m_currentPart->type)) });
                     issueJob(2, Stage::PickEntry);
                 }
                 break;
@@ -130,9 +195,23 @@ namespace core::sim
                     }
 
                     if (accepted) {
+                        logger::TraceLogger::instance().emit(
+                          logger::TraceCategory::Flow,
+                          "cell_flow",
+                          "inspection_accepted",
+                          { logger::traceField("cycle_id", m_cycleId),
+                            logger::traceField("seq", ++m_eventSeq),
+                            logger::traceField("reject_rate", m_config.inspectionRejectRate) });
                         issueJob(4, Stage::PickCamera);
                     }
                     else {
+                        logger::TraceLogger::instance().emit(
+                          logger::TraceCategory::Flow,
+                          "cell_flow",
+                          "inspection_rejected",
+                          { logger::traceField("cycle_id", m_cycleId),
+                            logger::traceField("seq", ++m_eventSeq),
+                            logger::traceField("reject_rate", m_config.inspectionRejectRate) });
                         if (m_cameraPart.has_value()) {
                             m_currentPart = m_cameraPart;
                             m_cameraPart.reset();
@@ -161,8 +240,22 @@ namespace core::sim
                     }
                     m_robot->setGripper(false);
                     if (m_laser->startLocalMarking(m_config.laserMarkDurationSeconds)) {
+                        logger::TraceLogger::instance().emit(
+                          logger::TraceCategory::Flow,
+                          "cell_flow",
+                          "laser_mark_started",
+                          { logger::traceField("cycle_id", m_cycleId),
+                            logger::traceField("seq", ++m_eventSeq),
+                            logger::traceField("duration_s", m_config.laserMarkDurationSeconds) });
                         m_stage = Stage::Marking;
                         m_stageTimer = 0.0;
+                    }
+                    else {
+                        logger::TraceLogger::instance().emit(logger::TraceCategory::Invariant,
+                                                             "cell_flow",
+                                                             "laser_mark_start_failed",
+                                                             { logger::traceField("cycle_id", m_cycleId),
+                                                               logger::traceField("seq", ++m_eventSeq) });
                     }
                 }
                 break;
@@ -287,6 +380,13 @@ namespace core::sim
         m_jobObservedMotion = false;
         m_stage = nextStage;
         m_stageTimer = 0.0;
+        logger::TraceLogger::instance().emit(logger::TraceCategory::Protocol,
+                                             "cell_flow",
+                                             "robot_job_issued",
+                                             { logger::traceField("cycle_id", m_cycleId),
+                                               logger::traceField("seq", ++m_eventSeq),
+                                               logger::traceField("job_id", static_cast<int>(jobId)),
+                                               logger::traceField("next_stage", stageName(nextStage)) });
     }
 
     auto CellFlowOrchestrator::updateJobProgress(Stage onCompletedStage) -> bool
@@ -302,6 +402,16 @@ namespace core::sim
         }
 
         if ((!m_jobObservedMotion && m_stageTimer < 0.25) || status.nJobIdFeedback != m_activeJobId) {
+            if (status.nJobIdFeedback != m_activeJobId) {
+                logger::TraceLogger::instance().emit(
+                  logger::TraceCategory::Invariant,
+                  "cell_flow",
+                  "job_feedback_mismatch",
+                  { logger::traceField("cycle_id", m_cycleId),
+                    logger::traceField("seq", ++m_eventSeq),
+                    logger::traceField("expected", static_cast<int>(m_activeJobId)),
+                    logger::traceField("actual", static_cast<int>(status.nJobIdFeedback)) });
+            }
             return false;
         }
 
@@ -314,11 +424,30 @@ namespace core::sim
 
     auto CellFlowOrchestrator::finishCycle(bool accepted) -> void
     {
+        const auto completedCycleId = m_cycleId;
         m_currentPart.reset();
         m_cameraPart.reset();
         m_laserPart.reset();
         m_stage = Stage::WaitingEntryPart;
         m_stageTimer = 0.0;
         logger::info("CellFlowOrchestrator cycle completed ({})", accepted ? "accepted" : "rejected");
+        logger::TraceLogger::instance().emit(
+          logger::TraceCategory::Flow,
+          "cell_flow",
+          "cycle_completed",
+          { logger::traceField("cycle_id", completedCycleId),
+            logger::traceField("seq", ++m_eventSeq),
+            logger::traceField("accepted", accepted),
+            logger::traceField("reject_bin_count", static_cast<int>(m_rejectBinParts.size())) });
+
+        ++m_cycleId;
+        m_eventSeq = 0;
+        m_lastTracedStage = Stage::WaitingEntryPart;
+
+        logger::TraceLogger::instance().emit(
+          logger::TraceCategory::Lifecycle,
+          "cell_flow",
+          "cycle_started",
+          { logger::traceField("cycle_id", m_cycleId), logger::traceField("stage", stageName(m_stage)) });
     }
 }

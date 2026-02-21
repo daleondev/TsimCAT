@@ -62,6 +62,7 @@ namespace core::sim
             RejectPart
         };
 
+        static auto stageName(Stage stage) -> std::string_view;
         auto issueJob(uint16_t jobId, Stage nextStage) -> void;
         auto updateJobProgress(Stage onCompletedStage) -> bool;
         auto finishCycle(bool accepted) -> void;
@@ -83,5 +84,8 @@ namespace core::sim
         bool m_jobInProgress{ false };
         bool m_jobObservedMotion{ false };
         double m_stageTimer{ 0.0 };
+        uint64_t m_cycleId{ 0 };
+        uint64_t m_eventSeq{ 0 };
+        Stage m_lastTracedStage{ Stage::Idle };
     };
 }

@@ -94,11 +94,34 @@ Analyzer capture can be configured via `analyzer`:
 - `maxFrames`: Automatic stop after N frames.
 - `outputFolder`: Output directory for frames and trace.
 
+Trace diagnostics can be configured via `trace`:
+- `enabled`: Enable structured protocol/state/flow/invariant JSONL output.
+- `outputFolder` + `fileName`: Target trace file (default `analysis/session/protocol_trace.jsonl`).
+- `sampleIntervalMs`: Optional event throttling in milliseconds.
+- `stationFilter`: Optional station whitelist.
+
+Runtime log behavior:
+- `logs/TsimCAT.log` is reset on each application start, so it always contains only the current run.
+
 `simulation.localOnly=true` forces all stations to local mode; keep it `false` to control each station individually.
 
 You can override the file path with:
 ```powershell
 $env:TSIMCAT_CONFIG = "config/runtime.json"
+```
+
+### Trace Summary Tool
+
+Use the helper script to summarize a single run from JSONL trace data:
+
+```powershell
+pwsh .\analysis\tools\summarize-trace.ps1
+```
+
+Optional JSON output:
+
+```powershell
+pwsh .\analysis\tools\summarize-trace.ps1 -AsJson
 ```
 
 ### ⚠️ Running (Critical DLL Order)

@@ -1,4 +1,5 @@
 #include "GantrySimulator.hpp"
+#include "Logger/TraceLogger.hpp"
 
 #include <cmath>
 
@@ -45,6 +46,12 @@ namespace core::sim
                     m_pendingPickupPart = std::move(part);
                     m_stage = Stage::MoveToPickup;
                     m_stageTimer = 0.0;
+                    logger::TraceLogger::instance().emit(
+                      logger::TraceCategory::Flow,
+                      "gantry",
+                      "pickup_requested",
+                      { logger::traceField("part_id", m_pendingPickupPart->id),
+                        logger::traceField("part_type", static_cast<int>(m_pendingPickupPart->type)) });
                 }
                 break;
             }
@@ -75,6 +82,12 @@ namespace core::sim
                     m_pendingPickupPart.reset();
                     m_stage = Stage::LiftFromPickup;
                     m_stageTimer = 0.0;
+                    logger::TraceLogger::instance().emit(
+                      logger::TraceCategory::State,
+                      "gantry",
+                      "part_gripped",
+                      { logger::traceField("gripped", m_gripperGripped),
+                        logger::traceField("has_part", m_carriedPart.has_value()) });
                 }
                 break;
 
@@ -102,6 +115,13 @@ namespace core::sim
             case Stage::ReleaseAtDrop:
                 if (m_carriedPart.has_value()) {
                     m_targetConveyor->spawnPartAtPosition(m_carriedPart->type, m_config.targetDropPosition);
+                    logger::TraceLogger::instance().emit(
+                      logger::TraceCategory::Flow,
+                      "gantry",
+                      "part_dropped",
+                      { logger::traceField("part_id", m_carriedPart->id),
+                        logger::traceField("part_type", static_cast<int>(m_carriedPart->type)),
+                        logger::traceField("drop_pos", m_config.targetDropPosition) });
                 }
                 m_carriedPart.reset();
                 m_gripperGripped = false;

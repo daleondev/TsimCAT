@@ -1,6 +1,7 @@
 #include "ConveyorSimulator.hpp"
 #include "Link/Symbolic/ISymbolicLink.hpp"
 #include "Logger/Logger.hpp"
+#include "Logger/TraceLogger.hpp"
 #include <algorithm>
 
 namespace core::sim
@@ -167,6 +168,21 @@ namespace core::sim
                         // Only override if not in autoLogic mode
                         if (!m_autoLogic)
                             m_beltRunning = *runRes;
+                        logger::TraceLogger::instance().emit(
+                          logger::TraceCategory::Protocol,
+                          m_config.name,
+                          "ads_rx_run_cmd",
+                          { logger::traceField("symbol", m_config.adsRunCmd),
+                            logger::traceField("run", *runRes),
+                            logger::traceField("auto_logic", m_autoLogic) });
+                    }
+                    else {
+                        logger::TraceLogger::instance().emit(
+                          logger::TraceCategory::Invariant,
+                          m_config.name,
+                          "ads_rx_run_cmd_failed",
+                          { logger::traceField("symbol", m_config.adsRunCmd),
+                            logger::traceField("error", runRes.error().message()) });
                     }
                 }
 
@@ -178,8 +194,22 @@ namespace core::sim
                             state = m_sensorStates[i];
                         }
                         (void)co_await symbolic->write(m_config.adsSensorSignals[i], state);
+                        logger::TraceLogger::instance().emit(
+                          logger::TraceCategory::Protocol,
+                          m_config.name,
+                          "ads_tx_sensor",
+                          { logger::traceField("index", static_cast<int>(i)),
+                            logger::traceField("symbol", m_config.adsSensorSignals[i]),
+                            logger::traceField("blocked", state) });
                     }
                 }
+            }
+            else if (!m_internalMode) {
+                logger::TraceLogger::instance().emit(
+                  logger::TraceCategory::Lifecycle,
+                  m_config.name,
+                  "ads_disconnected_wait",
+                  { logger::traceField("status", static_cast<int>(m_link->status())) });
             }
             co_await coro::sleep(std::chrono::milliseconds(50));
         }

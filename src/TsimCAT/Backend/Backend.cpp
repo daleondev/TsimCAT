@@ -5,11 +5,13 @@
 #include "Controllers/RobotController.h"
 #include "Link/LinkFactory.hpp"
 #include "Logger/Logger.hpp"
+#include "Logger/TraceLogger.hpp"
 #include "Simulators/CellFlowOrchestrator.hpp"
 #include "Simulators/ConveyorSimulator.hpp"
 #include "Simulators/GantrySimulator.hpp"
 #include "Simulators/LaserSimulator.hpp"
 #include "Simulators/RobotSimulator.hpp"
+#include <QCoreApplication>
 #include <QCoroTimer>
 #include <QDateTime>
 #include <QDir>
@@ -18,6 +20,7 @@
 #include <QQuickItemGrabResult>
 #include <QTextStream>
 #include <chrono>
+#include <filesystem>
 
 using namespace std::chrono_literals;
 
@@ -34,6 +37,42 @@ namespace backend
         core::logger::Logger::instance().init(m_runtimeConfig.loggerFilePath());
         core::logger::info("Backend initialized");
         core::logger::info("{}", configDiagnostics.toStdString());
+
+        {
+            QDir traceDir(m_runtimeConfig.trace.outputFolder);
+            if (!traceDir.isAbsolute()) {
+                traceDir = QDir(QDir::current().filePath(m_runtimeConfig.trace.outputFolder));
+            }
+            if (!traceDir.exists()) {
+                traceDir.mkpath(".");
+            }
+
+            core::logger::TraceConfig traceConfig{};
+            traceConfig.enabled = m_runtimeConfig.trace.enabled;
+            traceConfig.enableProtocol = m_runtimeConfig.trace.enableProtocol;
+            traceConfig.enableState = m_runtimeConfig.trace.enableState;
+            traceConfig.enableFlow = m_runtimeConfig.trace.enableFlow;
+            traceConfig.enableInvariant = m_runtimeConfig.trace.enableInvariant;
+            traceConfig.mirrorToHumanLog = m_runtimeConfig.trace.mirrorToHumanLog;
+            traceConfig.sampleIntervalMs = m_runtimeConfig.trace.sampleIntervalMs;
+            traceConfig.outputFile =
+              std::filesystem::path(traceDir.filePath(m_runtimeConfig.trace.fileName).toStdString());
+            traceConfig.stationFilter = m_runtimeConfig.trace.stationFilter;
+
+            auto traceInit = core::logger::TraceLogger::instance().init(std::move(traceConfig));
+            if (!traceInit) {
+                core::logger::error("Failed to initialize trace logger: {}", traceInit.error().message());
+            }
+            else {
+                core::logger::TraceLogger::instance().event(
+                  core::logger::TraceCategory::Lifecycle,
+                  "backend",
+                  "session_started",
+                  { core::logger::traceField("pid",
+                                             static_cast<uint64_t>(QCoreApplication::applicationPid())),
+                    core::logger::traceField("config", configPath.toStdString()) });
+            }
+        }
         m_analyzerOutputFolder = resolveAnalyzerOutputFolder();
         clearAnalyzerArtifactsOnStartup();
 
@@ -214,7 +253,15 @@ namespace backend
         }(this);
     }
 
-    Backend::~Backend() = default;
+    Backend::~Backend()
+    {
+        core::logger::TraceLogger::instance().event(
+          core::logger::TraceCategory::Lifecycle,
+          "backend",
+          "session_stopped",
+          { core::logger::traceField("pid", static_cast<uint64_t>(QCoreApplication::applicationPid())) });
+        core::logger::TraceLogger::instance().shutdown();
+    }
 
     QString Backend::welcomeMessage() const { return QStringLiteral("Hello from C++ Backend!"); }
 

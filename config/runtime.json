@@ -40,6 +40,18 @@
         "maxFrames": 240,
         "outputFolder": "analysis/session"
     },
+    "trace": {
+        "enabled": true,
+        "enableProtocol": true,
+        "enableState": true,
+        "enableFlow": true,
+        "enableInvariant": true,
+        "mirrorToHumanLog": true,
+        "sampleIntervalMs": 0,
+        "outputFolder": "analysis/session",
+        "fileName": "protocol_trace.jsonl",
+        "stationFilter": []
+    },
     "adsVariables": {
         "robot": {
             "control": "MAIN.stRobotControl",

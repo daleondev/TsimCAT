@@ -124,6 +124,16 @@ namespace backend
         config.analyzer.maxFrames = 240;
         config.analyzer.outputFolder = config.paths.analysisDirectory;
 
+        config.trace.enabled = true;
+        config.trace.enableProtocol = true;
+        config.trace.enableState = true;
+        config.trace.enableFlow = true;
+        config.trace.enableInvariant = true;
+        config.trace.mirrorToHumanLog = true;
+        config.trace.sampleIntervalMs = 0;
+        config.trace.outputFolder = config.paths.analysisDirectory;
+        config.trace.fileName = QStringLiteral("protocol_trace.jsonl");
+
         return config;
     }
 
@@ -163,6 +173,7 @@ namespace backend
         applyString(paths, "logFileName", config.paths.logFileName);
         applyString(paths, "analysisDirectory", config.paths.analysisDirectory);
         config.analyzer.outputFolder = config.paths.analysisDirectory;
+        config.trace.outputFolder = config.paths.analysisDirectory;
 
         const auto links = asObject(root, "links");
         const auto tcp = asObject(links, "tcp");
@@ -234,6 +245,25 @@ namespace backend
 
         if (config.analyzer.outputFolder.isEmpty()) {
             config.analyzer.outputFolder = config.paths.analysisDirectory;
+        }
+
+        const auto trace = asObject(root, "trace");
+        applyBool(trace, "enabled", config.trace.enabled);
+        applyBool(trace, "enableProtocol", config.trace.enableProtocol);
+        applyBool(trace, "enableState", config.trace.enableState);
+        applyBool(trace, "enableFlow", config.trace.enableFlow);
+        applyBool(trace, "enableInvariant", config.trace.enableInvariant);
+        applyBool(trace, "mirrorToHumanLog", config.trace.mirrorToHumanLog);
+        applyInt(trace, "sampleIntervalMs", config.trace.sampleIntervalMs);
+        applyString(trace, "outputFolder", config.trace.outputFolder);
+        applyString(trace, "fileName", config.trace.fileName);
+        applyStringArray(trace, "stationFilter", config.trace.stationFilter);
+
+        if (config.trace.outputFolder.isEmpty()) {
+            config.trace.outputFolder = config.paths.analysisDirectory;
+        }
+        if (config.trace.fileName.isEmpty()) {
+            config.trace.fileName = QStringLiteral("protocol_trace.jsonl");
         }
 
         if (diagnostics) {
