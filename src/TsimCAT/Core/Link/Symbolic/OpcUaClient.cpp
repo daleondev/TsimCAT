@@ -329,9 +329,9 @@ namespace
     };
     constexpr auto getStatus(UA_StatusCode status) -> UaStatus { return static_cast<UaStatus>(status); }
 
-    constexpr auto isGood(UaStatus code) -> bool { return UA_StatusCode_isGood(std::to_underlying(code)); }
-    constexpr auto isUncertain(UaStatus code) -> bool { return UA_StatusCode_isUncertain(std::to_underlying(code)); }
-    constexpr auto isBad(UaStatus code) -> bool { return UA_StatusCode_isBad(std::to_underlying(code)); }
+    auto isGood(UaStatus code) -> bool { return UA_StatusCode_isGood(std::to_underlying(code)); }
+    auto isUncertain(UaStatus code) -> bool { return UA_StatusCode_isUncertain(std::to_underlying(code)); }
+    auto isBad(UaStatus code) -> bool { return UA_StatusCode_isBad(std::to_underlying(code)); }
     // clang-format on
 
     class UaStatusCategory : public std::error_category
@@ -345,7 +345,7 @@ namespace
             if (!std::ranges::contains(enums, static_cast<UaStatusType>(ev))) {
                 return "Unknown";
             }
-            return std::format("{:v}", static_cast<UaStatus>(ev));
+            return std::to_string(static_cast<UaStatusType>(ev));
         }
     };
 

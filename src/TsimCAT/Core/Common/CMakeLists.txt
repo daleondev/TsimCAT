@@ -14,7 +14,6 @@ target_link_libraries(
     core_common
     INTERFACE
     format_utils::format_utils
-    stdc++exp
 )
 
 target_compile_features(

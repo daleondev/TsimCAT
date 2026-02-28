@@ -67,14 +67,31 @@ TsimCAT/
 ```
 
 ## 🛠 Prerequisites & Build
-- **Qt 6.10.1** (MinGW 64-bit) with **QtQuick3D** module
-- **MinGW GCC 15.2+** (Required for C++23 features like `std::print`)
+- **Windows 11**
+- **MSVC Build Tools** (Visual Studio 2022, x64 host tools)
+- **vcpkg** with triplet `x64-windows` and Qt6 packages installed
 - **CMake 3.24+** & **Ninja**
+
+Set `VCPKG_ROOT` before configuring:
+```powershell
+$env:VCPKG_ROOT = "C:/Dev/vcpkg"
+```
 
 ### Building
 ```powershell
 cmake --preset debug
 cmake --build --preset debug
+```
+
+### Running (No-copy runtime via vcpkg)
+Run with vcpkg runtime environment (no DLL copying into build output):
+```powershell
+cmake --build --preset debug --target run_appTsimCAT
+```
+
+Or use the generated launcher script:
+```powershell
+./build/debug/run_appTsimCAT_Debug.ps1
 ```
 
 ### Runtime Configuration
@@ -124,12 +141,8 @@ Optional JSON output:
 pwsh .\analysis\tools\summarize-trace.ps1 -AsJson
 ```
 
-### ⚠️ Running (Critical DLL Order)
-To avoid "Entry Point Not Found" errors, the **Compiler's bin directory must be prioritized** over Qt's bin directory in the PATH:
-```powershell
-$env:PATH = "C:\Users\Dev.Windows-Desktop\AppData\Local\mingw64\bin;D:\Qt\6.10.1\mingw_64\bin;" + $env:PATH
-.\build\debug\appTsimCAT.exe
-```
+### ⚠️ Runtime Notes
+The project is configured as **Windows + MSVC only**. Cross-platform and MinGW workflows are not supported.
 
 ## 💡 Architectural Patterns
 
