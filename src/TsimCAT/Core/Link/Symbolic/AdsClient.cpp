@@ -350,9 +350,8 @@ namespace core::link::symbolic
                                  std::chrono::milliseconds interval)
       -> coro::Task<result::Result<std::shared_ptr<RawSubscription>>>
     {
-        uint32_t transMode{ static_cast<uint32_t>((type == SubscriptionType::OnChange)
-                                ? ADSTRANS_SERVERONCHA
-                                : ADSTRANS_SERVERCYCLE) };
+        uint32_t transMode{ static_cast<uint32_t>(
+          (type == SubscriptionType::OnChange) ? ADSTRANS_SERVERONCHA : ADSTRANS_SERVERCYCLE) };
         uint32_t cycleTime{ static_cast<uint32_t>(interval.count() * 10000) };
 
         AdsNotificationAttrib attrib{ .cbLength = static_cast<uint32_t>(size),

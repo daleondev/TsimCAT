@@ -19,7 +19,13 @@ namespace core::sim
     {
         if (m_link) {
             if (auto* client = m_link->asClient()) {
-                co_await client->connect();
+                auto connectResult = co_await client->connect();
+                if (!connectResult) {
+                    logger::error("{}: Failed to connect symbolic link: {}",
+                                  m_config.name,
+                                  connectResult.error().message());
+                    co_return std::unexpected(connectResult.error());
+                }
             }
         }
         co_return result::success();

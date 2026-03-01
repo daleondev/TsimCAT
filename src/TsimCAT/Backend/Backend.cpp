@@ -34,7 +34,10 @@ namespace backend
         m_runtimeConfig = RuntimeConfig::loadFromFile(configPath, &configDiagnostics);
 
         // Initialize logger
-        core::logger::Logger::instance().init(m_runtimeConfig.loggerFilePath());
+        if (auto loggerInit = core::logger::Logger::instance().init(m_runtimeConfig.loggerFilePath());
+            !loggerInit) {
+            core::logger::error("Failed to initialize logger: {}", loggerInit.error().message());
+        }
         core::logger::info("Backend initialized");
         core::logger::info("{}", configDiagnostics.toStdString());
 

@@ -56,7 +56,10 @@ namespace core::sim
             return;
         }
         if (auto* server = m_link->asServer()) {
-            server->stop();
+            auto stopResult = server->stop();
+            if (!stopResult) {
+                logger::error("LaserSimulator: Failed to stop server: {}", stopResult.error().message());
+            }
         }
     }
 
