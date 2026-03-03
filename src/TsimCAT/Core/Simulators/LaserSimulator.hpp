@@ -37,6 +37,10 @@ namespace core::sim
         auto stateString() const -> std::string;
         auto tcpStatus() const -> std::string;
         auto lastMessage() const -> std::string;
+        auto setInternalMode(bool internalMode) -> void;
+        auto isInternalMode() const -> bool;
+        auto startLocalMarking(double durationSeconds = 2.0) -> bool;
+        auto acknowledgeDone() -> void;
 
       private:
         auto handleCommand(std::string_view cmd) -> coro::Task<void>;
@@ -47,6 +51,7 @@ namespace core::sim
         std::string m_lastMessage{ "No messages" };
         mutable std::mutex m_mutex;
         bool m_running{ false };
+        bool m_internalMode{ false };
 
         State m_state{ State::Idle };
         double m_workTimer{ 0.0 };

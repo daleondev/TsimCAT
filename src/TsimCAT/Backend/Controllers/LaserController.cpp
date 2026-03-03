@@ -1,4 +1,5 @@
 #include "LaserController.h"
+#include "Logger/Logger.hpp"
 #include "Simulators/LaserSimulator.hpp"
 #include <QCoroTimer>
 
@@ -11,7 +12,7 @@ namespace backend::controllers
       , m_simulator(std::move(simulator))
     {
         // Polling loop to sync simulator state to UI properties and drive physics
-        [] (LaserController* self) -> QCoro::Task<void> {
+        [](LaserController* self) -> QCoro::Task<void> {
             auto lastTime = std::chrono::steady_clock::now();
             while (true) {
                 auto now = std::chrono::steady_clock::now();
@@ -46,10 +47,17 @@ namespace backend::controllers
         if (m_simulator) {
             m_simulator->start();
             // Fire and forget the simulator task
-            [] (std::shared_ptr<core::sim::LaserSimulator> sim) -> QCoro::Task<void> {
-                co_await sim->initialize();
+            (void)[](std::shared_ptr<core::sim::LaserSimulator> sim)->QCoro::Task<void>
+            {
+                auto initResult = co_await sim->initialize();
+                if (!initResult) {
+                    core::logger::error("LaserController: Failed to initialize simulator: {}",
+                                        initResult.error().message());
+                    co_return;
+                }
                 co_await sim->run();
-            }(m_simulator);
+            }
+            (m_simulator);
         }
     }
 }

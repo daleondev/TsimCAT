@@ -16,6 +16,12 @@ ApplicationWindow {
         id: backend
     }
 
+    Component.onCompleted: {
+        if (backend.analyzerEnabled) {
+            backend.startAnalyzerCapture(window.contentItem);
+        }
+    }
+
     RowLayout {
         anchors.fill: parent
         spacing: 0

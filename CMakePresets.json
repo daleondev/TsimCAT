@@ -11,15 +11,21 @@
             "hidden": true,
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/${presetName}",
-            "cacheVariables": {
-                "CMAKE_PREFIX_PATH": "D:/Qt/6.10.1/mingw_64",
-                "CMAKE_TOOLCHAIN_FILE": "D:/vcpkg/scripts/buildsystems/vcpkg.cmake",
-                "VCPKG_TARGET_TRIPLET": "x64-mingw-static",
-                "CMAKE_MAKE_PROGRAM": "ninja",
-                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
             },
-            "environment": {
-                "PATH": "D:/Qt/6.10.1/mingw_64/bin;$penv{PATH}"
+            "toolset": {
+                "value": "host=x64",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "cl.exe",
+                "CMAKE_CXX_COMPILER": "cl.exe",
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                "VCPKG_TARGET_TRIPLET": "x64-windows",
+                "X_VCPKG_APPLOCAL_DEPS_INSTALL": "OFF",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
             }
         },
         {

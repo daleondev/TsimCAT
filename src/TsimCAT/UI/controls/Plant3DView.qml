@@ -6,7 +6,8 @@ import QtQuick3D.Helpers
 Item {
     id: root
     property var backend: null
-    property bool damperOpen: false
+    property bool entryDamperOpen: false
+    property bool exitDamperOpen: false
     property bool doorOpen: false
     property real gantryX: 0
     property real gantryZ: 80
@@ -78,7 +79,8 @@ Item {
                 id: fence
                 position: Qt.vector3d(500, 0, 0)
 
-                damperOpen: root.damperOpen
+                entryDamperOpen: root.entryDamperOpen
+                exitDamperOpen: root.exitDamperOpen
                 doorOpen: root.doorOpen
             }
 
@@ -89,7 +91,7 @@ Item {
                 length: 1875
                 height: 700
                 conveyorController: root.backend ? root.backend.entryConveyor : null
-                sensorPositions: [100.0, 1000.0, 1775.0]
+                sensorPositions: [437.5, 1000.0, 1775.0]
             }
 
             // 3. MAIN ROBOT
@@ -107,6 +109,8 @@ Item {
 
                 // Explicit connection for gripper state
                 gripperGripped: false
+                carriedPartVisible: root.backend ? root.backend.robotCarriedPartVisible : false
+                carriedPartType: root.backend ? root.backend.robotCarriedPartType : 0
                 Connections {
                     target: root.backend ? root.backend.robot : null
                     function onStateChanged() {
@@ -114,6 +118,94 @@ Item {
                     }
                 }
             }
+
+            Node {
+                id: rejectBin
+                position: Qt.vector3d(-850, 0, 1325)
+
+                Model {
+                    position: Qt.vector3d(0, 8, 0)
+                    source: "#Cube"
+                    scale: Qt.vector3d(5.0, 0.16, 3.8)
+                    materials: [
+                        PrincipledMaterial {
+                            baseColor: "#3a3a3a"
+                            metalness: 0.5
+                            roughness: 0.4
+                        }
+                    ]
+                }
+
+                Model {
+                    position: Qt.vector3d(-244, 188, 0)
+                    source: "#Cube"
+                    scale: Qt.vector3d(0.12, 3.6, 3.8)
+                    materials: [
+                        PrincipledMaterial {
+                            baseColor: "#4a4a4a"
+                            metalness: 0.5
+                            roughness: 0.4
+                        }
+                    ]
+                }
+
+                Model {
+                    position: Qt.vector3d(244, 188, 0)
+                    source: "#Cube"
+                    scale: Qt.vector3d(0.12, 3.6, 3.8)
+                    materials: [
+                        PrincipledMaterial {
+                            baseColor: "#4a4a4a"
+                            metalness: 0.5
+                            roughness: 0.4
+                        }
+                    ]
+                }
+
+                Model {
+                    position: Qt.vector3d(0, 188, -184)
+                    source: "#Cube"
+                    scale: Qt.vector3d(5.0, 3.6, 0.12)
+                    materials: [
+                        PrincipledMaterial {
+                            baseColor: "#4a4a4a"
+                            metalness: 0.5
+                            roughness: 0.4
+                        }
+                    ]
+                }
+
+                Model {
+                    position: Qt.vector3d(0, 188, 184)
+                    source: "#Cube"
+                    scale: Qt.vector3d(5.0, 3.6, 0.12)
+                    materials: [
+                        PrincipledMaterial {
+                            baseColor: "#4a4a4a"
+                            metalness: 0.5
+                            roughness: 0.4
+                        }
+                    ]
+                }
+
+                Repeater3D {
+                    model: root.backend ? root.backend.rejectBinCount : 0
+                    delegate: PartModel {
+                        required property int index
+                        readonly property int layer: Math.floor(index / 9)
+                        readonly property int layerIndex: index % 9
+                        readonly property int column: layerIndex % 3
+                        readonly property int row: Math.floor(layerIndex / 3)
+
+                        position: Qt.vector3d((column - 1) * 130, 52 + layer * 84, (row - 1) * 98)
+                        width: 120
+                        length: 120
+                        height: 80
+                        color: "#8f8f8f"
+                    }
+                }
+            }
+
             // 4. STATIONS
             Node {
                 id: stationsRow
@@ -124,6 +216,14 @@ Item {
                     position: Qt.vector3d(-1000, 0, 0)
                     StationModel {
                         color: "#3498db"
+                    }
+                    PartModel {
+                        visible: root.backend ? root.backend.cameraPartVisible : false
+                        position: Qt.vector3d(0, 815, 0)
+                        width: 140
+                        length: 140
+                        height: 80
+                        color: (root.backend && root.backend.cameraPartType === 2) ? "#2ecc71" : "#8f8f8f"
                     }
                     StationFrameModel {}
                     CameraModel {
@@ -137,6 +237,14 @@ Item {
                     position: Qt.vector3d(1000, 0, 0)
                     StationModel {
                         color: "#e74c3c"
+                    }
+                    PartModel {
+                        visible: root.backend ? root.backend.laserPartVisible : false
+                        position: Qt.vector3d(0, 815, 0)
+                        width: 140
+                        length: 140
+                        height: 80
+                        color: (root.backend && root.backend.laserPartType === 2) ? "#2ecc71" : "#8f8f8f"
                     }
 
                     // Offset frame to compensate for laser angle
@@ -172,6 +280,9 @@ Item {
                 frameHeight: 1600
                 xPos: root.gantryX
                 zPos: root.gantryZ
+                gripperGripped: (root.backend && root.backend.gantry) ? root.backend.gantry.gripperGripped : false
+                carriedPartVisible: (root.backend && root.backend.gantry) ? root.backend.gantry.hasCarriedPart : false
+                carriedPartType: (root.backend && root.backend.gantry) ? root.backend.gantry.carriedPartType : 0
             }
 
             // 7. NEIGHBOR EXIT CONVEYOR
@@ -180,6 +291,8 @@ Item {
                 position: Qt.vector3d(3250, 0, 0)
                 length: 1250
                 height: 1000
+                conveyorController: root.backend ? root.backend.transferConveyor : null
+                sensorPositions: [120.0, 650.0, 1120.0]
             }
         }
     }

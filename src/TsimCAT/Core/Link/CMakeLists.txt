@@ -26,15 +26,13 @@ target_link_libraries(
     asio::asio
     ads::ads
     open62541::open62541
+    ws2_32
+    mswsock
 
     PUBLIC
     core::common
     core::coroutines
 )
-
-if(WIN32)
-    target_link_libraries(core_link PUBLIC ws2_32 mswsock)
-endif()
 
 target_compile_definitions(
     core_link

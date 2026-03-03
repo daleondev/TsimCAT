@@ -60,7 +60,14 @@ namespace core::sim
     class RobotSimulator : public ISimulator
     {
       public:
-        explicit RobotSimulator(std::shared_ptr<link::ILink> link);
+                struct AdsSymbols
+                {
+                        std::string controlSymbol{ "MAIN.stRobotControl" };
+                        std::string statusSymbol{ "MAIN.stRobotStatus" };
+                };
+
+                explicit RobotSimulator(std::shared_ptr<link::ILink> link);
+                RobotSimulator(std::shared_ptr<link::ILink> link, AdsSymbols adsSymbols);
         ~RobotSimulator() override;
 
         auto name() const -> std::string override { return "Robot"; }
@@ -84,12 +91,15 @@ namespace core::sim
         auto setJointAngles(const double* anglesDegrees) -> void;
         auto setTargetPose(const Pose& pose) -> bool;
         auto triggerJob(uint16_t jobId) -> void;
+        auto setInternalMode(bool internalMode) -> void;
+        auto isInternalMode() const -> bool;
 
       private:
-        auto planTrajectory(const std::array<double, 6>& startJoints, 
+        auto planTrajectory(const std::array<double, 6>& startJoints,
                             const std::array<double, 6>& targetJoints) -> std::vector<std::array<double, 6>>;
 
         std::shared_ptr<link::ILink> m_link;
+        AdsSymbols m_adsSymbols;
         Kinematics m_kinematics;
 
         RobotControl m_control{};
@@ -98,6 +108,7 @@ namespace core::sim
         double m_targetJointAngles[6]{};
         uint16_t m_lastTargetJobId{ 0 };
         bool m_gripperGripped{ false };
+        bool m_internalMode{ false };
 
         std::vector<std::array<double, 6>> m_currentTrajectory;
         size_t m_trajectoryStep{ 0 };

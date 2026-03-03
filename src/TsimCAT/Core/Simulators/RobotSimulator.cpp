@@ -2,6 +2,7 @@
 #include "Coroutines/Task.hpp"
 #include "Link/Symbolic/ISymbolicLink.hpp"
 #include "Logger/Logger.hpp"
+#include "Logger/TraceLogger.hpp"
 #include <cmath>
 #include <numbers>
 
@@ -14,7 +15,13 @@
 namespace core::sim
 {
     RobotSimulator::RobotSimulator(std::shared_ptr<link::ILink> link)
+      : RobotSimulator(std::move(link), AdsSymbols{})
+    {
+    }
+
+    RobotSimulator::RobotSimulator(std::shared_ptr<link::ILink> link, AdsSymbols adsSymbols)
       : m_link(std::move(link))
+      , m_adsSymbols(std::move(adsSymbols))
     {
         // Initial hardware-like state
         m_status.bInHome = 1;
@@ -47,15 +54,32 @@ namespace core::sim
 
     auto RobotSimulator::initialize() -> coro::Task<result::Result<void>>
     {
+        if (!m_link || m_internalMode) {
+            logger::TraceLogger::instance().emit(
+              logger::TraceCategory::Lifecycle,
+              "robot",
+              "initialize_skipped",
+              { logger::traceField("reason", !m_link ? "no_link" : "internal_mode") });
+            co_return result::success();
+        }
+
         if (auto* client = m_link->asClient()) {
             logger::info("RobotSimulator: Connecting to ADS...");
             auto res = co_await client->connect();
             if (!res) {
                 logger::error("RobotSimulator: ADS Connection failed: {}", res.error().message());
+                logger::TraceLogger::instance().emit(logger::TraceCategory::Protocol,
+                                                     "robot",
+                                                     "ads_connect_failed",
+                                                     { logger::traceField("error", res.error().message()) });
                 co_return std::unexpected(res.error());
             }
             else {
                 logger::info("RobotSimulator: ADS Connected");
+                logger::TraceLogger::instance().emit(logger::TraceCategory::Protocol,
+                                                     "robot",
+                                                     "ads_connected",
+                                                     { logger::traceField("status", "connected") });
             }
         }
         co_return result::success();
@@ -101,6 +125,11 @@ namespace core::sim
                         break;
                     default:
                         validJob = false;
+                        logger::TraceLogger::instance().emit(
+                          logger::TraceCategory::Invariant,
+                          "robot",
+                          "unknown_job_id",
+                          { logger::traceField("job_id", static_cast<int>(m_control.nJobId)) });
                         break;
                 }
 
@@ -150,9 +179,20 @@ namespace core::sim
                           "RobotSimulator: Planned blended trajectory for Job {} with {} waypoints",
                           m_control.nJobId,
                           m_currentTrajectory.size());
+                        logger::TraceLogger::instance().emit(
+                          logger::TraceCategory::State,
+                          "robot",
+                          "trajectory_planned",
+                          { logger::traceField("job_id", static_cast<int>(m_control.nJobId)),
+                            logger::traceField("waypoints", static_cast<int>(m_currentTrajectory.size())) });
                     }
                     else {
                         logger::error("RobotSimulator: IK failed for Job {}", m_control.nJobId);
+                        logger::TraceLogger::instance().emit(
+                          logger::TraceCategory::Invariant,
+                          "robot",
+                          "ik_failed",
+                          { logger::traceField("job_id", static_cast<int>(m_control.nJobId)) });
                     }
                 }
             }
@@ -288,6 +328,9 @@ namespace core::sim
 
     auto RobotSimulator::adsStatus() const -> std::string
     {
+        if (m_internalMode) {
+            return "Local";
+        }
         if (!m_link)
             return "No Link";
         switch (m_link->status()) {
@@ -312,18 +355,34 @@ namespace core::sim
 
     auto RobotSimulator::run() -> coro::Task<void>
     {
+        if (m_internalMode || !m_link)
+            co_return;
+
         auto* symbolic = m_link->asSymbolic();
         if (!symbolic)
             co_return;
 
         while (m_running) {
+            if (m_internalMode) {
+                co_await coro::sleep(std::chrono::milliseconds(100));
+                continue;
+            }
+
             // Only communicate if actually connected to avoid floods
             if (m_link->status() == link::Status::Connected) {
                 // 1. Read Commands
-                auto ctrlRes = co_await symbolic->read<RobotControl>("MAIN.stRobotControl");
+                auto ctrlRes = co_await symbolic->read<RobotControl>(m_adsSymbols.controlSymbol);
                 if (ctrlRes) {
                     std::scoped_lock lock(m_mutex);
                     m_control = *ctrlRes;
+                    logger::TraceLogger::instance().emit(
+                      logger::TraceCategory::Protocol,
+                      "robot",
+                      "ads_rx_control",
+                      { logger::traceField("job_id", static_cast<int>(m_control.nJobId)),
+                        logger::traceField("move_enable", m_control.bMoveEnable != 0),
+                        logger::traceField("part_type", static_cast<int>(m_control.nPartType)),
+                        logger::traceField("symbol", m_adsSymbols.controlSymbol) });
                 }
 
                 // 2. Write Status
@@ -332,10 +391,23 @@ namespace core::sim
                     std::scoped_lock lock(m_mutex);
                     s = m_status;
                 }
-                (void)co_await symbolic->write("MAIN.stRobotStatus", s);
+                (void)co_await symbolic->write(m_adsSymbols.statusSymbol, s);
+                logger::TraceLogger::instance().emit(
+                  logger::TraceCategory::Protocol,
+                  "robot",
+                  "ads_tx_status",
+                  { logger::traceField("job_feedback", static_cast<int>(s.nJobIdFeedback)),
+                    logger::traceField("in_motion", s.bInMotion != 0),
+                    logger::traceField("error", s.bError != 0),
+                    logger::traceField("symbol", m_adsSymbols.statusSymbol) });
             }
             else {
                 // Throttled wait when disconnected
+                logger::TraceLogger::instance().emit(
+                  logger::TraceCategory::Lifecycle,
+                  "robot",
+                  "ads_disconnected_wait",
+                  { logger::traceField("status", static_cast<int>(m_link->status())) });
                 co_await coro::sleep(std::chrono::milliseconds(500));
             }
 
@@ -408,7 +480,51 @@ namespace core::sim
     auto RobotSimulator::triggerJob(uint16_t jobId) -> void
     {
         std::scoped_lock lock(m_mutex);
+        if (!m_internalMode) {
+            logger::TraceLogger::instance().emit(logger::TraceCategory::Lifecycle,
+                                                 "robot",
+                                                 "job_trigger_ignored_remote_mode",
+                                                 { logger::traceField("job_id", static_cast<int>(jobId)) });
+            return;
+        }
         m_control.nJobId = jobId;
         m_control.bMoveEnable = 1; // Auto-enable move for convenience in simulation
+        logger::TraceLogger::instance().emit(logger::TraceCategory::Flow,
+                                             "robot",
+                                             "job_triggered",
+                                             { logger::traceField("job_id", static_cast<int>(jobId)) });
+    }
+
+    auto RobotSimulator::setInternalMode(bool internalMode) -> void
+    {
+        std::scoped_lock lock(m_mutex);
+        if (m_internalMode == internalMode) {
+            return;
+        }
+
+        m_internalMode = internalMode;
+        if (!m_internalMode) {
+            m_control.nJobId = 0;
+            m_control.bMoveEnable = 0;
+            m_currentTrajectory.clear();
+            m_trajectoryStep = 0;
+            m_lastTargetJobId = 0;
+            m_status.bInMotion = 0;
+            m_status.nJobIdFeedback = 0;
+            logger::TraceLogger::instance().emit(logger::TraceCategory::State,
+                                                 "robot",
+                                                 "local_motion_quiesced",
+                                                 { logger::traceField("reason", "switched_to_remote_mode") });
+        }
+        logger::TraceLogger::instance().emit(logger::TraceCategory::Lifecycle,
+                                             "robot",
+                                             "internal_mode_changed",
+                                             { logger::traceField("internal", internalMode) });
+    }
+
+    auto RobotSimulator::isInternalMode() const -> bool
+    {
+        std::scoped_lock lock(m_mutex);
+        return m_internalMode;
     }
 }

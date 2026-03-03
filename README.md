@@ -67,9 +67,15 @@ TsimCAT/
 ```
 
 ## 🛠 Prerequisites & Build
-- **Qt 6.10.1** (MinGW 64-bit) with **QtQuick3D** module
-- **MinGW GCC 15.2+** (Required for C++23 features like `std::print`)
+- **Windows 11**
+- **MSVC Build Tools** (Visual Studio 2022, x64 host tools)
+- **vcpkg** with triplet `x64-windows` and Qt6 packages installed
 - **CMake 3.24+** & **Ninja**
+
+Set `VCPKG_ROOT` before configuring:
+```powershell
+$env:VCPKG_ROOT = "C:/Dev/vcpkg"
+```
 
 ### Building
 ```powershell
@@ -77,12 +83,66 @@ cmake --preset debug
 cmake --build --preset debug
 ```
 
-### ⚠️ Running (Critical DLL Order)
-To avoid "Entry Point Not Found" errors, the **Compiler's bin directory must be prioritized** over Qt's bin directory in the PATH:
+### Running (No-copy runtime via vcpkg)
+Run with vcpkg runtime environment (no DLL copying into build output):
 ```powershell
-$env:PATH = "C:\Users\Dev.Windows-Desktop\AppData\Local\mingw64\bin;D:\Qt\6.10.1\mingw_64\bin;" + $env:PATH
-.\build\debug\appTsimCAT.exe
+cmake --build --preset debug --target run_appTsimCAT
 ```
+
+Or use the generated launcher script:
+```powershell
+./build/debug/run_appTsimCAT_Debug.ps1
+```
+
+### Runtime Configuration
+Runtime endpoints and simulator parameters are loaded from `config/runtime.json`.
+Per-station local simulation can be configured independently via:
+- `simulation.stationModes.robotInternal`
+- `simulation.stationModes.laserInternal`
+- `simulation.stationModes.entryConveyorInternal`
+- `simulation.stationModes.exitConveyorInternal`
+
+Analyzer capture can be configured via `analyzer`:
+- `enabled`: Enable/disable analyzer helper pipeline.
+- `autoStart`: Start capture automatically on app launch.
+- `saveFrames`: Write cyclic PNG frames.
+- `saveTrace`: Write CSV state trace (`trace.csv`).
+- `frameIntervalMs` / `traceIntervalMs`: Capture cadence.
+- `maxFrames`: Automatic stop after N frames.
+- `outputFolder`: Output directory for frames and trace.
+
+Trace diagnostics can be configured via `trace`:
+- `enabled`: Enable structured protocol/state/flow/invariant JSONL output.
+- `outputFolder` + `fileName`: Target trace file (default `analysis/session/protocol_trace.jsonl`).
+- `sampleIntervalMs`: Optional event throttling in milliseconds.
+- `stationFilter`: Optional station whitelist.
+
+Runtime log behavior:
+- `logs/TsimCAT.log` is reset on each application start, so it always contains only the current run.
+
+`simulation.localOnly=true` forces all stations to local mode; keep it `false` to control each station individually.
+
+You can override the file path with:
+```powershell
+$env:TSIMCAT_CONFIG = "config/runtime.json"
+```
+
+### Trace Summary Tool
+
+Use the helper script to summarize a single run from JSONL trace data:
+
+```powershell
+pwsh .\analysis\tools\summarize-trace.ps1
+```
+
+Optional JSON output:
+
+```powershell
+pwsh .\analysis\tools\summarize-trace.ps1 -AsJson
+```
+
+### ⚠️ Runtime Notes
+The project is configured as **Windows + MSVC only**. Cross-platform and MinGW workflows are not supported.
 
 ## 💡 Architectural Patterns
 

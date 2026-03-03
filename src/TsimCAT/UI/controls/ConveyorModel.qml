@@ -7,7 +7,7 @@ Node {
     property real length: 2000
     property real width: 400
     property real height: 800
-    
+
     property var conveyorController: null
     property var sensorPositions: []
 
@@ -62,16 +62,17 @@ Node {
     Repeater3D {
         model: conveyorRoot.sensorPositions.length
         delegate: Node {
+            id: sensorNode
             required property int index
             // Position relative to conveyor center
-            position: Qt.vector3d(conveyorRoot.sensorPositions[index] - conveyorRoot.length / 2, conveyorRoot.height + 60, conveyorRoot.width / 2 - 20)
-            
+            position: Qt.vector3d(conveyorRoot.sensorPositions[sensorNode.index] - conveyorRoot.length / 2, conveyorRoot.height + 60, conveyorRoot.width / 2 - 20)
+
             Model {
                 source: "#Sphere"
                 scale: Qt.vector3d(0.2, 0.2, 0.2)
                 materials: [
                     DefaultMaterial {
-                        diffuseColor: (conveyorRoot.conveyorController && conveyorRoot.conveyorController.sensors[index]) ? "#e74c3c" : "#2ecc71"
+                        diffuseColor: (conveyorRoot.conveyorController && conveyorRoot.conveyorController.sensors[sensorNode.index]) ? "#e74c3c" : "#2ecc71"
                         emissiveFactor: Qt.vector3d(diffuseColor.r, diffuseColor.g, diffuseColor.b)
                     }
                 ]
@@ -89,7 +90,7 @@ Node {
             width: modelData.width
             length: modelData.length
             height: modelData.height
-            color: modelData.type === 1 ? "#e67e22" : "#3498db"
+            color: modelData.type === 2 ? "#2ecc71" : "#8f8f8f"
         }
     }
 }

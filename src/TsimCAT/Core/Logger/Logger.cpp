@@ -27,7 +27,7 @@ namespace core::logger
             if (logFile.has_parent_path()) {
                 std::filesystem::create_directories(logFile.parent_path());
             }
-            m_fileStream.open(logFile, std::ios::app);
+            m_fileStream.open(logFile, std::ios::trunc);
             if (!m_fileStream) {
                 return std::unexpected(std::make_error_code(std::errc::io_error));
             }

@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick3D
 
@@ -10,11 +11,14 @@ Node {
 
     property real xPos: 0
     property real zPos: 80
+    property bool gripperGripped: false
+    property bool carriedPartVisible: false
+    property int carriedPartType: 0
 
     property real frameHeight: 800
     property real frameWidth: 200
 
-    property real xAxisLength: 800
+    property real xAxisLength: 1000
     property real xAxisWidth: 85
 
     property real zAxisLength: 400
@@ -213,9 +217,20 @@ Node {
                 }
 
                 GripperModel {
+                    id: gantryGripper
                     x: -gripperFrameLength / 2
                     eulerRotation.y: -90
                     eulerRotation.z: 90
+                    gripped: gantryRoot.gripperGripped
+
+                    PartModel {
+                        visible: gantryRoot.carriedPartVisible
+                        position: gantryRoot.gripperGripped ? Qt.vector3d(0, 12, 100) : Qt.vector3d(0, 34, 100)
+                        width: 140
+                        length: 140
+                        height: 80
+                        color: gantryRoot.carriedPartType === 2 ? "#2ecc71" : "#8f8f8f"
+                    }
                 }
             }
         }

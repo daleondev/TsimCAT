@@ -15,22 +15,30 @@ Control {
     readonly property var robot: backend ? backend.robot : null
 
     function updateJoints(index, value) {
-        if (!robot) return;
+        if (!robot)
+            return;
         let joints = [robot.axis1, robot.axis2, robot.axis3, robot.axis4, robot.axis5, robot.axis6];
         joints[index] = value;
         robot.setJoints(joints[0], joints[1], joints[2], joints[3], joints[4], joints[5]);
     }
 
     function updateTcp(axis, value) {
-        if (!robot) return;
+        if (!robot)
+            return;
         let x = robot.tcpX, y = robot.tcpY, z = robot.tcpZ;
         let r = robot.tcpRoll, p = robot.tcpPitch, w = robot.tcpYaw;
-        if (axis === "x") x = value;
-        else if (axis === "y") y = value;
-        else if (axis === "z") z = value;
-        else if (axis === "r") r = value;
-        else if (axis === "p") p = value;
-        else if (axis === "w") w = value;
+        if (axis === "x")
+            x = value;
+        else if (axis === "y")
+            y = value;
+        else if (axis === "z")
+            z = value;
+        else if (axis === "r")
+            r = value;
+        else if (axis === "p")
+            p = value;
+        else if (axis === "w")
+            w = value;
         robot.setTcp(x, y, z, r, p, w);
     }
 
@@ -40,14 +48,15 @@ Control {
             id: plantView
             anchors.fill: parent
             backend: root.backend
-            damperOpen: (root.backend && root.backend.entryConveyor.autoLogic) ? root.backend.entryConveyor.damperOpen : damperToggle.checked
+            entryDamperOpen: (root.backend && root.backend.entryConveyor.autoLogic) ? root.backend.entryConveyor.damperOpen : entryDamperToggle.checked
+            exitDamperOpen: (root.backend && root.backend.transferConveyor.autoLogic) ? root.backend.transferConveyor.damperOpen : exitDamperToggle.checked
             doorOpen: doorToggle.checked
-            gantryX: gantryXSlider.value
-            gantryZ: gantryZSlider.value
+            gantryX: (root.backend && root.backend.gantry) ? root.backend.gantry.xPos : gantryXSlider.value
+            gantryZ: (root.backend && root.backend.gantry) ? root.backend.gantry.zPos : gantryZSlider.value
         }
 
         // --- OVERLAYS ---
-        
+
         // Header
         Rectangle {
             anchors.top: parent.top
@@ -69,17 +78,30 @@ Control {
                     Layout.preferredHeight: 12
                     radius: 6
                     color: "#2ecc71"
-                    
+
                     PropertyAnimation on opacity {
-                        from: 1.0; to: 0.4; duration: 1000
-                        loops: Animation.Infinite; running: true
+                        from: 1.0
+                        to: 0.4
+                        duration: 1000
+                        loops: Animation.Infinite
+                        running: true
                     }
                 }
 
                 ColumnLayout {
                     spacing: 0
-                    Text { text: root.title; font.pixelSize: 18; font.bold: true; color: "white" }
-                    Text { text: "SYSTEM OPERATIONAL"; font.pixelSize: 10; font.bold: true; color: "#2ecc71" }
+                    Text {
+                        text: root.title
+                        font.pixelSize: 18
+                        font.bold: true
+                        color: "white"
+                    }
+                    Text {
+                        text: "SYSTEM OPERATIONAL"
+                        font.pixelSize: 10
+                        font.bold: true
+                        color: "#2ecc71"
+                    }
                 }
 
                 Button {
@@ -131,7 +153,7 @@ Control {
                     }
 
                     CheckBox {
-                        id: damperToggle
+                        id: entryDamperToggle
                         text: ""
                         indicator.width: 20
                         indicator.height: 20
@@ -139,6 +161,22 @@ Control {
                         checked: (root.backend && root.backend.entryConveyor.autoLogic) ? root.backend.entryConveyor.damperOpen : false
                         Label {
                             text: "Guillotine Damper"
+                            color: "white"
+                            anchors.left: parent.right
+                            anchors.leftMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+
+                    CheckBox {
+                        id: exitDamperToggle
+                        text: ""
+                        indicator.width: 20
+                        indicator.height: 20
+                        enabled: !(root.backend && root.backend.transferConveyor.autoLogic)
+                        checked: (root.backend && root.backend.transferConveyor.autoLogic) ? root.backend.transferConveyor.damperOpen : false
+                        Label {
+                            text: "Exit Guillotine Damper"
                             color: "white"
                             anchors.left: parent.right
                             anchors.leftMargin: 8
@@ -173,13 +211,107 @@ Control {
                         font.bold: true
                     }
 
+                    Text {
+                        text: "Internal Cell Flow"
+                        color: "#a0aec0"
+                        font.pixelSize: 12
+                        font.bold: true
+                    }
+
+                    Switch {
+                        text: "Robot local simulation"
+                        checked: root.backend ? root.backend.localRobotMode : false
+                        onToggled: if (root.backend)
+                            root.backend.localRobotMode = checked
+                    }
+
+                    Switch {
+                        text: "Laser local simulation"
+                        checked: root.backend ? root.backend.localLaserMode : false
+                        onToggled: if (root.backend)
+                            root.backend.localLaserMode = checked
+                    }
+
+                    Switch {
+                        text: "Camera local simulation"
+                        checked: root.backend ? root.backend.localCameraMode : false
+                        onToggled: if (root.backend)
+                            root.backend.localCameraMode = checked
+                    }
+
+                    Switch {
+                        text: "Entry conveyor local simulation"
+                        checked: root.backend ? root.backend.localEntryConveyorMode : false
+                        onToggled: if (root.backend)
+                            root.backend.localEntryConveyorMode = checked
+                    }
+
+                    Switch {
+                        text: "Exit conveyor local simulation"
+                        checked: root.backend ? root.backend.localExitConveyorMode : false
+                        onToggled: if (root.backend)
+                            root.backend.localExitConveyorMode = checked
+                    }
+
+                    Switch {
+                        text: "Gantry local simulation"
+                        checked: root.backend ? root.backend.localGantryMode : false
+                        onToggled: if (root.backend)
+                            root.backend.localGantryMode = checked
+                    }
+
+                    Switch {
+                        id: internalFlowSwitch
+                        text: "Run full local sequence"
+                        checked: root.backend ? root.backend.internalCellFlowRunning : false
+                        enabled: root.backend ? (root.backend.internalCellFlowRunning || (root.backend.localRobotMode && root.backend.localCameraMode && root.backend.localLaserMode && root.backend.localEntryConveyorMode && root.backend.localExitConveyorMode)) : false
+                        onToggled: {
+                            if (!root.backend)
+                                return;
+                            if (checked) {
+                                root.backend.startInternalCellFlow();
+                            } else {
+                                root.backend.stopInternalCellFlow();
+                            }
+                        }
+                    }
+
+                    Text {
+                        text: root.backend ? ("State: " + root.backend.internalCellFlowStatus) : "State: N/A"
+                        color: "white"
+                        font.pixelSize: 11
+                    }
+
+                    Text {
+                        text: root.backend ? ("Modes  R:" + (root.backend.localRobotMode ? "L" : "E") + "  Cam:" + (root.backend.localCameraMode ? "L" : "E") + "  L:" + (root.backend.localLaserMode ? "L" : "E") + "  C1:" + (root.backend.localEntryConveyorMode ? "L" : "E") + "  C2:" + (root.backend.localExitConveyorMode ? "L" : "E")) : "Modes: N/A"
+                        color: "#cbd5e1"
+                        font.pixelSize: 10
+                    }
+
                     CheckBox {
                         id: autoLogicToggle
                         text: ""
                         checked: root.backend ? root.backend.entryConveyor.autoLogic : false
-                        onToggled: if (root.backend) root.backend.entryConveyor.autoLogic = checked
+                        onToggled: if (root.backend)
+                            root.backend.entryConveyor.autoLogic = checked
                         Label {
                             text: "Independent Seq. Logic"
+                            color: "#3498db"
+                            font.bold: true
+                            anchors.left: parent.right
+                            anchors.leftMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+
+                    CheckBox {
+                        id: autoLogicTransferToggle
+                        text: ""
+                        checked: root.backend ? root.backend.transferConveyor.autoLogic : false
+                        onToggled: if (root.backend)
+                            root.backend.transferConveyor.autoLogic = checked
+                        Label {
+                            text: "Transfer Conveyor Auto Logic"
                             color: "#3498db"
                             font.bold: true
                             anchors.left: parent.right
@@ -193,7 +325,8 @@ Control {
                         text: ""
                         enabled: !autoLogicToggle.checked
                         checked: root.backend ? root.backend.entryConveyor.isRunning : true
-                        onToggled: if (root.backend) root.backend.entryConveyor.isRunning = checked
+                        onToggled: if (root.backend)
+                            root.backend.entryConveyor.isRunning = checked
                         Label {
                             text: "Entry Belt Run"
                             color: "white"
@@ -207,9 +340,25 @@ Control {
                         id: autoSpawnToggle
                         text: ""
                         checked: root.backend ? root.backend.entryConveyor.autoSpawn : false
-                        onToggled: if (root.backend) root.backend.entryConveyor.autoSpawn = checked
+                        onToggled: if (root.backend)
+                            root.backend.entryConveyor.autoSpawn = checked
                         Label {
                             text: "Auto-Spawn Parts"
+                            color: "white"
+                            anchors.left: parent.right
+                            anchors.leftMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+
+                    CheckBox {
+                        id: gantryAutoToggle
+                        text: ""
+                        checked: root.backend ? root.backend.gantry.autoTransfer : false
+                        onToggled: if (root.backend)
+                            root.backend.gantry.autoTransfer = checked
+                        Label {
+                            text: "Gantry Auto Transfer"
                             color: "white"
                             anchors.left: parent.right
                             anchors.leftMargin: 8
@@ -223,12 +372,14 @@ Control {
                         Button {
                             text: "Spawn Type 1"
                             Layout.fillWidth: true
-                            onClicked: if (root.backend) root.backend.entryConveyor.spawnPart(1)
+                            onClicked: if (root.backend)
+                                root.backend.entryConveyor.spawnPart(1)
                         }
                         Button {
                             text: "Spawn Type 2"
                             Layout.fillWidth: true
-                            onClicked: if (root.backend) root.backend.entryConveyor.spawnPart(2)
+                            onClicked: if (root.backend)
+                                root.backend.entryConveyor.spawnPart(2)
                         }
                     }
 
@@ -239,8 +390,9 @@ Control {
                         palette.buttonText: "white"
                         onClicked: {
                             if (root.backend) {
-                                root.backend.entryConveyor.clearParts()
-                                root.backend.exitConveyor.clearParts()
+                                root.backend.entryConveyor.clearParts();
+                                root.backend.exitConveyor.clearParts();
+                                root.backend.transferConveyor.clearParts();
                             }
                         }
                     }
@@ -261,23 +413,23 @@ Control {
                     ColumnLayout {
                         spacing: 15
                         Layout.fillWidth: true
-                        EditableValue { 
+                        EditableValue {
                             id: gantryXSlider
-                            label: "X-Axis"; 
-                            value: 0; 
-                            min: -800; 
-                            max: 800; 
-                            Layout.fillWidth: true; 
-                            onUpdated: v => value = v 
+                            label: "X-Axis"
+                            value: 0
+                            min: -800
+                            max: 800
+                            Layout.fillWidth: true
+                            onUpdated: v => value = v
                         }
-                        EditableValue { 
+                        EditableValue {
                             id: gantryZSlider
-                            label: "Z-Axis"; 
-                            value: 80; 
-                            min: 0; 
-                            max: 300; 
-                            Layout.fillWidth: true; 
-                            onUpdated: v => value = v 
+                            label: "Z-Axis"
+                            value: 80
+                            min: 0
+                            max: 300
+                            Layout.fillWidth: true
+                            onUpdated: v => value = v
                         }
                     }
 
@@ -323,12 +475,54 @@ Control {
                     ColumnLayout {
                         spacing: 15
                         Layout.fillWidth: true
-                        EditableValue { label: "A1"; value: root.robot ? root.robot.axis1 : 0; min: -180; max: 180; Layout.fillWidth: true; onUpdated: v => root.updateJoints(0, v) }
-                        EditableValue { label: "A2"; value: root.robot ? root.robot.axis2 : 0; min: -180; max: 180; Layout.fillWidth: true; onUpdated: v => root.updateJoints(1, v) }
-                        EditableValue { label: "A3"; value: root.robot ? root.robot.axis3 : 0; min: -180; max: 180; Layout.fillWidth: true; onUpdated: v => root.updateJoints(2, v) }
-                        EditableValue { label: "A4"; value: root.robot ? root.robot.axis4 : 0; min: -180; max: 180; Layout.fillWidth: true; onUpdated: v => root.updateJoints(3, v) }
-                        EditableValue { label: "A5"; value: root.robot ? root.robot.axis5 : 0; min: -180; max: 180; Layout.fillWidth: true; onUpdated: v => root.updateJoints(4, v) }
-                        EditableValue { label: "A6"; value: root.robot ? root.robot.axis6 : 0; min: -360; max: 360; Layout.fillWidth: true; onUpdated: v => root.updateJoints(5, v) }
+                        EditableValue {
+                            label: "A1"
+                            value: root.robot ? root.robot.axis1 : 0
+                            min: -180
+                            max: 180
+                            Layout.fillWidth: true
+                            onUpdated: v => root.updateJoints(0, v)
+                        }
+                        EditableValue {
+                            label: "A2"
+                            value: root.robot ? root.robot.axis2 : 0
+                            min: -180
+                            max: 180
+                            Layout.fillWidth: true
+                            onUpdated: v => root.updateJoints(1, v)
+                        }
+                        EditableValue {
+                            label: "A3"
+                            value: root.robot ? root.robot.axis3 : 0
+                            min: -180
+                            max: 180
+                            Layout.fillWidth: true
+                            onUpdated: v => root.updateJoints(2, v)
+                        }
+                        EditableValue {
+                            label: "A4"
+                            value: root.robot ? root.robot.axis4 : 0
+                            min: -180
+                            max: 180
+                            Layout.fillWidth: true
+                            onUpdated: v => root.updateJoints(3, v)
+                        }
+                        EditableValue {
+                            label: "A5"
+                            value: root.robot ? root.robot.axis5 : 0
+                            min: -180
+                            max: 180
+                            Layout.fillWidth: true
+                            onUpdated: v => root.updateJoints(4, v)
+                        }
+                        EditableValue {
+                            label: "A6"
+                            value: root.robot ? root.robot.axis6 : 0
+                            min: -360
+                            max: 360
+                            Layout.fillWidth: true
+                            onUpdated: v => root.updateJoints(5, v)
+                        }
                     }
 
                     Rectangle {
@@ -347,15 +541,59 @@ Control {
                     ColumnLayout {
                         spacing: 15
                         Layout.fillWidth: true
-                        EditableValue { label: "X"; value: root.robot ? root.robot.tcpX : 0; min: -2000; max: 2000; Layout.fillWidth: true; onUpdated: v => root.updateTcp("x", v) }
-                        EditableValue { label: "Y"; value: root.robot ? root.robot.tcpY : 0; min: -2000; max: 2000; Layout.fillWidth: true; onUpdated: v => root.updateTcp("y", v) }
-                        EditableValue { label: "Z"; value: root.robot ? root.robot.tcpZ : 0; min: 0; max: 3000; Layout.fillWidth: true; onUpdated: v => root.updateTcp("z", v) }
-                        EditableValue { label: "R"; value: root.robot ? root.robot.tcpRoll : 0; min: -180; max: 180; Layout.fillWidth: true; onUpdated: v => root.updateTcp("r", v) }
-                        EditableValue { label: "P"; value: root.robot ? root.robot.tcpPitch : 0; min: -180; max: 180; Layout.fillWidth: true; onUpdated: v => root.updateTcp("p", v) }
-                        EditableValue { label: "W"; value: root.robot ? root.robot.tcpYaw : 0; min: -180; max: 180; Layout.fillWidth: true; onUpdated: v => root.updateTcp("w", v) }
+                        EditableValue {
+                            label: "X"
+                            value: root.robot ? root.robot.tcpX : 0
+                            min: -2000
+                            max: 2000
+                            Layout.fillWidth: true
+                            onUpdated: v => root.updateTcp("x", v)
+                        }
+                        EditableValue {
+                            label: "Y"
+                            value: root.robot ? root.robot.tcpY : 0
+                            min: -2000
+                            max: 2000
+                            Layout.fillWidth: true
+                            onUpdated: v => root.updateTcp("y", v)
+                        }
+                        EditableValue {
+                            label: "Z"
+                            value: root.robot ? root.robot.tcpZ : 0
+                            min: 0
+                            max: 3000
+                            Layout.fillWidth: true
+                            onUpdated: v => root.updateTcp("z", v)
+                        }
+                        EditableValue {
+                            label: "R"
+                            value: root.robot ? root.robot.tcpRoll : 0
+                            min: -180
+                            max: 180
+                            Layout.fillWidth: true
+                            onUpdated: v => root.updateTcp("r", v)
+                        }
+                        EditableValue {
+                            label: "P"
+                            value: root.robot ? root.robot.tcpPitch : 0
+                            min: -180
+                            max: 180
+                            Layout.fillWidth: true
+                            onUpdated: v => root.updateTcp("p", v)
+                        }
+                        EditableValue {
+                            label: "W"
+                            value: root.robot ? root.robot.tcpYaw : 0
+                            min: -180
+                            max: 180
+                            Layout.fillWidth: true
+                            onUpdated: v => root.updateTcp("w", v)
+                        }
                     }
 
-                    Item { Layout.preferredHeight: 20 } // Bottom spacer
+                    Item {
+                        Layout.preferredHeight: 20
+                    } // Bottom spacer
                 }
             }
         }
@@ -381,7 +619,7 @@ Control {
         }
     }
 
-    component EditableValue : Rectangle {
+    component EditableValue: Rectangle {
         id: editableValueRoot
         property string label: ""
         property var value: 0
@@ -401,8 +639,15 @@ Control {
 
             RowLayout {
                 Layout.fillWidth: true
-                Text { text: editableValueRoot.label; font.pixelSize: 9; font.bold: true; color: "#a0aec0" }
-                Item { Layout.fillWidth: true }
+                Text {
+                    text: editableValueRoot.label
+                    font.pixelSize: 9
+                    font.bold: true
+                    color: "#a0aec0"
+                }
+                Item {
+                    Layout.fillWidth: true
+                }
                 TextInput {
                     id: input
                     text: Number(editableValueRoot.value).toFixed(2)
@@ -413,14 +658,14 @@ Control {
                     selectByMouse: true
                     horizontalAlignment: Text.AlignRight
                     onAccepted: {
-                        editableValueRoot.updated(parseFloat(text))
-                        focus = false
+                        editableValueRoot.updated(parseFloat(text));
+                        focus = false;
                     }
                     Connections {
                         target: editableValueRoot
                         function onValueChanged() {
                             if (!input.activeFocus) {
-                                input.text = Number(editableValueRoot.value).toFixed(2)
+                                input.text = Number(editableValueRoot.value).toFixed(2);
                             }
                         }
                     }
@@ -434,7 +679,7 @@ Control {
                 to: editableValueRoot.max
                 value: editableValueRoot.value
                 onMoved: editableValueRoot.updated(value)
-                
+
                 background: Rectangle {
                     x: parent.leftPadding
                     y: parent.topPadding + parent.availableHeight / 2 - height / 2
