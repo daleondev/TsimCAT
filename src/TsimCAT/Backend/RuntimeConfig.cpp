@@ -104,17 +104,12 @@ namespace backend
         config.adsLink.remoteNetId = "192.168.167.100.1.1";
         config.adsLink.localNetId = "192.168.167.100.1.20";
         config.adsLink.port = 851;
+        config.opcUaLink.ip = "opc.tcp://127.0.0.1:4840";
 
         config.simulation.localOnly = false;
-        config.simulation.camera.internal = true;
-        config.simulation.laser.internal = true;
         config.simulation.robot.internal = true;
-        config.simulation.gantry.internal = true;
         config.simulation.entryConveyor.internal = true;
         config.simulation.exitConveyor.internal = true;
-        config.simulation.cellFlow.enabled = true;
-        config.simulation.cellFlow.autoStart = true;
-        config.simulation.cellFlow.inspectionRejectRate = 0.2;
 
         config.analyzer.enabled = false;
         config.analyzer.autoStart = true;
@@ -186,6 +181,10 @@ namespace backend
         applyString(ads, "localNetId", config.adsLink.localNetId);
         applyUInt16(ads, "port", config.adsLink.port);
 
+        const auto opcUa = asObject(links, "opcUa");
+        applyString(opcUa, "endpoint", config.opcUaLink.ip);
+        applyUInt16(opcUa, "port", config.opcUaLink.port);
+
         const auto adsVariables = asObject(root, "adsVariables");
         const auto adsRobot = asObject(adsVariables, "robot");
         applyString(adsRobot, "control", config.adsVariables.robot.control);
@@ -196,42 +195,17 @@ namespace backend
         applyStringArray(adsConveyors, "entrySensors", config.adsVariables.conveyors.entrySensors);
         applyString(adsConveyors, "exitRun", config.adsVariables.conveyors.exitRun);
         applyStringArray(adsConveyors, "exitSensors", config.adsVariables.conveyors.exitSensors);
-        applyString(adsConveyors, "transferRun", config.adsVariables.conveyors.transferRun);
-        applyStringArray(adsConveyors, "transferSensors", config.adsVariables.conveyors.transferSensors);
-
-        const auto adsFuture = asObject(adsVariables, "future");
-        applyString(adsFuture, "cameraTrigger", config.adsVariables.future.cameraTrigger);
-        applyString(adsFuture, "cameraResult", config.adsVariables.future.cameraResult);
-        applyString(adsFuture, "laserStart", config.adsVariables.future.laserStart);
-        applyString(adsFuture, "laserDone", config.adsVariables.future.laserDone);
-        applyString(adsFuture, "gantryPosX", config.adsVariables.future.gantryPosX);
-        applyString(adsFuture, "gantryPosZ", config.adsVariables.future.gantryPosZ);
-        applyString(adsFuture, "gantryGripCmd", config.adsVariables.future.gantryGripCmd);
-        applyString(adsFuture, "gantryGripFb", config.adsVariables.future.gantryGripFb);
-        applyString(adsFuture, "safetyDoorClosed", config.adsVariables.future.safetyDoorClosed);
-        applyString(adsFuture, "safetyEStopOk", config.adsVariables.future.safetyEStopOk);
 
         const auto simulation = asObject(root, "simulation");
         applyBool(simulation, "localOnly", config.simulation.localOnly);
 
         const auto stationModes = asObject(simulation, "stationModes");
-        applyBool(stationModes, "cameraInternal", config.simulation.camera.internal);
-        applyBool(stationModes, "laserInternal", config.simulation.laser.internal);
         applyBool(stationModes, "robotInternal", config.simulation.robot.internal);
-        applyBool(stationModes, "gantryInternal", config.simulation.gantry.internal);
         applyBool(stationModes, "entryConveyorInternal", config.simulation.entryConveyor.internal);
         applyBool(stationModes, "exitConveyorInternal", config.simulation.exitConveyor.internal);
 
-        const auto cellFlow = asObject(simulation, "cellFlow");
-        applyBool(cellFlow, "enabled", config.simulation.cellFlow.enabled);
-        applyBool(cellFlow, "autoStart", config.simulation.cellFlow.autoStart);
-        applyDouble(cellFlow, "inspectionRejectRate", config.simulation.cellFlow.inspectionRejectRate);
-
         if (config.simulation.localOnly) {
-            config.simulation.camera.internal = true;
-            config.simulation.laser.internal = true;
             config.simulation.robot.internal = true;
-            config.simulation.gantry.internal = true;
             config.simulation.entryConveyor.internal = true;
             config.simulation.exitConveyor.internal = true;
         }

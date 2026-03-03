@@ -13,25 +13,19 @@
             "remoteNetId": "192.168.167.100.1.1",
             "localNetId": "192.168.167.100.1.20",
             "port": 851
+        },
+        "opcUa": {
+            "endpoint": "opc.tcp://127.0.0.1:4840"
         }
     },
+    "simulation": {},
     "simulation": {
         "localOnly": false,
         "stationModes": {
-            "cameraInternal": true,
-            "laserInternal": true,
             "robotInternal": true,
-            "gantryInternal": true,
             "entryConveyorInternal": true,
             "exitConveyorInternal": true
-        },
-        "cellFlow": {
-            "enabled": true,
-            "autoStart": true,
-            "inspectionRejectRate": 0.2
         }
-    },
-    "analyzer": {
         "enabled": false,
         "autoStart": true,
         "saveFrames": true,

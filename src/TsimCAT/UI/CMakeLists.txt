@@ -13,27 +13,14 @@ qt_add_qml_module(TsimCAT_UI
         controls/Robot3DView.qml
         controls/RobotModel.qml
         controls/GripperModel.qml
-        controls/GantryModel.qml
-        controls/LaserModel.qml
-        controls/CameraModel.qml
         controls/ConveyorModel.qml
         controls/PartModel.qml
-        controls/StationModel.qml
-        controls/StationFrameModel.qml
         controls/FenceModel.qml
         controls/Plant3DView.qml
         icons/DashboardIcon.qml
         icons/RobotIcon.qml
-        icons/CameraIcon.qml
-        icons/LaserIcon.qml
-        icons/GantryIcon.qml
-        icons/AnalyticsIcon.qml
         subscreens/PlantOverview.qml
         subscreens/RobotStatus.qml
-        subscreens/CameraStatus.qml
-        subscreens/LaserStatus.qml
-        subscreens/GantryStatus.qml
-        subscreens/ProcessData.qml
     RESOURCES
         qtquickcontrols2.conf
         assets/meshes/base_link/Base_link.qml
