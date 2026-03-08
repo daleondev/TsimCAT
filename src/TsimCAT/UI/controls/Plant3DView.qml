@@ -103,10 +103,29 @@ Item {
             id: rotaryStation
             position: Qt.vector3d(-1350, 0, 120)
 
-            StationFrameModel {
-                width: 760
-                depth: 1200
-                position: Qt.vector3d(120, 0, 0)
+            Model {
+                position: Qt.vector3d(0, 18, 0)
+                source: "#Cube"
+                scale: Qt.vector3d(10.4, 0.36, 9.4)
+                materials: [
+                    PrincipledMaterial {
+                        baseColor: "#616b67"
+                        roughness: 0.88
+                    }
+                ]
+            }
+
+            Model {
+                position: Qt.vector3d(0, 150, -380)
+                source: "#Cube"
+                scale: Qt.vector3d(4.2, 2.6, 1.8)
+                materials: [
+                    PrincipledMaterial {
+                        baseColor: "#394148"
+                        metalness: 0.35
+                        roughness: 0.42
+                    }
+                ]
             }
 
             RotaryTableModel {
@@ -137,7 +156,22 @@ Item {
             id: laserStation
             position: Qt.vector3d(0, 0, -900)
 
+            Model {
+                position: Qt.vector3d(0, 15, 0)
+                source: "#Cube"
+                scale: Qt.vector3d(13.5, 0.3, 10.5)
+                materials: [
+                    PrincipledMaterial {
+                        baseColor: "#616b67"
+                        roughness: 0.9
+                    }
+                ]
+            }
+
             StationModel {
+                width: 520
+                depth: 520
+                height: 820
                 color: "#b45e43"
             }
 
@@ -153,12 +187,162 @@ Item {
             Node {
                 position: Qt.vector3d(560, 0, 0)
 
-                StationFrameModel {}
+                PrincipledMaterial {
+                    id: enclosureFrameMaterial
+                    baseColor: "#2f3438"
+                    metalness: 0.55
+                    roughness: 0.34
+                }
+
+                PrincipledMaterial {
+                    id: enclosureBodyMaterial
+                    baseColor: "#d8dbd4"
+                    metalness: 0.18
+                    roughness: 0.58
+                }
+
+                PrincipledMaterial {
+                    id: safetyGlassMaterial
+                    baseColor: "#b86f20"
+                    opacity: 0.42
+                    alphaMode: PrincipledMaterial.Blend
+                    metalness: 0.0
+                    roughness: 0.14
+                    cullMode: PrincipledMaterial.NoCulling
+                }
+
+                Model {
+                    position: Qt.vector3d(0, 20, 0)
+                    source: "#Cube"
+                    scale: Qt.vector3d(10.6, 0.4, 8.6)
+                    materials: [ enclosureBodyMaterial ]
+                }
+
+                Model {
+                    position: Qt.vector3d(0, 1860, 0)
+                    source: "#Cube"
+                    scale: Qt.vector3d(10.6, 0.44, 8.6)
+                    materials: [ enclosureBodyMaterial ]
+                }
+
+                Repeater3D {
+                    model: [
+                        Qt.vector3d(-500, 930, -400),
+                        Qt.vector3d(500, 930, -400),
+                        Qt.vector3d(-500, 930, 400),
+                        Qt.vector3d(500, 930, 400)
+                    ]
+
+                    delegate: Model {
+                        required property vector3d modelData
+                        position: modelData
+                        source: "#Cube"
+                        scale: Qt.vector3d(0.32, 18.6, 0.32)
+                        materials: [ enclosureFrameMaterial ]
+                    }
+                }
+
+                Model {
+                    position: Qt.vector3d(0, 930, -400)
+                    source: "#Cube"
+                    scale: Qt.vector3d(10.0, 0.24, 0.24)
+                    materials: [ enclosureFrameMaterial ]
+                }
+
+                Model {
+                    position: Qt.vector3d(0, 930, 400)
+                    source: "#Cube"
+                    scale: Qt.vector3d(10.0, 0.24, 0.24)
+                    materials: [ enclosureFrameMaterial ]
+                }
+
+                Model {
+                    position: Qt.vector3d(-500, 930, 0)
+                    source: "#Cube"
+                    scale: Qt.vector3d(0.24, 0.24, 8.0)
+                    materials: [ enclosureFrameMaterial ]
+                }
+
+                Model {
+                    position: Qt.vector3d(500, 930, 0)
+                    source: "#Cube"
+                    scale: Qt.vector3d(0.24, 0.24, 8.0)
+                    materials: [ enclosureFrameMaterial ]
+                }
+
+                Model {
+                    position: Qt.vector3d(0, 900, -398)
+                    source: "#Cube"
+                    scale: Qt.vector3d(9.4, 17.2, 0.03)
+                    materials: [ safetyGlassMaterial ]
+                }
+
+                Model {
+                    position: Qt.vector3d(-498, 900, 0)
+                    source: "#Cube"
+                    scale: Qt.vector3d(0.03, 17.2, 7.8)
+                    materials: [ safetyGlassMaterial ]
+                }
+
+                Model {
+                    position: Qt.vector3d(498, 900, 0)
+                    source: "#Cube"
+                    scale: Qt.vector3d(0.03, 17.2, 7.8)
+                    materials: [ safetyGlassMaterial ]
+                }
+
+                Model {
+                    position: Qt.vector3d(-180, 900, 398)
+                    source: "#Cube"
+                    scale: Qt.vector3d(5.8, 17.2, 0.03)
+                    materials: [ safetyGlassMaterial ]
+                }
+
+                Model {
+                    position: Qt.vector3d(360, 900, 398)
+                    source: "#Cube"
+                    scale: Qt.vector3d(2.2, 17.2, 0.03)
+                    materials: [ safetyGlassMaterial ]
+                }
+
+                Model {
+                    position: Qt.vector3d(-340, 900, 410)
+                    source: "#Cube"
+                    scale: Qt.vector3d(0.22, 17.0, 0.4)
+                    materials: [ enclosureFrameMaterial ]
+                }
+
+                Model {
+                    position: Qt.vector3d(110, 1680, 398)
+                    source: "#Cube"
+                    scale: Qt.vector3d(4.6, 1.5, 0.4)
+                    materials: [ enclosureBodyMaterial ]
+                }
+
+                Model {
+                    position: Qt.vector3d(120, 980, 425)
+                    source: "#Cube"
+                    scale: Qt.vector3d(4.4, 9.2, 0.08)
+                    materials: [ safetyGlassMaterial ]
+                }
 
                 LaserModel {
-                    position: Qt.vector3d(0, 1950, 0)
-                    eulerRotation.z: -30
+                    position: Qt.vector3d(0, 1730, -40)
+                    eulerRotation.z: -18
                     laserOn: true
+                }
+
+                Model {
+                    position: Qt.vector3d(0, 820, 0)
+                    source: "#Cube"
+                    scale: Qt.vector3d(4.4, 1.1, 4.0)
+                    materials: [
+                        PrincipledMaterial {
+                            baseColor: "#59636a"
+                            metalness: 0.32
+                            roughness: 0.4
+                        }
+                    ]
                 }
             }
         }

@@ -33,6 +33,34 @@ Node {
         roughness: 0.36
     }
 
+    PrincipledMaterial {
+        id: machineBasePaint
+        baseColor: "#2a3138"
+        metalness: 0.35
+        roughness: 0.46
+    }
+
+    PrincipledMaterial {
+        id: trimPaint
+        baseColor: "#6e7b83"
+        metalness: 0.42
+        roughness: 0.32
+    }
+
+    Model {
+        source: "#Cube"
+        position: Qt.vector3d(0, 90, 0)
+        scale: Qt.vector3d(7.2, 1.8, 7.2)
+        materials: [ machineBasePaint ]
+    }
+
+    Model {
+        source: "#Cube"
+        position: Qt.vector3d(0, 245, 0)
+        scale: Qt.vector3d(5.6, 1.35, 5.6)
+        materials: [ trimPaint ]
+    }
+
     Model {
         source: "#Cylinder"
         position: Qt.vector3d(0, 120, 0)
@@ -92,15 +120,22 @@ Node {
 
     Model {
         source: "#Cube"
-        position: Qt.vector3d(0, rotaryRoot.height + 72, rotaryRoot.radius + 80)
-        scale: Qt.vector3d(7.6, 0.18, 0.18)
+        position: Qt.vector3d(-120, rotaryRoot.height + 54, 0)
+        scale: Qt.vector3d(0.34, 0.3, 5.2)
         materials: [ darkSteel ]
     }
 
     Model {
         source: "#Cube"
-        position: Qt.vector3d(0, rotaryRoot.height + 72, -rotaryRoot.radius - 80)
-        scale: Qt.vector3d(7.6, 0.18, 0.18)
+        position: Qt.vector3d(120, rotaryRoot.height + 54, 0)
+        scale: Qt.vector3d(0.34, 0.3, 5.2)
+        materials: [ darkSteel ]
+    }
+
+    Model {
+        source: "#Cube"
+        position: Qt.vector3d(0, rotaryRoot.height + 54, -225)
+        scale: Qt.vector3d(2.7, 0.24, 0.28)
         materials: [ darkSteel ]
     }
 }
