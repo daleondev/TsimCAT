@@ -60,14 +60,14 @@ namespace core::sim
     class RobotSimulator : public ISimulator
     {
       public:
-                struct AdsSymbols
-                {
-                        std::string controlSymbol{ "MAIN.stRobotControl" };
-                        std::string statusSymbol{ "MAIN.stRobotStatus" };
-                };
+        struct AdsSymbols
+        {
+            std::string controlSymbol{ "MAIN.stRobotControl" };
+            std::string statusSymbol{ "MAIN.stRobotStatus" };
+        };
 
-                explicit RobotSimulator(std::shared_ptr<link::ILink> link);
-                RobotSimulator(std::shared_ptr<link::ILink> link, AdsSymbols adsSymbols);
+        explicit RobotSimulator(std::shared_ptr<link::ILink> link);
+        RobotSimulator(std::shared_ptr<link::ILink> link, AdsSymbols adsSymbols);
         ~RobotSimulator() override;
 
         auto name() const -> std::string override { return "Robot"; }
@@ -93,19 +93,21 @@ namespace core::sim
         auto triggerJob(uint16_t jobId) -> void;
         auto setInternalMode(bool internalMode) -> void;
         auto isInternalMode() const -> bool;
+        auto setExternalCommandSimulationEnabled(bool enabled) -> void;
+        auto externalCommandSimulationEnabled() const -> bool;
 
       private:
-                enum class JobId : uint16_t
-                {
-                        Home = 1,
-                        PickEntry = 2,
-                        PlaceLaser = 3,
-                        PickLaser = 4,
-                        PlaceExit = 7
-                };
+        enum class JobId : uint16_t
+        {
+            Home = 1,
+            PickEntry = 2,
+            PlaceLaser = 3,
+            PickLaser = 4,
+            PlaceExit = 7
+        };
 
-                auto targetPoseForJob(uint16_t jobId, Pose& outPose) const -> bool;
-                auto applyJobCompletionEffects(uint16_t jobId) -> void;
+        auto targetPoseForJob(uint16_t jobId, Pose& outPose) const -> bool;
+        auto applyJobCompletionEffects(uint16_t jobId) -> void;
 
         auto planTrajectory(const std::array<double, 6>& startJoints,
                             const std::array<double, 6>& targetJoints) -> std::vector<std::array<double, 6>>;
@@ -121,6 +123,8 @@ namespace core::sim
         uint16_t m_lastTargetJobId{ 0 };
         bool m_gripperGripped{ false };
         bool m_internalMode{ false };
+        bool m_externalCommandSimulationEnabled{ true };
+        bool m_manualTrajectoryActive{ false };
 
         std::vector<std::array<double, 6>> m_currentTrajectory;
         size_t m_trajectoryStep{ 0 };

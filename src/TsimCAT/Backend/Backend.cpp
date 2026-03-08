@@ -175,6 +175,7 @@ namespace backend
         m_cellCoordinator->setConveyorSimulationEnabled(m_localConveyorSimulationEnabled);
         m_cellCoordinator->setAutoSpawnParts(m_autoSpawnPartsEnabled);
         m_exitConveyorSim->setConsumeAtEndSensor(m_autoDespawnPartsEnabled);
+        m_robotSim->setExternalCommandSimulationEnabled(m_localRobotSimulationEnabled);
 
         ensureRobotCommTask();
         ensureRotaryTableCommTask();
@@ -296,6 +297,9 @@ namespace backend
         m_localRobotSimulationEnabled = enabled;
         if (m_cellCoordinator) {
             m_cellCoordinator->setRobotSimulationEnabled(enabled);
+        }
+        if (m_robotSim) {
+            m_robotSim->setExternalCommandSimulationEnabled(enabled);
         }
         emit simulationSettingsChanged();
     }
@@ -467,7 +471,7 @@ namespace backend
             if (m_rotaryTableSim && m_localSimulationEnabled && m_localTableSimulationEnabled) {
                 m_rotaryTableSim->update(dt);
             }
-            if (m_robotSim && m_localSimulationEnabled && m_localRobotSimulationEnabled) {
+            if (m_robotSim && m_localSimulationEnabled) {
                 m_robotSim->update(dt);
             }
             if (m_exitConveyorSim && m_localSimulationEnabled && m_localConveyorSimulationEnabled) {

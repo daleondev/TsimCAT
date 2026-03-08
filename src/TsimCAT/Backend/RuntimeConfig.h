@@ -44,7 +44,7 @@ namespace backend
     {
         double length{ 1250.0 };
         double speed{ 250.0 };
-        std::vector<double> sensorPositions{ 120.0, 560.0, 760.0, 1120.0 };
+        std::vector<double> sensorPositions{ 120.0, 420.0, 760.0, 1120.0 };
         int damperSensorIndex{ 1 };
         int damperCloseSensorIndex{ 2 };
         int endSensorIndex{ 3 };

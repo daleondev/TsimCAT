@@ -92,7 +92,7 @@ namespace core::sim
 
     auto RobotSimulator::update(double deltaTimeSeconds) -> void
     {
-        if (!m_internalMode) {
+        if (!m_internalMode && m_externalCommandSimulationEnabled) {
             if (auto* localAds = dynamic_cast<link::symbolic::LocalAdsLink*>(m_link.get())) {
                 const auto control = localAds->readSync<RobotControl>(m_adsSymbols.controlSymbol);
                 std::scoped_lock controlLock(m_mutex);
@@ -105,9 +105,13 @@ namespace core::sim
 
         m_status.nPartTypeMirrored = m_control.nPartType;
 
-        if (m_control.bMoveEnable && !m_status.bError) {
+        const bool autoCommandActive =
+          m_externalCommandSimulationEnabled && m_control.bMoveEnable && !m_status.bError;
+        const bool motionRequested = m_manualTrajectoryActive || autoCommandActive;
+
+        if (motionRequested) {
             // 1. Check if Job ID changed -> Plan New Trajectory
-            if (m_control.nJobId != m_lastTargetJobId) {
+            if (autoCommandActive && m_control.nJobId != m_lastTargetJobId) {
                 m_lastTargetJobId = m_control.nJobId;
 
                 using std::numbers::pi;
@@ -209,7 +213,10 @@ namespace core::sim
                 m_status.bInMotion = 0;
 
                 if (m_trajectoryStep >= m_currentTrajectory.size() && !m_currentTrajectory.empty()) {
-                    applyJobCompletionEffects(m_control.nJobId);
+                    if (!m_manualTrajectoryActive) {
+                        applyJobCompletionEffects(m_control.nJobId);
+                    }
+                    m_manualTrajectoryActive = false;
                     m_currentTrajectory.clear();
                     m_trajectoryStep = 0;
                 }
@@ -487,6 +494,7 @@ namespace core::sim
             m_jointAngles[i] = anglesDegrees[i];
         }
         m_currentTrajectory.clear();
+        m_manualTrajectoryActive = false;
     }
 
     auto RobotSimulator::setTargetPose(const Pose& pose) -> bool
@@ -517,7 +525,25 @@ namespace core::sim
         std::scoped_lock lock(m_mutex);
         m_currentTrajectory = std::move(path);
         m_trajectoryStep = 0;
+        m_manualTrajectoryActive = true;
         return true;
+    }
+
+    auto RobotSimulator::setExternalCommandSimulationEnabled(bool enabled) -> void
+    {
+        std::scoped_lock lock(m_mutex);
+        m_externalCommandSimulationEnabled = enabled;
+        if (!enabled) {
+            m_control.bMoveEnable = 0;
+            m_control.nJobId = 0;
+            m_lastTargetJobId = 0;
+        }
+    }
+
+    auto RobotSimulator::externalCommandSimulationEnabled() const -> bool
+    {
+        std::scoped_lock lock(m_mutex);
+        return m_externalCommandSimulationEnabled;
     }
 
     auto RobotSimulator::triggerJob(uint16_t jobId) -> void

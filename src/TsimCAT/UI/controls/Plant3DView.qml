@@ -339,7 +339,7 @@ Item {
             height: 720
             width: 430
             conveyorController: root.backend ? root.backend.exitConveyor : null
-            sensorPositions: [120.0, 560.0, 760.0, 1120.0]
+            sensorPositions: [120.0, 420.0, 760.0, 1120.0]
         }
     }
 
