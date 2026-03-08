@@ -3,10 +3,13 @@
 #include "ISimulator.hpp"
 #include "Kinematics.hpp"
 #include "Link/ILink.hpp"
+#include <array>
 #include <cstdint>
 #include <memory>
 #include <mutex>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 namespace core::sim
 {
@@ -60,6 +63,17 @@ namespace core::sim
     class RobotSimulator : public ISimulator
     {
       public:
+        struct JobTrajectory
+        {
+            uint16_t jobId{ 0 };
+            std::vector<Pose> poses;
+        };
+
+        struct Config
+        {
+            std::vector<JobTrajectory> jobTrajectories;
+        };
+
         struct AdsSymbols
         {
             std::string controlSymbol{ "MAIN.stRobotControl" };
@@ -67,7 +81,8 @@ namespace core::sim
         };
 
         explicit RobotSimulator(std::shared_ptr<link::ILink> link);
-        RobotSimulator(std::shared_ptr<link::ILink> link, AdsSymbols adsSymbols);
+        RobotSimulator(std::shared_ptr<link::ILink> link, Config config);
+        RobotSimulator(std::shared_ptr<link::ILink> link, AdsSymbols adsSymbols, Config config = {});
         ~RobotSimulator() override;
 
         auto name() const -> std::string override { return "Robot"; }
@@ -106,11 +121,16 @@ namespace core::sim
             PlaceExit = 7
         };
 
-        auto targetPoseForJob(uint16_t jobId, Pose& outPose) const -> bool;
+        static auto defaultJobTrajectories() -> std::vector<JobTrajectory>;
+        auto configuredPosesForJob(uint16_t jobId) const -> const std::vector<Pose>*;
+        auto planTrajectoryThroughPoses(const std::array<double, 6>& startJoints,
+                                        const std::vector<Pose>& poses,
+                                        std::vector<std::array<double, 6>>& outTrajectory) const -> bool;
         auto applyJobCompletionEffects(uint16_t jobId) -> void;
 
         auto planTrajectory(const std::array<double, 6>& startJoints,
-                            const std::array<double, 6>& targetJoints) -> std::vector<std::array<double, 6>>;
+                            const std::array<double, 6>& targetJoints) const
+          -> std::vector<std::array<double, 6>>;
 
         std::shared_ptr<link::ILink> m_link;
         AdsSymbols m_adsSymbols;
@@ -121,10 +141,12 @@ namespace core::sim
         double m_jointAngles[6]{};
         double m_targetJointAngles[6]{};
         uint16_t m_lastTargetJobId{ 0 };
+        uint16_t m_lastSuccessfulJobId{ 0 };
         bool m_gripperGripped{ false };
         bool m_internalMode{ false };
         bool m_externalCommandSimulationEnabled{ true };
         bool m_manualTrajectoryActive{ false };
+        std::unordered_map<uint16_t, std::vector<Pose>> m_jobTrajectories;
 
         std::vector<std::array<double, 6>> m_currentTrajectory;
         size_t m_trajectoryStep{ 0 };

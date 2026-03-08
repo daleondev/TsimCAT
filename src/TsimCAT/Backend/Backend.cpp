@@ -16,9 +16,42 @@
 #include <QTimer>
 #include <chrono>
 #include <filesystem>
+#include <numbers>
 
 namespace backend
 {
+    namespace
+    {
+        auto makeRobotSimulatorConfig(const RuntimeConfig& runtimeConfig) -> core::sim::RobotSimulator::Config
+        {
+            constexpr double degToRad = std::numbers::pi / 180.0;
+
+            core::sim::RobotSimulator::Config config;
+            config.jobTrajectories.reserve(runtimeConfig.simulation.robotMotion.jobs.size());
+
+            for (const auto& job : runtimeConfig.simulation.robotMotion.jobs) {
+                core::sim::RobotSimulator::JobTrajectory trajectory;
+                trajectory.jobId = job.jobId;
+                trajectory.poses.reserve(job.poses.size());
+
+                for (const auto& pose : job.poses) {
+                    trajectory.poses.push_back(core::sim::Pose{ .x = pose.x,
+                                                                .y = pose.y,
+                                                                .z = pose.z,
+                                                                .roll = pose.rollDeg * degToRad,
+                                                                .pitch = pose.pitchDeg * degToRad,
+                                                                .yaw = pose.yawDeg * degToRad });
+                }
+
+                if (!trajectory.poses.empty()) {
+                    config.jobTrajectories.push_back(std::move(trajectory));
+                }
+            }
+
+            return config;
+        }
+    }
+
     Backend::Backend(QObject* parent)
       : QObject(parent)
     {
@@ -106,6 +139,7 @@ namespace backend
             .controlSymbol = m_runtimeConfig.adsVariables.rotaryTable.control,
             .statusSymbol = m_runtimeConfig.adsVariables.rotaryTable.status
         };
+        const auto robotConfig = makeRobotSimulatorConfig(m_runtimeConfig);
 
         const auto exitConveyorConfig = core::sim::ConveyorSimulator::Config{
             .name = "ExitConveyor",
@@ -121,7 +155,7 @@ namespace backend
             .adsSensorSignals = m_runtimeConfig.adsVariables.conveyors.exitSensors,
         };
 
-        m_robotSim = std::make_shared<core::sim::RobotSimulator>(m_adsLink, robotSymbols);
+        m_robotSim = std::make_shared<core::sim::RobotSimulator>(m_adsLink, robotSymbols, robotConfig);
         m_rotaryTableSim = std::make_shared<core::sim::RotaryTableSimulator>(
           core::sim::RotaryTableSimulator::Config{
             .name = "RotaryTable",

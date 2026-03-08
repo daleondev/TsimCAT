@@ -3,6 +3,7 @@
 #include "Link/LinkFactory.hpp"
 
 #include <QString>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -52,6 +53,28 @@ namespace backend
         double damperOpenDelaySeconds{ 0.8 };
     };
 
+    struct RobotPoseConfig
+    {
+        double x{ 0.0 };
+        double y{ 0.0 };
+        double z{ 0.0 };
+        double rollDeg{ 0.0 };
+        double pitchDeg{ 0.0 };
+        double yawDeg{ 0.0 };
+    };
+
+    struct RobotJobConfig
+    {
+        uint16_t jobId{ 0 };
+        std::string name;
+        std::vector<RobotPoseConfig> poses;
+    };
+
+    struct RobotMotionConfig
+    {
+        std::vector<RobotJobConfig> jobs;
+    };
+
     struct LocalCellConfig
     {
         bool enabled{ true };
@@ -67,6 +90,7 @@ namespace backend
         StationModeConfig robot;
         StationModeConfig rotaryTable;
         StationModeConfig exitConveyor;
+        RobotMotionConfig robotMotion;
         RotaryTableConfig rotaryTableConfig;
         ConveyorConfig exitConveyorConfig;
         LocalCellConfig localCell;

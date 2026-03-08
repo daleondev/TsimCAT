@@ -28,6 +28,174 @@
             "rotaryTableInternal": false,
             "exitConveyorInternal": false
         },
+        "robotJobs": [
+            {
+                "jobId": 1,
+                "name": "Home",
+                "poses": [
+                    {
+                        "x": 395.0,
+                        "y": 0.0,
+                        "z": 765.0,
+                        "rollDeg": 0.0,
+                        "pitchDeg": 90.0,
+                        "yawDeg": 0.0
+                    }
+                ]
+            },
+            {
+                "jobId": 2,
+                "name": "PickEntry",
+                "poses": [
+                    {
+                        "x": 395.0,
+                        "y": 0.0,
+                        "z": 765.0,
+                        "rollDeg": 0.0,
+                        "pitchDeg": 90.0,
+                        "yawDeg": 0.0
+                    },
+                    {
+                        "x": 615.0,
+                        "y": 650.0,
+                        "z": 520.0,
+                        "rollDeg": 0.0,
+                        "pitchDeg": 0.0,
+                        "yawDeg": 90.0
+                    },
+                    {
+                        "x": 395.0,
+                        "y": 0.0,
+                        "z": 765.0,
+                        "rollDeg": 0.0,
+                        "pitchDeg": 90.0,
+                        "yawDeg": 0.0
+                    }
+                ]
+            },
+            {
+                "jobId": 3,
+                "name": "PlaceLaser",
+                "poses": [
+                    {
+                        "x": 395.0,
+                        "y": 0.0,
+                        "z": 765.0,
+                        "rollDeg": 0.0,
+                        "pitchDeg": 90.0,
+                        "yawDeg": 0.0
+                    },
+                    {
+                        "x": 520.0,
+                        "y": 0.0,
+                        "z": 760.0,
+                        "rollDeg": 0.0,
+                        "pitchDeg": 0.0,
+                        "yawDeg": 0.0
+                    },
+                    {
+                        "x": 670.0,
+                        "y": 0.0,
+                        "z": 630.0,
+                        "rollDeg": 0.0,
+                        "pitchDeg": 0.0,
+                        "yawDeg": 0.0
+                    },
+                    {
+                        "x": 520.0,
+                        "y": 0.0,
+                        "z": 760.0,
+                        "rollDeg": 0.0,
+                        "pitchDeg": 0.0,
+                        "yawDeg": 0.0
+                    },
+                    {
+                        "x": 395.0,
+                        "y": 0.0,
+                        "z": 765.0,
+                        "rollDeg": 0.0,
+                        "pitchDeg": 90.0,
+                        "yawDeg": 0.0
+                    }
+                ]
+            },
+            {
+                "jobId": 4,
+                "name": "PickLaser",
+                "poses": [
+                    {
+                        "x": 520.0,
+                        "y": 0.0,
+                        "z": 760.0,
+                        "rollDeg": 0.0,
+                        "pitchDeg": 0.0,
+                        "yawDeg": 0.0
+                    },
+                    {
+                        "x": 670.0,
+                        "y": 0.0,
+                        "z": 630.0,
+                        "rollDeg": 0.0,
+                        "pitchDeg": 0.0,
+                        "yawDeg": 0.0
+                    },
+                    {
+                        "x": 670.0,
+                        "y": 0.0,
+                        "z": 565.0,
+                        "rollDeg": 0.0,
+                        "pitchDeg": 0.0,
+                        "yawDeg": 0.0
+                    },
+                    {
+                        "x": 670.0,
+                        "y": 0.0,
+                        "z": 630.0,
+                        "rollDeg": 0.0,
+                        "pitchDeg": 0.0,
+                        "yawDeg": 0.0
+                    },
+                    {
+                        "x": 520.0,
+                        "y": 0.0,
+                        "z": 760.0,
+                        "rollDeg": 0.0,
+                        "pitchDeg": 0.0,
+                        "yawDeg": 0.0
+                    }
+                ]
+            },
+            {
+                "jobId": 7,
+                "name": "PlaceExit",
+                "poses": [
+                    {
+                        "x": 395.0,
+                        "y": 0.0,
+                        "z": 765.0,
+                        "rollDeg": 0.0,
+                        "pitchDeg": 90.0,
+                        "yawDeg": 0.0
+                    },
+                    {
+                        "x": 615.0,
+                        "y": -690.0,
+                        "z": 520.0,
+                        "rollDeg": 0.0,
+                        "pitchDeg": 0.0,
+                        "yawDeg": -90.0
+                    },
+                    {
+                        "x": 395.0,
+                        "y": 0.0,
+                        "z": 765.0,
+                        "rollDeg": 0.0,
+                        "pitchDeg": 90.0,
+                        "yawDeg": 0.0
+                    }
+                ]
+            }
+        ],
         "rotaryTable": {
             "radius": 420.0,
             "height": 760.0,

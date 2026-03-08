@@ -9,6 +9,48 @@ namespace backend
 {
     namespace
     {
+        auto makeRobotPose(double x, double y, double z, double rollDeg, double pitchDeg, double yawDeg)
+          -> RobotPoseConfig
+        {
+            return RobotPoseConfig{
+                .x = x, .y = y, .z = z, .rollDeg = rollDeg, .pitchDeg = pitchDeg, .yawDeg = yawDeg
+            };
+        }
+
+        auto defaultRobotJobs() -> std::vector<RobotJobConfig>
+        {
+            return {
+                                RobotJobConfig{ .jobId = 1,
+                                                                .name = "Home",
+                                                                .poses = { makeRobotPose(395.0, 0.0, 765.0, 0.0, 90.0, 0.0) } },
+                RobotJobConfig{ .jobId = 2,
+                                .name = "PickEntry",
+                                                                .poses = { makeRobotPose(395.0, 0.0, 765.0, 0.0, 90.0, 0.0),
+                                                                                     makeRobotPose(615.0, 650.0, 520.0, 0.0, 0.0, 90.0),
+                                                                                     makeRobotPose(395.0, 0.0, 765.0, 0.0, 90.0, 0.0) } },
+                RobotJobConfig{ .jobId = 3,
+                                .name = "PlaceLaser",
+                                .poses = { makeRobotPose(395.0, 0.0, 765.0, 0.0, 90.0, 0.0),
+                                           makeRobotPose(520.0, 0.0, 760.0, 0.0, 0.0, 0.0),
+                                           makeRobotPose(670.0, 0.0, 630.0, 0.0, 0.0, 0.0),
+                                           makeRobotPose(520.0, 0.0, 760.0, 0.0, 0.0, 0.0),
+                                           makeRobotPose(395.0, 0.0, 765.0, 0.0, 90.0, 0.0) } },
+                RobotJobConfig{ .jobId = 4,
+                                .name = "PickLaser",
+                                                                .poses = { makeRobotPose(520.0, 0.0, 760.0, 0.0, 0.0, 0.0),
+                                                                                     makeRobotPose(670.0, 0.0, 630.0, 0.0, 0.0, 0.0),
+                                                                                     makeRobotPose(670.0, 0.0, 565.0, 0.0, 0.0, 0.0),
+                                                                                     makeRobotPose(670.0, 0.0, 630.0, 0.0, 0.0, 0.0),
+                                           makeRobotPose(520.0, 0.0, 760.0, 0.0, 0.0, 0.0),
+                                                                                     } },
+                RobotJobConfig{ .jobId = 7,
+                                .name = "PlaceExit",
+                                                                .poses = { makeRobotPose(395.0, 0.0, 765.0, 0.0, 90.0, 0.0),
+                                                                                     makeRobotPose(615.0, -690.0, 520.0, 0.0, 0.0, -90.0),
+                                                                                     makeRobotPose(395.0, 0.0, 765.0, 0.0, 90.0, 0.0) } },
+            };
+        }
+
         auto asObject(const QJsonObject& object, const char* key) -> QJsonObject
         {
             const auto value = object.value(QLatin1StringView(key));
@@ -110,6 +152,82 @@ namespace backend
             }
         }
 
+        auto parseRobotPose(const QJsonObject& object, RobotPoseConfig& target) -> bool
+        {
+            const auto x = object.value(QLatin1StringView("x"));
+            const auto y = object.value(QLatin1StringView("y"));
+            const auto z = object.value(QLatin1StringView("z"));
+            if (!x.isDouble() || !y.isDouble() || !z.isDouble()) {
+                return false;
+            }
+
+            target = {};
+            target.x = x.toDouble();
+            target.y = y.toDouble();
+            target.z = z.toDouble();
+            applyDouble(object, "rollDeg", target.rollDeg);
+            applyDouble(object, "pitchDeg", target.pitchDeg);
+            applyDouble(object, "yawDeg", target.yawDeg);
+            return true;
+        }
+
+        void applyRobotJobs(const QJsonObject& object, const char* key, std::vector<RobotJobConfig>& target)
+        {
+            const auto value = object.value(QLatin1StringView(key));
+            if (!value.isArray()) {
+                return;
+            }
+
+            std::vector<RobotJobConfig> jobs;
+            const auto array = value.toArray();
+            jobs.reserve(static_cast<size_t>(array.size()));
+
+            for (const auto& item : array) {
+                if (!item.isObject()) {
+                    continue;
+                }
+
+                const auto jobObject = item.toObject();
+                RobotJobConfig job;
+                applyUInt16(jobObject, "jobId", job.jobId);
+                applyString(jobObject, "name", job.name);
+
+                const auto posesValue = jobObject.value(QLatin1StringView("poses"));
+                if (!posesValue.isArray()) {
+                    continue;
+                }
+
+                const auto posesArray = posesValue.toArray();
+                std::vector<RobotPoseConfig> poses;
+                poses.reserve(static_cast<size_t>(posesArray.size()));
+                bool poseParseFailed = false;
+                for (const auto& poseItem : posesArray) {
+                    if (!poseItem.isObject()) {
+                        poseParseFailed = true;
+                        break;
+                    }
+
+                    RobotPoseConfig pose;
+                    if (!parseRobotPose(poseItem.toObject(), pose)) {
+                        poseParseFailed = true;
+                        break;
+                    }
+                    poses.push_back(pose);
+                }
+
+                if (poseParseFailed || job.jobId == 0 || poses.empty()) {
+                    continue;
+                }
+
+                job.poses = std::move(poses);
+                jobs.push_back(std::move(job));
+            }
+
+            if (!jobs.empty()) {
+                target = std::move(jobs);
+            }
+        }
+
     }
 
     RuntimeConfig RuntimeConfig::defaults()
@@ -135,6 +253,7 @@ namespace backend
         config.simulation.robot.internal = false;
         config.simulation.rotaryTable.internal = false;
         config.simulation.exitConveyor.internal = false;
+        config.simulation.robotMotion.jobs = defaultRobotJobs();
 
         config.analyzer.enabled = false;
         config.analyzer.autoStart = true;
@@ -233,6 +352,7 @@ namespace backend
         applyBool(stationModes, "robotInternal", config.simulation.robot.internal);
         applyBool(stationModes, "rotaryTableInternal", config.simulation.rotaryTable.internal);
         applyBool(stationModes, "exitConveyorInternal", config.simulation.exitConveyor.internal);
+        applyRobotJobs(simulation, "robotJobs", config.simulation.robotMotion.jobs);
 
         const auto rotaryTable = asObject(simulation, "rotaryTable");
         applyDouble(rotaryTable, "radius", config.simulation.rotaryTableConfig.radius);

@@ -4,26 +4,94 @@
 #include "Link/Symbolic/LocalAdsLink.hpp"
 #include "Logger/Logger.hpp"
 #include "Logger/TraceLogger.hpp"
+#include <algorithm>
 #include <cmath>
 #include <numbers>
 
-#include <ompl/base/SpaceInformation.h>
-#include <ompl/base/spaces/RealVectorStateSpace.h>
-#include <ompl/geometric/PathSimplifier.h>
-#include <ompl/geometric/SimpleSetup.h>
-#include <ompl/geometric/planners/rrt/RRTConnect.h>
-
 namespace core::sim
 {
+    namespace
+    {
+        constexpr std::array<double, 6> kJointLowerBounds = {
+            -180.0, -150.0, -150.0, -180.0, -125.0, -180.0
+        };
+        constexpr std::array<double, 6> kJointUpperBounds = { 180.0, 150.0, 150.0, 180.0, 125.0, 180.0 };
+        constexpr std::array<bool, 6> kWrapJoints = { true, false, false, true, false, true };
+
+        auto normalizeJointToBounds(double value, size_t axis) -> double
+        {
+            const double low = kJointLowerBounds[axis];
+            const double high = kJointUpperBounds[axis];
+
+            while (value < low) {
+                value += 360.0;
+            }
+            while (value > high) {
+                value -= 360.0;
+            }
+
+            return std::clamp(value, low, high);
+        }
+
+        auto shortestWrappedDelta(double start, double target, size_t axis) -> double
+        {
+            double delta = target - start;
+            if (!kWrapJoints[axis]) {
+                return delta;
+            }
+
+            while (delta > 180.0) {
+                delta -= 360.0;
+            }
+            while (delta < -180.0) {
+                delta += 360.0;
+            }
+            return delta;
+        }
+    }
+
     RobotSimulator::RobotSimulator(std::shared_ptr<link::ILink> link)
-      : RobotSimulator(std::move(link), AdsSymbols{})
+      : RobotSimulator(std::move(link), AdsSymbols{}, Config{})
     {
     }
 
-    RobotSimulator::RobotSimulator(std::shared_ptr<link::ILink> link, AdsSymbols adsSymbols)
+    RobotSimulator::RobotSimulator(std::shared_ptr<link::ILink> link, Config config)
+      : RobotSimulator(std::move(link), AdsSymbols{}, std::move(config))
+    {
+    }
+
+    RobotSimulator::RobotSimulator(std::shared_ptr<link::ILink> link, AdsSymbols adsSymbols, Config config)
       : m_link(std::move(link))
       , m_adsSymbols(std::move(adsSymbols))
     {
+        auto trajectories = defaultJobTrajectories();
+        for (auto& configuredTrajectory : config.jobTrajectories) {
+            if (configuredTrajectory.jobId == 0 || configuredTrajectory.poses.empty()) {
+                continue;
+            }
+
+            const auto existing =
+              std::find_if(trajectories.begin(), trajectories.end(), [&](const auto& trajectory) {
+                return trajectory.jobId == configuredTrajectory.jobId;
+            });
+            if (existing != trajectories.end()) {
+                existing->poses = std::move(configuredTrajectory.poses);
+            }
+            else {
+                trajectories.push_back(std::move(configuredTrajectory));
+            }
+        }
+
+        for (auto& trajectory : trajectories) {
+            if (trajectory.jobId == 0 || trajectory.poses.empty()) {
+                continue;
+            }
+            m_jobTrajectories.emplace(trajectory.jobId, std::move(trajectory.poses));
+            logger::info("RobotSimulator: Loaded trajectory for Job {} with {} poses",
+                         trajectory.jobId,
+                         m_jobTrajectories[trajectory.jobId].size());
+        }
+
         // Initial hardware-like state
         m_status.bInHome = 1;
         m_status.bEnabled = 1;
@@ -112,73 +180,61 @@ namespace core::sim
         if (motionRequested) {
             // 1. Check if Job ID changed -> Plan New Trajectory
             if (autoCommandActive && m_control.nJobId != m_lastTargetJobId) {
-                m_lastTargetJobId = m_control.nJobId;
+                const auto requestedJobId = m_control.nJobId;
 
-                using std::numbers::pi;
-                Pose targetPose;
-                const bool validJob = targetPoseForJob(m_control.nJobId, targetPose);
+                const auto* poses = configuredPosesForJob(requestedJobId);
 
-                if (validJob) {
-
+                if (poses && !poses->empty()) {
                     std::array<double, 6> startJoints;
-
                     for (int i = 0; i < 6; ++i)
                         startJoints[i] = m_jointAngles[i];
 
-                    std::array<double, 6> homeJoints = { 0.0, -90.0, 90.0, 0.0, 0.0, 0.0 };
-
-                    // Get target joints from IK - Use homeJoints as seed since we plan from there
-
-                    std::array<double, 6> homeRads;
-
-                    for (int i = 0; i < 6; ++i)
-                        homeRads[i] = homeJoints[i] * pi / 180.0;
-
-                    auto targetRadsVec = m_kinematics.inverse(targetPose, homeRads);
-
-                    if (!targetRadsVec.empty()) {
-
-                        std::array<double, 6> targetJoints;
-                        for (int i = 0; i < 6; ++i)
-                            targetJoints[i] = targetRadsVec[i] * 180.0 / pi;
-
-                        // PLAN: Start -> Home
-                        auto path1 = planTrajectory(startJoints, homeJoints);
-                        // PLAN: Home -> Target
-                        auto path2 = planTrajectory(homeJoints, targetJoints);
-
-                        // Combine paths with blending
-                        m_currentTrajectory.clear();
-                        m_currentTrajectory.insert(m_currentTrajectory.end(), path1.begin(), path1.end());
-
-                        if (!m_currentTrajectory.empty() && !path2.empty()) {
-                            // Remove overlapping Home waypoint to allow smoother blending in next step if we
-                            // had OMPL path types here. Since we already did interpolation in planTrajectory,
-                            // we just join them.
-                            m_currentTrajectory.pop_back();
-                        }
-                        m_currentTrajectory.insert(m_currentTrajectory.end(), path2.begin(), path2.end());
+                    std::vector<std::array<double, 6>> trajectory;
+                    if (planTrajectoryThroughPoses(startJoints, *poses, trajectory)) {
+                        m_currentTrajectory = std::move(trajectory);
                         m_trajectoryStep = 0;
+                        m_lastTargetJobId = requestedJobId;
+                        m_lastSuccessfulJobId = requestedJobId;
+                        m_status.nJobIdFeedback = requestedJobId;
+                        m_status.bError = 0;
+                        m_status.nErrorCode = 0;
 
                         logger::info(
-                          "RobotSimulator: Planned blended trajectory for Job {} with {} waypoints",
-                          m_control.nJobId,
-                          m_currentTrajectory.size());
+                          "RobotSimulator: Planned blended trajectory for Job {} with {} samples across {} "
+                          "configured poses",
+                          requestedJobId,
+                          m_currentTrajectory.size(),
+                          poses->size());
                         logger::TraceLogger::instance().emit(
                           logger::TraceCategory::State,
                           "robot",
                           "trajectory_planned",
-                          { logger::traceField("job_id", static_cast<int>(m_control.nJobId)),
-                            logger::traceField("waypoints", static_cast<int>(m_currentTrajectory.size())) });
+                          { logger::traceField("job_id", static_cast<int>(requestedJobId)),
+                            logger::traceField("samples", static_cast<int>(m_currentTrajectory.size())),
+                            logger::traceField("poses", static_cast<int>(poses->size())) });
                     }
                     else {
-                        logger::error("RobotSimulator: IK failed for Job {}", m_control.nJobId);
+                        m_currentTrajectory.clear();
+                        m_trajectoryStep = 0;
+                        logger::error("RobotSimulator: Failed to plan multi-pose trajectory for Job {}",
+                                      requestedJobId);
                         logger::TraceLogger::instance().emit(
                           logger::TraceCategory::Invariant,
                           "robot",
-                          "ik_failed",
-                          { logger::traceField("job_id", static_cast<int>(m_control.nJobId)) });
+                          "multi_pose_plan_failed",
+                          { logger::traceField("job_id", static_cast<int>(requestedJobId)),
+                            logger::traceField("pose_count", static_cast<int>(poses->size())) });
                     }
+                }
+                else {
+                    m_currentTrajectory.clear();
+                    m_trajectoryStep = 0;
+                    logger::error("RobotSimulator: No configured trajectory for Job {}", requestedJobId);
+                    logger::TraceLogger::instance().emit(
+                      logger::TraceCategory::Invariant,
+                      "robot",
+                      "job_trajectory_missing",
+                      { logger::traceField("job_id", static_cast<int>(requestedJobId)) });
                 }
             }
 
@@ -237,8 +293,6 @@ namespace core::sim
             m_status.bInMotion = 0;
         }
 
-        m_status.nJobIdFeedback = m_control.nJobId;
-
         if (!m_internalMode) {
             if (auto* localAds = dynamic_cast<link::symbolic::LocalAdsLink*>(m_link.get())) {
                 localAds->writeSync(m_adsSymbols.statusSymbol, m_status);
@@ -246,32 +300,94 @@ namespace core::sim
         }
     }
 
-    auto RobotSimulator::targetPoseForJob(uint16_t jobId, Pose& outPose) const -> bool
+    auto RobotSimulator::defaultJobTrajectories() -> std::vector<JobTrajectory>
     {
         using std::numbers::pi;
 
-        switch (static_cast<JobId>(jobId)) {
-            case JobId::Home:
-                outPose = { 905.0, 0.0, 1080.0, 0.0, 0.0, 0.0 };
-                return true;
-            case JobId::PickEntry:
-                outPose = { 615.0, 650.0, 520.0, 0.0, 0.0, 90.0 * pi / 180.0 };
-                return true;
-            case JobId::PlaceLaser:
-            case JobId::PickLaser:
-                outPose = { 1270.0, 0.0, 580.0, 0.0, 0.0, 0.0 };
-                return true;
-            case JobId::PlaceExit:
-                outPose = { 615.0, -690.0, 520.0, 0.0, 0.0, -90.0 * pi / 180.0 };
-                return true;
-            default:
-                logger::TraceLogger::instance().emit(
-                  logger::TraceCategory::Invariant,
-                  "robot",
-                  "unknown_job_id",
-                  { logger::traceField("job_id", static_cast<int>(jobId)) });
-                return false;
+        return {
+            JobTrajectory{ .jobId = static_cast<uint16_t>(JobId::Home),
+                           .poses = { Pose{ 395.0, 0.0, 765.0, 0.0, 90.0 * pi / 180.0, 0.0 } } },
+            JobTrajectory{ .jobId = static_cast<uint16_t>(JobId::PickEntry),
+                           .poses = { Pose{ 395.0, 0.0, 765.0, 0.0, 90.0 * pi / 180.0, 0.0 },
+                                      Pose{ 615.0, 650.0, 520.0, 0.0, 0.0, 90.0 * pi / 180.0 },
+                                      Pose{ 395.0, 0.0, 765.0, 0.0, 90.0 * pi / 180.0, 0.0 } } },
+            JobTrajectory{ .jobId = static_cast<uint16_t>(JobId::PlaceLaser),
+                           .poses = { Pose{ 395.0, 0.0, 765.0, 0.0, 90.0 * pi / 180.0, 0.0 },
+                                      Pose{ 520.0, 0.0, 760.0, 0.0, 0.0, 0.0 },
+                                      Pose{ 670.0, 0.0, 630.0, 0.0, 0.0, 0.0 },
+                                      Pose{ 520.0, 0.0, 760.0, 0.0, 0.0, 0.0 },
+                                      Pose{ 395.0, 0.0, 765.0, 0.0, 90.0 * pi / 180.0, 0.0 } } },
+            JobTrajectory{ .jobId = static_cast<uint16_t>(JobId::PickLaser),
+                           .poses = { Pose{ 520.0, 0.0, 760.0, 0.0, 0.0, 0.0 },
+                                      Pose{ 670.0, 0.0, 630.0, 0.0, 0.0, 0.0 },
+                                      Pose{ 670.0, 0.0, 565.0, 0.0, 0.0, 0.0 },
+                                      Pose{ 670.0, 0.0, 630.0, 0.0, 0.0, 0.0 },
+                                      Pose{ 520.0, 0.0, 760.0, 0.0, 0.0, 0.0 } } },
+            JobTrajectory{ .jobId = static_cast<uint16_t>(JobId::PlaceExit),
+                           .poses = { Pose{ 395.0, 0.0, 765.0, 0.0, 90.0 * pi / 180.0, 0.0 },
+                                      Pose{ 615.0, -690.0, 520.0, 0.0, 0.0, -90.0 * pi / 180.0 },
+                                      Pose{ 395.0, 0.0, 765.0, 0.0, 90.0 * pi / 180.0, 0.0 } } },
+        };
+    }
+
+    auto RobotSimulator::configuredPosesForJob(uint16_t jobId) const -> const std::vector<Pose>*
+    {
+        if (const auto it = m_jobTrajectories.find(jobId); it != m_jobTrajectories.end()) {
+            return &it->second;
         }
+
+        logger::TraceLogger::instance().emit(logger::TraceCategory::Invariant,
+                                             "robot",
+                                             "unknown_job_id",
+                                             { logger::traceField("job_id", static_cast<int>(jobId)) });
+        return nullptr;
+    }
+
+    auto RobotSimulator::planTrajectoryThroughPoses(const std::array<double, 6>& startJoints,
+                                                    const std::vector<Pose>& poses,
+                                                    std::vector<std::array<double, 6>>& outTrajectory) const
+      -> bool
+    {
+        if (poses.empty()) {
+            outTrajectory.clear();
+            return false;
+        }
+
+        using std::numbers::pi;
+
+        std::array<double, 6> currentJoints = startJoints;
+        std::array<double, 6> currentSeedRadians{};
+        for (int i = 0; i < 6; ++i) {
+            currentSeedRadians[i] = currentJoints[i] * pi / 180.0;
+        }
+
+        outTrajectory.clear();
+
+        for (const auto& pose : poses) {
+            const auto targetRadsVec = m_kinematics.inverse(pose, currentSeedRadians);
+            if (targetRadsVec.empty()) {
+                outTrajectory.clear();
+                return false;
+            }
+
+            std::array<double, 6> targetJoints{};
+            std::array<double, 6> targetSeedRadians{};
+            for (int i = 0; i < 6; ++i) {
+                targetSeedRadians[i] = targetRadsVec[i];
+                targetJoints[i] = targetRadsVec[i] * 180.0 / pi;
+            }
+
+            auto segment = planTrajectory(currentJoints, targetJoints);
+            if (!outTrajectory.empty() && !segment.empty()) {
+                segment.erase(segment.begin());
+            }
+            outTrajectory.insert(outTrajectory.end(), segment.begin(), segment.end());
+
+            currentJoints = targetJoints;
+            currentSeedRadians = targetSeedRadians;
+        }
+
+        return !outTrajectory.empty();
     }
 
     auto RobotSimulator::applyJobCompletionEffects(uint16_t jobId) -> void
@@ -292,72 +408,35 @@ namespace core::sim
     }
 
     auto RobotSimulator::planTrajectory(const std::array<double, 6>& startJoints,
-                                        const std::array<double, 6>& targetJoints)
+                                        const std::array<double, 6>& targetJoints) const
       -> std::vector<std::array<double, 6>>
     {
-        namespace ob = ompl::base;
-        namespace og = ompl::geometric;
+        std::array<double, 6> normalizedStart{};
+        std::array<double, 6> deltas{};
+        double maxAbsDelta = 0.0;
 
-        // 1. Create State Space
-        auto space(std::make_shared<ob::RealVectorStateSpace>(6));
-
-        // 2. Set Bounds
-        ob::RealVectorBounds bounds(6);
-        bounds.setLow(0, -180.0);
-        bounds.setHigh(0, 180.0); // A1
-        bounds.setLow(1, -150.0);
-        bounds.setHigh(1, 150.0); // A2
-        bounds.setLow(2, -150.0);
-        bounds.setHigh(2, 150.0); // A3
-        bounds.setLow(3, -180.0);
-        bounds.setHigh(3, 180.0); // A4
-        bounds.setLow(4, -125.0);
-        bounds.setHigh(4, 125.0); // A5
-        bounds.setLow(5, -180.0);
-        bounds.setHigh(5, 180.0); // A6
-        space->setBounds(bounds);
-
-        // 3. Simple Setup
-        og::SimpleSetup ss(space);
-
-        // State validity checker
-        ss.setStateValidityChecker([](const ob::State*) { return true; });
-
-        // 4. Start and Goal States
-        ob::ScopedState<> start(space);
-        for (int i = 0; i < 6; ++i)
-            start[i] = startJoints[i];
-
-        ob::ScopedState<> goal(space);
-        for (int i = 0; i < 6; ++i)
-            goal[i] = targetJoints[i];
-
-        ss.setStartAndGoalStates(start, goal);
-
-        // 5. Solve
-        ob::PlannerStatus solved = ss.solve(0.1);
-
-        if (solved) {
-            ss.simplifySolution();
-            auto path = ss.getSolutionPath();
-
-            // Apply B-Spline smoothing for "nice blending"
-            ss.getPathSimplifier()->smoothBSpline(path);
-            path.interpolate(20);
-
-            std::vector<std::array<double, 6>> result;
-            for (size_t i = 0; i < path.getStateCount(); ++i) {
-                const auto* state = path.getState(i)->as<ob::RealVectorStateSpace::StateType>();
-                std::array<double, 6> waypoint;
-                for (int j = 0; j < 6; ++j)
-                    waypoint[j] = (*state)[j];
-                result.push_back(waypoint);
-            }
-            return result;
+        for (size_t axis = 0; axis < normalizedStart.size(); ++axis) {
+            normalizedStart[axis] = normalizeJointToBounds(startJoints[axis], axis);
+            const double normalizedTarget = normalizeJointToBounds(targetJoints[axis], axis);
+            deltas[axis] = shortestWrappedDelta(normalizedStart[axis], normalizedTarget, axis);
+            maxAbsDelta = std::max(maxAbsDelta, std::abs(deltas[axis]));
         }
 
-        // Fallback: Linear interpolation if planning fails
-        return { startJoints, targetJoints };
+        const int segmentCount = std::max(1, static_cast<int>(std::ceil(maxAbsDelta / 8.0)));
+
+        std::vector<std::array<double, 6>> result;
+        result.reserve(static_cast<size_t>(segmentCount + 1));
+
+        for (int segment = 0; segment <= segmentCount; ++segment) {
+            const double t = static_cast<double>(segment) / static_cast<double>(segmentCount);
+            std::array<double, 6> waypoint{};
+            for (size_t axis = 0; axis < waypoint.size(); ++axis) {
+                waypoint[axis] = normalizeJointToBounds(normalizedStart[axis] + deltas[axis] * t, axis);
+            }
+            result.push_back(waypoint);
+        }
+
+        return result;
     }
 
     auto RobotSimulator::control() const -> RobotControl
@@ -589,6 +668,7 @@ namespace core::sim
             m_currentTrajectory.clear();
             m_trajectoryStep = 0;
             m_lastTargetJobId = 0;
+            m_lastSuccessfulJobId = 0;
             m_status.bInMotion = 0;
             m_status.nJobIdFeedback = 0;
             logger::TraceLogger::instance().emit(logger::TraceCategory::State,
