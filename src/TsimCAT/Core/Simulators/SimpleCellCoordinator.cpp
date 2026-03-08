@@ -41,6 +41,7 @@ namespace core::sim
         const auto robotStatus = localAds->readSync<RobotStatus>(m_robotSymbols.statusSymbol);
         const auto rotaryStatus = localAds->readSync<RotaryTableStatus>(m_rotarySymbols.statusSymbol);
         const bool inMotion = robotStatus.bInMotion != 0;
+        const bool exitPlaceOccupied = m_exitConveyor->sensorBlocked(0);
 
         switch (m_state) {
             case FlowState::WaitTableReady:
@@ -130,6 +131,10 @@ namespace core::sim
                 }
 
                 if (inMotion || robotStatus.nJobIdFeedback != 4) {
+                    break;
+                }
+
+                if (exitPlaceOccupied) {
                     break;
                 }
 

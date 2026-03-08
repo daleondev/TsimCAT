@@ -136,7 +136,7 @@ Control {
                     anchors.margins: 20
                     spacing: 14
 
-                    Text { text: "Cell Controls"; color: "white"; font.pixelSize: 18; font.bold: true; Layout.alignment: Qt.AlignHCenter }
+                    Text { text: "Cell Controls"; color: "#f4f7f8"; font.pixelSize: 18; font.bold: true; Layout.alignment: Qt.AlignHCenter }
 
                     Rectangle { Layout.fillWidth: true; radius: 8; color: "#1f2b2f"; implicitHeight: modeColumn.implicitHeight + 20
                         ColumnLayout {
@@ -144,12 +144,12 @@ Control {
                             anchors.fill: parent
                             anchors.margins: 10
                             spacing: 6
-                            Text { text: "Execution"; color: "#d6e4e0"; font.pixelSize: 13; font.bold: true }
+                            Text { text: "Execution"; color: "#eef5f3"; font.pixelSize: 13; font.bold: true }
                             Text {
                                 Layout.fillWidth: true
                                 wrapMode: Text.WordWrap
                                 text: root.backend && root.backend.usingLocalAdsShadow ? "Stations exchange ADS-shaped data through the in-process shadow. Direct station mode bypasses that station's PLC shadow interface." : "External symbolic links are active."
-                                color: "#a9bdba"
+                                color: "#d6e3e0"
                                 font.pixelSize: 11
                             }
                         }
@@ -169,13 +169,14 @@ Control {
 
                     Text {
                         text: "Simulation"
-                        color: "#a0aec0"
+                        color: "#e5edf2"
                         font.pixelSize: 12
                         font.bold: true
                     }
 
                     Switch {
                         text: "Enable local simulation"
+                        palette.windowText: "#eef5f3"
                         checked: root.backend ? root.backend.localSimulationEnabled : true
                         onToggled: if (root.backend)
                             root.backend.localSimulationEnabled = checked
@@ -183,6 +184,7 @@ Control {
 
                     Switch {
                         text: "Enable table simulation"
+                        palette.windowText: "#eef5f3"
                         enabled: root.backend ? root.backend.localSimulationEnabled : false
                         checked: root.backend ? root.backend.localTableSimulationEnabled : true
                         onToggled: if (root.backend)
@@ -191,6 +193,7 @@ Control {
 
                     Switch {
                         text: "Enable robot simulation"
+                        palette.windowText: "#eef5f3"
                         enabled: root.backend ? root.backend.localSimulationEnabled : false
                         checked: root.backend ? root.backend.localRobotSimulationEnabled : true
                         onToggled: if (root.backend)
@@ -199,6 +202,7 @@ Control {
 
                     Switch {
                         text: "Enable laser simulation"
+                        palette.windowText: "#eef5f3"
                         enabled: root.backend ? root.backend.localSimulationEnabled : false
                         checked: root.backend ? root.backend.localLaserSimulationEnabled : true
                         onToggled: if (root.backend)
@@ -207,6 +211,7 @@ Control {
 
                     Switch {
                         text: "Enable conveyor simulation"
+                        palette.windowText: "#eef5f3"
                         enabled: root.backend ? root.backend.localSimulationEnabled : false
                         checked: root.backend ? root.backend.localConveyorSimulationEnabled : true
                         onToggled: if (root.backend)
@@ -215,6 +220,7 @@ Control {
 
                     Switch {
                         text: "Auto spawn parts"
+                        palette.windowText: "#eef5f3"
                         enabled: root.backend ? root.backend.localSimulationEnabled : false
                         checked: root.backend ? root.backend.autoSpawnPartsEnabled : true
                         onToggled: if (root.backend)
@@ -223,6 +229,7 @@ Control {
 
                     Button {
                         text: "Spawn part"
+                        palette.buttonText: "#eef5f3"
                         Layout.fillWidth: true
                         enabled: root.backend
                                  ? (root.backend.localSimulationEnabled && !root.backend.autoSpawnPartsEnabled && root.backend.rotaryTable && root.backend.rotaryTable.atLoadPosition && !root.backend.rotaryTable.partPresent)
@@ -233,6 +240,7 @@ Control {
 
                     Switch {
                         text: "Auto despawn parts"
+                        palette.windowText: "#eef5f3"
                         enabled: root.backend ? (root.backend.localSimulationEnabled && root.backend.localConveyorSimulationEnabled) : false
                         checked: root.backend ? root.backend.autoDespawnPartsEnabled : true
                         onToggled: if (root.backend)
@@ -241,6 +249,7 @@ Control {
 
                     Button {
                         text: "Despawn part"
+                        palette.buttonText: "#eef5f3"
                         Layout.fillWidth: true
                         enabled: root.backend
                                  ? (root.backend.localSimulationEnabled && !root.backend.autoDespawnPartsEnabled && root.backend.exitConveyor && root.backend.exitConveyor.partAtEndSensor)
@@ -257,7 +266,7 @@ Control {
 
                     Text {
                         text: "Stations"
-                        color: "#a0aec0"
+                        color: "#e5edf2"
                         font.pixelSize: 12
                         font.bold: true
                     }
@@ -266,7 +275,7 @@ Control {
                         text: root.backend && root.backend.rotaryTable
                               ? "Rotary angle: " + Number(root.backend.rotaryTable.angleDegrees).toFixed(1) + " deg"
                               : "Rotary angle: 0.0 deg"
-                        color: "#c7d2d9"
+                        color: "#edf3f6"
                         font.pixelSize: 11
                     }
 
@@ -274,7 +283,7 @@ Control {
                         text: root.backend && root.backend.rotaryTable && root.backend.rotaryTable.readyToPick
                               ? "Rotary table ready for pick"
                               : "Rotary table staging"
-                        color: root.backend && root.backend.rotaryTable && root.backend.rotaryTable.readyToPick ? "#7fe0a0" : "#d0b06c"
+                        color: root.backend && root.backend.rotaryTable && root.backend.rotaryTable.readyToPick ? "#93f0b2" : "#f0cd83"
                         font.pixelSize: 11
                     }
 
@@ -282,7 +291,7 @@ Control {
                         text: root.backend && root.backend.exitConveyor
                               ? "Exit parts: " + root.backend.exitConveyor.parts.length
                               : "Exit parts: 0"
-                        color: "#c7d2d9"
+                        color: "#edf3f6"
                         font.pixelSize: 11
                     }
                 }
@@ -302,7 +311,7 @@ Control {
             radius: 10
             visible: root.showRobotManual
             z: 10
-            opacity: root.backend && root.backend.localSimulationEnabled && root.backend.localRobotSimulationEnabled ? 1.0 : 0.72
+            opacity: root.backend && root.backend.localSimulationEnabled && !root.backend.localRobotSimulationEnabled ? 1.0 : 0.72
 
             ScrollView {
                 anchors.fill: parent
@@ -336,10 +345,10 @@ Control {
                     Text {
                         Layout.fillWidth: true
                         wrapMode: Text.WordWrap
-                        text: root.backend && root.backend.localSimulationEnabled && root.backend.localRobotSimulationEnabled
+                        text: root.backend && root.backend.localSimulationEnabled && !root.backend.localRobotSimulationEnabled
                               ? "Use sliders to set the simulated robot joints or TCP pose directly."
-                              : "Enable local simulation and robot simulation to drive the robot manually."
-                        color: "#a9bdba"
+                            : "Enable local simulation and disable robot simulation to drive the robot manually."
+                        color: "#d6e3e0"
                         font.pixelSize: 11
                     }
 
@@ -356,7 +365,7 @@ Control {
                     StackLayout {
                         Layout.fillWidth: true
                         currentIndex: root.manualRobotMode
-                        enabled: root.backend && root.backend.localSimulationEnabled && root.backend.localRobotSimulationEnabled
+                        enabled: root.backend && root.backend.localSimulationEnabled && !root.backend.localRobotSimulationEnabled
 
                         ColumnLayout {
                             spacing: 8

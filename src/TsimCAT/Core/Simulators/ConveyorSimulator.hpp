@@ -53,6 +53,7 @@ namespace core::sim
         // State Access
         auto parts() const -> std::vector<Part>;
         auto sensors() const -> std::vector<bool>;
+        auto sensorBlocked(size_t index) const -> bool;
         auto speed() const -> double { return m_config.speed; }
         auto setSpeed(double speed) -> void { m_config.speed = speed; }
         auto length() const -> double { return m_config.length; }

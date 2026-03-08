@@ -40,13 +40,14 @@
             "length": 1250.0,
             "speed": 250.0,
             "sensorPositions": [
-                250.0,
-                700.0,
-                1150.0
+                120.0,
+                560.0,
+                760.0,
+                1120.0
             ],
-            "damperSensorIndex": 0,
-            "damperCloseSensorIndex": 1,
-            "endSensorIndex": 2,
+            "damperSensorIndex": 1,
+            "damperCloseSensorIndex": 2,
+            "endSensorIndex": 3,
             "consumeAtEndSensor": true,
             "damperOpenDelaySeconds": 0.8
         },
@@ -106,7 +107,8 @@
             "exitSensors": [
                 "MAIN.bExitSensor1",
                 "MAIN.bExitSensor2",
-                "MAIN.bExitSensor3"
+                "MAIN.bExitSensor3",
+                "MAIN.bExitSensor4"
             ]
         },
         "rotaryTable": {

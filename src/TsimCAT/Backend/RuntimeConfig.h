@@ -44,10 +44,10 @@ namespace backend
     {
         double length{ 1250.0 };
         double speed{ 250.0 };
-        std::vector<double> sensorPositions{ 250.0, 700.0, 1150.0 };
-        int damperSensorIndex{ 0 };
-        int damperCloseSensorIndex{ 1 };
-        int endSensorIndex{ 2 };
+        std::vector<double> sensorPositions{ 120.0, 560.0, 760.0, 1120.0 };
+        int damperSensorIndex{ 1 };
+        int damperCloseSensorIndex{ 2 };
+        int endSensorIndex{ 3 };
         bool consumeAtEndSensor{ true };
         double damperOpenDelaySeconds{ 0.8 };
     };
@@ -119,7 +119,8 @@ namespace backend
             std::string exitRun{ "MAIN.bExitConveyorRun" };
             std::vector<std::string> exitSensors{ "MAIN.bExitSensor1",
                                                   "MAIN.bExitSensor2",
-                                                  "MAIN.bExitSensor3" };
+                                                  "MAIN.bExitSensor3",
+                                                  "MAIN.bExitSensor4" };
         } conveyors;
 
         struct RotaryTable

@@ -295,13 +295,20 @@ namespace core::sim
         if (m_parts.empty())
             return std::nullopt;
 
+        const bool hasEndSensor = m_config.endSensorIndex >= 0 &&
+                                  m_config.endSensorIndex < static_cast<int>(m_config.sensorPositions.size());
+        const double endSensorPosition =
+          hasEndSensor ? m_config.sensorPositions[static_cast<size_t>(m_config.endSensorIndex)]
+                       : (m_config.length - 200.0);
+
         // Find part closest to the end
         auto it = std::max_element(m_parts.begin(), m_parts.end(), [](const Part& a, const Part& b) {
             return a.position < b.position;
         });
 
-        // Check if it's actually near the end (e.g. within 200mm of end sensor)
-        if (it->position > m_config.length - 200.0) {
+        const double partStart = it->position - it->length / 2;
+        const double partEnd = it->position + it->length / 2;
+        if (endSensorPosition >= partStart && endSensorPosition <= partEnd) {
             Part p = *it;
             m_parts.erase(it);
             return p;
@@ -315,11 +322,19 @@ namespace core::sim
         if (m_parts.empty())
             return std::nullopt;
 
+        const bool hasEndSensor = m_config.endSensorIndex >= 0 &&
+                                  m_config.endSensorIndex < static_cast<int>(m_config.sensorPositions.size());
+        const double endSensorPosition =
+          hasEndSensor ? m_config.sensorPositions[static_cast<size_t>(m_config.endSensorIndex)]
+                       : (m_config.length - 200.0);
+
         auto it = std::max_element(m_parts.begin(), m_parts.end(), [](const Part& a, const Part& b) {
             return a.position < b.position;
         });
 
-        if (it->position > m_config.length - 200.0) {
+        const double partStart = it->position - it->length / 2;
+        const double partEnd = it->position + it->length / 2;
+        if (endSensorPosition >= partStart && endSensorPosition <= partEnd) {
             return *it;
         }
         return std::nullopt;
@@ -335,5 +350,23 @@ namespace core::sim
     {
         std::scoped_lock lock(m_mutex);
         return m_sensorStates;
+    }
+
+    auto ConveyorSimulator::sensorBlocked(size_t index) const -> bool
+    {
+        std::scoped_lock lock(m_mutex);
+        if (index >= m_config.sensorPositions.size()) {
+            return false;
+        }
+
+        const double sensorPos = m_config.sensorPositions[index];
+        for (const auto& part : m_parts) {
+            const double partStart = part.position - part.length / 2;
+            const double partEnd = part.position + part.length / 2;
+            if (sensorPos >= partStart && sensorPos <= partEnd) {
+                return true;
+            }
+        }
+        return false;
     }
 }
