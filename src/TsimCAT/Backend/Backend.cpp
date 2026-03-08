@@ -2,25 +2,33 @@
 
 #include "Controllers/ConveyorController.h"
 #include "Controllers/RobotController.h"
+#include "Controllers/RotaryTableController.h"
 #include "Link/LinkFactory.hpp"
 #include "Logger/Logger.hpp"
 #include "Logger/TraceLogger.hpp"
 #include "Simulators/ConveyorSimulator.hpp"
 #include "Simulators/RobotSimulator.hpp"
+#include "Simulators/RotaryTableSimulator.hpp"
+#include "Simulators/SimpleCellCoordinator.hpp"
 
 #include <QCoreApplication>
-#include <QCoroTimer>
+#include <QFileInfo>
+#include <QTimer>
 #include <chrono>
 #include <filesystem>
-
-using namespace std::chrono_literals;
 
 namespace backend
 {
     Backend::Backend(QObject* parent)
       : QObject(parent)
     {
-        const auto configPath = qEnvironmentVariable("TSIMCAT_CONFIG", QStringLiteral("config/runtime.json"));
+        QString configPath = qEnvironmentVariable("TSIMCAT_CONFIG");
+        if (configPath.isEmpty()) {
+            const QString workspaceRelative = QStringLiteral("config/runtime.json");
+            const QString appRelative =
+              QCoreApplication::applicationDirPath() + QStringLiteral("/../../config/runtime.json");
+            configPath = QFileInfo::exists(workspaceRelative) ? workspaceRelative : appRelative;
+        }
         QString configDiagnostics;
         m_runtimeConfig = RuntimeConfig::loadFromFile(configPath, &configDiagnostics);
 
@@ -91,86 +99,78 @@ namespace backend
                                opcUaRes.error().message());
         }
 
-        m_robotSim = std::make_shared<core::sim::RobotSimulator>(
-          m_adsLink,
+        const auto robotSymbols =
           core::sim::RobotSimulator::AdsSymbols{ .controlSymbol = m_runtimeConfig.adsVariables.robot.control,
-                                                 .statusSymbol = m_runtimeConfig.adsVariables.robot.status });
+                                                 .statusSymbol = m_runtimeConfig.adsVariables.robot.status };
+        const auto rotarySymbols = core::sim::RotaryTableSimulator::AdsSymbols{
+            .controlSymbol = m_runtimeConfig.adsVariables.rotaryTable.control,
+            .statusSymbol = m_runtimeConfig.adsVariables.rotaryTable.status
+        };
 
-        auto entryConveyorConfig =
-          core::sim::ConveyorSimulator::Config{ .name = "EntryConveyor",
-                                                .length = 1875.0,
-                                                .speed = 250.0,
-                                                .sensorPositions = { 437.5, 1000.0, 1775.0 },
-                                                .damperSensorIndex = 0,
-                                                .damperCloseSensorIndex = 1,
-                                                .endSensorIndex = 2,
-                                                .consumeAtEndSensor = false,
-                                                .damperOpenDelaySeconds = 1.0,
-                                                .adsRunCmd = m_runtimeConfig.adsVariables.conveyors.entryRun,
-                                                .adsSensorSignals =
-                                                  m_runtimeConfig.adsVariables.conveyors.entrySensors };
+        const auto exitConveyorConfig = core::sim::ConveyorSimulator::Config{
+            .name = "ExitConveyor",
+            .length = m_runtimeConfig.simulation.exitConveyorConfig.length,
+            .speed = m_runtimeConfig.simulation.exitConveyorConfig.speed,
+            .sensorPositions = m_runtimeConfig.simulation.exitConveyorConfig.sensorPositions,
+            .damperSensorIndex = m_runtimeConfig.simulation.exitConveyorConfig.damperSensorIndex,
+            .damperCloseSensorIndex = m_runtimeConfig.simulation.exitConveyorConfig.damperCloseSensorIndex,
+            .endSensorIndex = m_runtimeConfig.simulation.exitConveyorConfig.endSensorIndex,
+            .consumeAtEndSensor = m_runtimeConfig.simulation.exitConveyorConfig.consumeAtEndSensor,
+            .damperOpenDelaySeconds = m_runtimeConfig.simulation.exitConveyorConfig.damperOpenDelaySeconds,
+            .adsRunCmd = m_runtimeConfig.adsVariables.conveyors.exitRun,
+            .adsSensorSignals = m_runtimeConfig.adsVariables.conveyors.exitSensors,
+        };
 
-        auto exitConveyorConfig =
-          core::sim::ConveyorSimulator::Config{ .name = "ExitConveyor",
-                                                .length = 1250.0,
-                                                .speed = 250.0,
-                                                .sensorPositions = { 250.0, 700.0, 1150.0 },
-                                                .damperSensorIndex = 0,
-                                                .damperCloseSensorIndex = 1,
-                                                .endSensorIndex = 2,
-                                                .consumeAtEndSensor = false,
-                                                .damperOpenDelaySeconds = 0.8,
-                                                .adsRunCmd = m_runtimeConfig.adsVariables.conveyors.exitRun,
-                                                .adsSensorSignals =
-                                                  m_runtimeConfig.adsVariables.conveyors.exitSensors };
-
-        m_entryConveyorSim = std::make_shared<core::sim::ConveyorSimulator>(entryConveyorConfig, m_adsLink);
+        m_robotSim = std::make_shared<core::sim::RobotSimulator>(m_adsLink, robotSymbols);
+        m_rotaryTableSim = std::make_shared<core::sim::RotaryTableSimulator>(
+          core::sim::RotaryTableSimulator::Config{
+            .name = "RotaryTable",
+            .radius = m_runtimeConfig.simulation.rotaryTableConfig.radius,
+            .height = m_runtimeConfig.simulation.rotaryTableConfig.height,
+            .loadAngleDeg = m_runtimeConfig.simulation.rotaryTableConfig.loadAngleDeg,
+            .pickAngleDeg = m_runtimeConfig.simulation.rotaryTableConfig.pickAngleDeg,
+            .rotationSpeedDegPerSecond =
+              m_runtimeConfig.simulation.rotaryTableConfig.rotationSpeedDegPerSecond,
+            .loadDelaySeconds = m_runtimeConfig.simulation.rotaryTableConfig.loadDelaySeconds },
+          m_adsLink,
+          rotarySymbols);
         m_exitConveyorSim = std::make_shared<core::sim::ConveyorSimulator>(exitConveyorConfig, m_adsLink);
 
         m_robotSim->setInternalMode(m_runtimeConfig.simulation.robot.internal);
-        m_entryConveyorSim->setInternalMode(m_runtimeConfig.simulation.entryConveyor.internal);
+        m_rotaryTableSim->setInternalMode(m_runtimeConfig.simulation.rotaryTable.internal);
         m_exitConveyorSim->setInternalMode(m_runtimeConfig.simulation.exitConveyor.internal);
 
-        m_entryConveyorSim->setAutoLogic(true);
         m_exitConveyorSim->setAutoLogic(true);
-        m_entryConveyorSim->start();
+        m_exitConveyorSim->setAutoSpawn(false);
+        m_rotaryTableSim->start();
         m_exitConveyorSim->start();
         m_robotSim->start();
 
-        ensureEntryConveyorCommTask();
-        ensureExitConveyorCommTask();
+        m_cellCoordinator = std::make_shared<core::sim::SimpleCellCoordinator>(
+          core::sim::SimpleCellCoordinator::Config{
+            .enabled = m_runtimeConfig.simulation.localCell.enabled,
+            .cyclePartTypes = m_runtimeConfig.simulation.localCell.cyclePartTypes,
+            .markingDelayMs = m_runtimeConfig.simulation.localCell.markingDelayMs,
+            .idleLoadDelayMs = m_runtimeConfig.simulation.localCell.idleLoadDelayMs },
+          m_adsLink,
+          m_rotaryTableSim,
+          m_robotSim,
+          m_exitConveyorSim,
+          robotSymbols,
+          rotarySymbols,
+          m_runtimeConfig.adsVariables.conveyors.exitRun);
+
         ensureRobotCommTask();
+        ensureRotaryTableCommTask();
+        ensureExitConveyorCommTask();
 
         m_robotController = std::make_unique<backend::controllers::RobotController>(m_robotSim, this);
-        m_entryConveyorController =
-          std::make_unique<backend::controllers::ConveyorController>(m_entryConveyorSim, this);
+        m_rotaryTableController =
+          std::make_unique<backend::controllers::RotaryTableController>(m_rotaryTableSim, this);
         m_exitConveyorController =
           std::make_unique<backend::controllers::ConveyorController>(m_exitConveyorSim, this);
 
-        (void)[](Backend * self)->QCoro::Task<void>
-        {
-            auto lastTime = std::chrono::steady_clock::now();
-            while (true) {
-                auto now = std::chrono::steady_clock::now();
-                const double dt = std::chrono::duration<double>(now - lastTime).count();
-                lastTime = now;
-
-                if (self->m_robotSim)
-                    self->m_robotSim->update(dt);
-                if (self->m_entryConveyorSim)
-                    self->m_entryConveyorSim->update(dt);
-                if (self->m_exitConveyorSim)
-                    self->m_exitConveyorSim->update(dt);
-
-                if (self->m_entryConveyorController)
-                    emit self->m_entryConveyorController->stateChanged();
-                if (self->m_exitConveyorController)
-                    emit self->m_exitConveyorController->stateChanged();
-
-                co_await QCoro::sleepFor(10ms);
-            }
-        }
-        (this);
+        startUpdateLoop();
     }
 
     Backend::~Backend()
@@ -189,9 +189,9 @@ namespace backend
 
     backend::controllers::RobotController* Backend::robot() const { return m_robotController.get(); }
 
-    backend::controllers::ConveyorController* Backend::entryConveyor() const
+    backend::controllers::RotaryTableController* Backend::rotaryTable() const
     {
-        return m_entryConveyorController.get();
+        return m_rotaryTableController.get();
     }
 
     backend::controllers::ConveyorController* Backend::exitConveyor() const
@@ -199,9 +199,35 @@ namespace backend
         return m_exitConveyorController.get();
     }
 
+    bool Backend::robotCarriedPartVisible() const
+    {
+        return m_robotSim ? m_robotSim->isGripperGripped() : false;
+    }
+
+    int Backend::robotCarriedPartType() const
+    {
+        return robotCarriedPartVisible() && m_robotSim
+                 ? static_cast<int>(m_robotSim->status().nPartTypeMirrored)
+                 : 0;
+    }
+
+    bool Backend::laserPartVisible() const
+    {
+        return m_cellCoordinator ? m_cellCoordinator->laserStationHasPart() : false;
+    }
+
+    int Backend::laserPartType() const
+    {
+        return m_cellCoordinator ? static_cast<int>(m_cellCoordinator->laserStationPartType()) : 0;
+    }
+
+    bool Backend::usingLocalAdsShadow() const { return m_adsLink && m_runtimeConfig.adsLink.inProcess; }
+
+    bool Backend::localPlcShadow() const { return m_runtimeConfig.simulation.localPlcShadow; }
+
     bool Backend::localRobotMode() const { return m_runtimeConfig.simulation.robot.internal; }
 
-    bool Backend::localEntryConveyorMode() const { return m_runtimeConfig.simulation.entryConveyor.internal; }
+    bool Backend::localRotaryTableMode() const { return m_runtimeConfig.simulation.rotaryTable.internal; }
 
     bool Backend::localExitConveyorMode() const { return m_runtimeConfig.simulation.exitConveyor.internal; }
 
@@ -219,17 +245,17 @@ namespace backend
         emit stationModesChanged();
     }
 
-    void Backend::setLocalEntryConveyorMode(bool enabled)
+    void Backend::setLocalRotaryTableMode(bool enabled)
     {
-        if (m_runtimeConfig.simulation.entryConveyor.internal == enabled) {
+        if (m_runtimeConfig.simulation.rotaryTable.internal == enabled) {
             return;
         }
 
-        m_runtimeConfig.simulation.entryConveyor.internal = enabled;
-        if (m_entryConveyorSim) {
-            m_entryConveyorSim->setInternalMode(enabled);
+        m_runtimeConfig.simulation.rotaryTable.internal = enabled;
+        if (m_rotaryTableSim) {
+            m_rotaryTableSim->setInternalMode(enabled);
         }
-        ensureEntryConveyorCommTask();
+        ensureRotaryTableCommTask();
         emit stationModesChanged();
     }
 
@@ -252,61 +278,101 @@ namespace backend
         m_asyncTestStatus = "Running...";
         emit asyncTestStatusChanged();
 
-        (void)[](Backend * self)->QCoro::Task<void> { co_await self->doAsyncTest(); }
-        (this);
+        QTimer::singleShot(2000, this, [this]() {
+            m_asyncTestStatus = "Async task completed!";
+            emit asyncTestStatusChanged();
+        });
     }
 
-    QCoro::Task<void> Backend::doAsyncTest()
+    void Backend::startBackgroundTask(core::coro::Task<void>&& task)
     {
-        co_await QCoro::sleepFor(2s);
-        m_asyncTestStatus = "Async task completed!";
-        emit asyncTestStatusChanged();
+        m_backgroundTasks.push_back(std::move(task));
+        auto& backgroundTask = m_backgroundTasks.back();
+        const auto handle = backgroundTask.getHandle();
+        if (handle) {
+            handle.resume();
+        }
+    }
+
+    void Backend::startUpdateLoop()
+    {
+        m_lastUpdateTime = std::chrono::steady_clock::now();
+        m_updateTimer = new QTimer(this);
+        m_updateTimer->setInterval(16);
+        connect(m_updateTimer, &QTimer::timeout, this, [this]() {
+            const auto now = std::chrono::steady_clock::now();
+            const double dt = std::chrono::duration<double>(now - m_lastUpdateTime).count();
+            m_lastUpdateTime = now;
+
+            if (m_cellCoordinator) {
+                m_cellCoordinator->update(dt);
+            }
+            if (m_rotaryTableSim) {
+                m_rotaryTableSim->update(dt);
+            }
+            if (m_robotSim) {
+                m_robotSim->update(dt);
+            }
+            if (m_exitConveyorSim) {
+                m_exitConveyorSim->update(dt);
+            }
+
+            if (m_rotaryTableController) {
+                emit m_rotaryTableController->stateChanged();
+            }
+            if (m_exitConveyorController) {
+                emit m_exitConveyorController->stateChanged();
+            }
+            emit partVisualizationChanged();
+        });
+        m_updateTimer->start();
     }
 
     void Backend::ensureRobotCommTask()
     {
-        if (m_robotCommTaskStarted || !m_robotSim || m_runtimeConfig.simulation.robot.internal) {
+        if (m_robotCommTaskStarted || !m_robotSim || m_runtimeConfig.simulation.robot.internal ||
+            usingLocalAdsShadow()) {
             return;
         }
 
         m_robotCommTaskStarted = true;
-        (void)[](std::shared_ptr<core::sim::RobotSimulator> sim)->core::coro::Task<void>
-        {
+        startBackgroundTask([sim = m_robotSim]() -> core::coro::Task<void> {
             auto res = co_await sim->initialize();
             if (res) {
                 co_await sim->run();
             }
-        }
-        (m_robotSim);
+        }());
     }
 
-    void Backend::ensureEntryConveyorCommTask()
+    void Backend::ensureRotaryTableCommTask()
     {
-        if (m_entryConveyorCommTaskStarted || !m_entryConveyorSim ||
-            m_runtimeConfig.simulation.entryConveyor.internal) {
+        if (m_rotaryTableCommTaskStarted || !m_rotaryTableSim ||
+            m_runtimeConfig.simulation.rotaryTable.internal || usingLocalAdsShadow()) {
             return;
         }
 
-        m_entryConveyorCommTaskStarted = true;
-        (void)[](std::shared_ptr<core::sim::ConveyorSimulator> sim)->core::coro::Task<void>
-        {
-            co_await sim->run();
-        }
-        (m_entryConveyorSim);
+        m_rotaryTableCommTaskStarted = true;
+        startBackgroundTask([sim = m_rotaryTableSim]() -> core::coro::Task<void> {
+            auto res = co_await sim->initialize();
+            if (res) {
+                co_await sim->run();
+            }
+        }());
     }
 
     void Backend::ensureExitConveyorCommTask()
     {
         if (m_exitConveyorCommTaskStarted || !m_exitConveyorSim ||
-            m_runtimeConfig.simulation.exitConveyor.internal) {
+            m_runtimeConfig.simulation.exitConveyor.internal || usingLocalAdsShadow()) {
             return;
         }
 
         m_exitConveyorCommTaskStarted = true;
-        (void)[](std::shared_ptr<core::sim::ConveyorSimulator> sim)->core::coro::Task<void>
-        {
-            co_await sim->run();
-        }
-        (m_exitConveyorSim);
+        startBackgroundTask([sim = m_exitConveyorSim]() -> core::coro::Task<void> {
+            auto res = co_await sim->initialize();
+            if (res) {
+                co_await sim->run();
+            }
+        }());
     }
 }

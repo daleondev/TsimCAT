@@ -1,5 +1,6 @@
 #include "ConveyorSimulator.hpp"
 #include "Link/Symbolic/ISymbolicLink.hpp"
+#include "Link/Symbolic/LocalAdsLink.hpp"
 #include "Logger/Logger.hpp"
 #include "Logger/TraceLogger.hpp"
 #include <algorithm>
@@ -39,6 +40,14 @@ namespace core::sim
     {
         if (!m_running)
             return;
+
+        if (!m_internalMode) {
+            if (auto* localAds = dynamic_cast<link::symbolic::LocalAdsLink*>(m_link.get())) {
+                if (!m_config.adsRunCmd.empty() && !m_autoLogic) {
+                    setRunning(localAds->readSync<bool>(m_config.adsRunCmd));
+                }
+            }
+        }
 
         std::scoped_lock lock(m_mutex);
 
@@ -157,10 +166,22 @@ namespace core::sim
                          m_parts.end(),
                          [this](const Part& p) { return p.position > m_config.length + p.length; }),
           m_parts.end());
+
+        if (!m_internalMode) {
+            if (auto* localAds = dynamic_cast<link::symbolic::LocalAdsLink*>(m_link.get())) {
+                for (size_t i = 0; i < m_config.adsSensorSignals.size() && i < m_sensorStates.size(); ++i) {
+                    localAds->writeSync(m_config.adsSensorSignals[i], m_sensorStates[i]);
+                }
+            }
+        }
     }
 
     auto ConveyorSimulator::run() -> coro::Task<void>
     {
+        if (dynamic_cast<link::symbolic::LocalAdsLink*>(m_link.get())) {
+            co_return;
+        }
+
         auto* symbolic = m_link ? m_link->asSymbolic() : nullptr;
         if (!symbolic)
             co_return;

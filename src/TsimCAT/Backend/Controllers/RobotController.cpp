@@ -1,8 +1,6 @@
 #include "RobotController.h"
 #include "Simulators/RobotSimulator.hpp"
-#include <QCoroTimer>
-
-using namespace std::chrono_literals;
+#include <QTimer>
 
 namespace backend::controllers
 {
@@ -10,14 +8,13 @@ namespace backend::controllers
       : QObject(parent)
       , m_simulator(std::move(simulator))
     {
-        // Sync loop to UI
-        [](RobotController* self) -> QCoro::Task<void> {
-            while (true) {
-                emit self->stateChanged();
-                emit self->adsStatusChanged();
-                co_await QCoro::sleepFor(100ms);
-            }
-        }(this);
+        auto* timer = new QTimer(this);
+        timer->setInterval(100);
+        connect(timer, &QTimer::timeout, this, [this]() {
+            emit stateChanged();
+            emit adsStatusChanged();
+        });
+        timer->start();
     }
 
     // --- Status Getters ---
@@ -111,16 +108,8 @@ namespace backend::controllers
     void RobotController::connectAds()
     {
         if (m_simulator) {
-            if (m_simulator->adsStatus() != "Disconnected" && m_simulator->adsStatus() != "Faulty")
-                return;
-
             m_simulator->start();
-            [](std::shared_ptr<core::sim::RobotSimulator> sim) -> QCoro::Task<void> {
-                auto res = co_await sim->initialize();
-                if (res) {
-                    co_await sim->run();
-                }
-            }(m_simulator);
+            emit adsStatusChanged();
         }
     }
 

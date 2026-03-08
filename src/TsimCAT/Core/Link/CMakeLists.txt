@@ -7,6 +7,7 @@ target_sources(
     LinkFactory.cpp
     Raw/TcpServer.cpp
     Symbolic/AdsClient.cpp
+    Symbolic/LocalAdsLink.cpp
     Symbolic/OpcUaClient.cpp
 
     PUBLIC
@@ -18,6 +19,7 @@ target_sources(
         Subscription.hpp
         Raw/IRawLink.hpp
         Symbolic/ISymbolicLink.hpp
+        Symbolic/LocalAdsLink.hpp
 )
 
 target_link_libraries(

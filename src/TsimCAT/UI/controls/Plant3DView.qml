@@ -15,7 +15,7 @@ Item {
         camera: sceneCamera
 
         environment: SceneEnvironment {
-            clearColor: "#f0f2f5"
+            clearColor: "#dbe3e0"
             backgroundMode: SceneEnvironment.Color
             antialiasingMode: SceneEnvironment.MSAA
             antialiasingQuality: SceneEnvironment.High
@@ -23,63 +23,105 @@ Item {
 
         Node {
             id: cameraPivot
-            eulerRotation: Qt.vector3d(-30, 40, 0)
-            position: Qt.vector3d(600, 450, 0)
+            eulerRotation: Qt.vector3d(-26, 34, 0)
+            position: Qt.vector3d(520, 420, 120)
 
             PerspectiveCamera {
                 id: sceneCamera
-                position: Qt.vector3d(0, 0, 5200)
+                position: Qt.vector3d(0, 0, 6100)
                 clipNear: 10
                 clipFar: 30000
             }
         }
 
         DirectionalLight {
-            eulerRotation.x: -35
-            eulerRotation.y: -30
-            brightness: 1.4
+            eulerRotation.x: -38
+            eulerRotation.y: -18
+            brightness: 1.55
             castsShadow: true
             shadowMapFar: 12000
             shadowMapQuality: DirectionalLight.ShadowMapQualityVeryHigh
         }
 
         PointLight {
-            position: Qt.vector3d(1800, 1800, 1800)
-            brightness: 0.7
+            position: Qt.vector3d(1200, 2400, 1400)
+            brightness: 0.9
+            color: "#f2f1df"
+        }
+
+        PointLight {
+            position: Qt.vector3d(-2200, 1800, -800)
+            brightness: 0.45
+            color: "#bfd0df"
         }
 
         Model {
             y: -1
             source: "#Rectangle"
-            scale: Qt.vector3d(150, 150, 1)
+            scale: Qt.vector3d(180, 180, 1)
             eulerRotation.x: -90
             materials: [
-                DefaultMaterial {
-                    diffuseColor: "#e0e0e0"
+                PrincipledMaterial {
+                    baseColor: "#c6ccc6"
+                    roughness: 0.98
+                }
+            ]
+        }
+
+        Model {
+            y: 1
+            source: "#Rectangle"
+            position: Qt.vector3d(100, 0, 240)
+            scale: Qt.vector3d(52, 34, 1)
+            eulerRotation.x: -90
+            materials: [
+                PrincipledMaterial {
+                    baseColor: "#b7b49f"
+                    roughness: 0.95
                 }
             ]
         }
 
         FenceModel {
             id: fence
-            position: Qt.vector3d(500, 0, 0)
+            position: Qt.vector3d(450, 0, 120)
             entryDamperOpen: root.entryDamperOpen
             exitDamperOpen: root.exitDamperOpen
             doorOpen: root.doorOpen
         }
 
-        ConveyorModel {
-            id: entryConveyor
-            position: Qt.vector3d(-2000, 0, 0)
-            length: 1875
-            height: 700
-            conveyorController: root.backend ? root.backend.entryConveyor : null
-            sensorPositions: [437.5, 1000.0, 1775.0]
+        Model {
+            position: Qt.vector3d(-1320, 4, 1180)
+            source: "#Rectangle"
+            scale: Qt.vector3d(16, 12, 1)
+            eulerRotation.x: -90
+            materials: [
+                PrincipledMaterial {
+                    baseColor: "#83918d"
+                    roughness: 0.9
+                }
+            ]
+        }
+
+        Node {
+            id: rotaryStation
+            position: Qt.vector3d(-1350, 0, 1150)
+
+            StationFrameModel {
+                position: Qt.vector3d(0, 0, 0)
+            }
+
+            RotaryTableModel {
+                angleDegrees: root.backend ? root.backend.rotaryTable.angleDegrees : 0
+                partPresent: root.backend ? root.backend.rotaryTable.partPresent : false
+                partType: root.backend ? root.backend.rotaryTable.partType : 0
+                busy: root.backend ? root.backend.rotaryTable.busy : false
+            }
         }
 
         RobotModel {
             id: plantRobot
-            position: Qt.vector3d(0, 0, 1000)
+            position: Qt.vector3d(0, 0, 350)
             eulerRotation.z: 90
 
             axis1: root.backend ? root.backend.robot.axis1 : 0
@@ -89,13 +131,46 @@ Item {
             axis5: root.backend ? root.backend.robot.axis5 : 0
             axis6: root.backend ? root.backend.robot.axis6 : 0
             gripperGripped: root.backend ? root.backend.robot.gripperGripped : false
+            carriedPartVisible: root.backend ? root.backend.robotCarriedPartVisible : false
+            carriedPartType: root.backend ? root.backend.robotCarriedPartType : 0
+        }
+
+        Node {
+            id: laserStation
+            position: Qt.vector3d(900, 0, -900)
+
+            StationModel {
+                color: "#b45e43"
+            }
+
+            PartModel {
+                visible: root.backend ? root.backend.laserPartVisible : false
+                position: Qt.vector3d(0, 815, 0)
+                width: 140
+                length: 140
+                height: 80
+                color: (root.backend && root.backend.laserPartType === 2) ? "#2ecc71" : "#8f8f8f"
+            }
+
+            Node {
+                position: Qt.vector3d(560, 0, 0)
+
+                StationFrameModel {}
+
+                LaserModel {
+                    position: Qt.vector3d(0, 1950, 0)
+                    eulerRotation.z: -30
+                    laserOn: true
+                }
+            }
         }
 
         ConveyorModel {
             id: exitConveyor
-            position: Qt.vector3d(1750, 0, 0)
+            position: Qt.vector3d(1750, 0, 300)
             length: 1250
-            height: 700
+            height: 720
+            width: 430
             conveyorController: root.backend ? root.backend.exitConveyor : null
             sensorPositions: [250.0, 700.0, 1150.0]
         }

@@ -195,6 +195,8 @@ Control {
                     
                     Button { text: "HOME"; onClicked: if (root.robot) root.robot.triggerJob(1); flat: true }
                     Button { text: "PICK ENTRY"; onClicked: if (root.robot) root.robot.triggerJob(2); flat: true }
+                    Button { text: "PLACE LASER"; onClicked: if (root.robot) root.robot.triggerJob(3); flat: true }
+                    Button { text: "PICK LASER"; onClicked: if (root.robot) root.robot.triggerJob(4); flat: true }
                     Button { text: "PLACE EXIT"; onClicked: if (root.robot) root.robot.triggerJob(7); flat: true }
                 }
             }

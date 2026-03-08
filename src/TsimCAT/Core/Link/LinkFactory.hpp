@@ -13,6 +13,8 @@ namespace core::link
         uint16_t port{ 0 };
         std::string localNetId;
         std::string remoteNetId;
+        bool inProcess{ false };
+        std::string instanceName{ "default" };
     };
 
     auto create(Role role, Mode mode, Protocol proto, const LinkConfig& config)

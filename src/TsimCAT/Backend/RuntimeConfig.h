@@ -10,15 +10,67 @@ namespace backend
 {
     struct StationModeConfig
     {
-        bool internal{ true };
+        bool internal{ false };
+    };
+
+    struct StationPoseConfig
+    {
+        double x{ 0.0 };
+        double y{ 0.0 };
+        double z{ 0.0 };
+        double rotationZ{ 0.0 };
+    };
+
+    struct PlantLayoutConfig
+    {
+        double floorScale{ 150.0 };
+        StationPoseConfig rotaryTable{ .x = -1350.0, .y = 0.0, .z = 1150.0, .rotationZ = 0.0 };
+        StationPoseConfig robot{ .x = 0.0, .y = 0.0, .z = 350.0, .rotationZ = 90.0 };
+        StationPoseConfig laser{ .x = 850.0, .y = 0.0, .z = -900.0, .rotationZ = 0.0 };
+        StationPoseConfig exitConveyor{ .x = 1750.0, .y = 0.0, .z = 300.0, .rotationZ = 0.0 };
+    };
+
+    struct RotaryTableConfig
+    {
+        double radius{ 420.0 };
+        double loadAngleDeg{ 0.0 };
+        double pickAngleDeg{ 180.0 };
+        double height{ 760.0 };
+        double rotationSpeedDegPerSecond{ 95.0 };
+        double loadDelaySeconds{ 1.0 };
+    };
+
+    struct ConveyorConfig
+    {
+        double length{ 1250.0 };
+        double speed{ 250.0 };
+        std::vector<double> sensorPositions{ 250.0, 700.0, 1150.0 };
+        int damperSensorIndex{ 0 };
+        int damperCloseSensorIndex{ 1 };
+        int endSensorIndex{ 2 };
+        bool consumeAtEndSensor{ false };
+        double damperOpenDelaySeconds{ 0.8 };
+    };
+
+    struct LocalCellConfig
+    {
+        bool enabled{ true };
+        bool cyclePartTypes{ true };
+        int markingDelayMs{ 900 };
+        int idleLoadDelayMs{ 500 };
     };
 
     struct SimulationConfig
     {
         bool localOnly{ true };
+        bool localPlcShadow{ true };
         StationModeConfig robot;
-        StationModeConfig entryConveyor;
+        StationModeConfig rotaryTable;
         StationModeConfig exitConveyor;
+        RotaryTableConfig rotaryTableConfig;
+        ConveyorConfig exitConveyorConfig;
+        LocalCellConfig localCell;
+        PlantLayoutConfig layout;
     };
 
     struct AnalyzerConfig
@@ -64,16 +116,17 @@ namespace backend
 
         struct Conveyors
         {
-            std::string entryRun{ "MAIN.bEntryConveyorRun" };
-            std::vector<std::string> entrySensors{ "MAIN.bEntrySensor1",
-                                                   "MAIN.bEntrySensor2",
-                                                   "MAIN.bEntrySensor3" };
-
             std::string exitRun{ "MAIN.bExitConveyorRun" };
             std::vector<std::string> exitSensors{ "MAIN.bExitSensor1",
                                                   "MAIN.bExitSensor2",
                                                   "MAIN.bExitSensor3" };
         } conveyors;
+
+        struct RotaryTable
+        {
+            std::string control{ "MAIN.stRotaryTableControl" };
+            std::string status{ "MAIN.stRotaryTableStatus" };
+        } rotaryTable;
     };
 
     struct RuntimeConfig

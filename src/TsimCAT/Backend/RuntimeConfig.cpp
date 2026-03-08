@@ -58,6 +58,28 @@ namespace backend
             }
         }
 
+        void applyDoubleArray(const QJsonObject& object, const char* key, std::vector<double>& target)
+        {
+            const auto value = object.value(QLatin1StringView(key));
+            if (!value.isArray()) {
+                return;
+            }
+
+            std::vector<double> values;
+            const auto array = value.toArray();
+            values.reserve(static_cast<size_t>(array.size()));
+            for (const auto& item : array) {
+                if (!item.isDouble()) {
+                    return;
+                }
+                values.push_back(item.toDouble());
+            }
+
+            if (!values.empty()) {
+                target = std::move(values);
+            }
+        }
+
         void applyBool(const QJsonObject& object, const char* key, bool& target)
         {
             const auto value = object.value(QLatin1StringView(key));
@@ -104,12 +126,15 @@ namespace backend
         config.adsLink.remoteNetId = "192.168.167.100.1.1";
         config.adsLink.localNetId = "192.168.167.100.1.20";
         config.adsLink.port = 851;
+        config.adsLink.inProcess = true;
+        config.adsLink.instanceName = "simple_cell_local_ads";
         config.opcUaLink.ip = "opc.tcp://127.0.0.1:4840";
 
-        config.simulation.localOnly = false;
-        config.simulation.robot.internal = true;
-        config.simulation.entryConveyor.internal = true;
-        config.simulation.exitConveyor.internal = true;
+        config.simulation.localOnly = true;
+        config.simulation.localPlcShadow = true;
+        config.simulation.robot.internal = false;
+        config.simulation.rotaryTable.internal = false;
+        config.simulation.exitConveyor.internal = false;
 
         config.analyzer.enabled = false;
         config.analyzer.autoStart = true;
@@ -180,6 +205,8 @@ namespace backend
         applyString(ads, "remoteNetId", config.adsLink.remoteNetId);
         applyString(ads, "localNetId", config.adsLink.localNetId);
         applyUInt16(ads, "port", config.adsLink.port);
+        applyBool(ads, "inProcess", config.adsLink.inProcess);
+        applyString(ads, "instanceName", config.adsLink.instanceName);
 
         const auto opcUa = asObject(links, "opcUa");
         applyString(opcUa, "endpoint", config.opcUaLink.ip);
@@ -191,23 +218,86 @@ namespace backend
         applyString(adsRobot, "status", config.adsVariables.robot.status);
 
         const auto adsConveyors = asObject(adsVariables, "conveyors");
-        applyString(adsConveyors, "entryRun", config.adsVariables.conveyors.entryRun);
-        applyStringArray(adsConveyors, "entrySensors", config.adsVariables.conveyors.entrySensors);
         applyString(adsConveyors, "exitRun", config.adsVariables.conveyors.exitRun);
         applyStringArray(adsConveyors, "exitSensors", config.adsVariables.conveyors.exitSensors);
 
+        const auto adsRotaryTable = asObject(adsVariables, "rotaryTable");
+        applyString(adsRotaryTable, "control", config.adsVariables.rotaryTable.control);
+        applyString(adsRotaryTable, "status", config.adsVariables.rotaryTable.status);
+
         const auto simulation = asObject(root, "simulation");
         applyBool(simulation, "localOnly", config.simulation.localOnly);
+        applyBool(simulation, "localPlcShadow", config.simulation.localPlcShadow);
 
         const auto stationModes = asObject(simulation, "stationModes");
         applyBool(stationModes, "robotInternal", config.simulation.robot.internal);
-        applyBool(stationModes, "entryConveyorInternal", config.simulation.entryConveyor.internal);
+        applyBool(stationModes, "rotaryTableInternal", config.simulation.rotaryTable.internal);
         applyBool(stationModes, "exitConveyorInternal", config.simulation.exitConveyor.internal);
 
-        if (config.simulation.localOnly) {
-            config.simulation.robot.internal = true;
-            config.simulation.entryConveyor.internal = true;
-            config.simulation.exitConveyor.internal = true;
+        const auto rotaryTable = asObject(simulation, "rotaryTable");
+        applyDouble(rotaryTable, "radius", config.simulation.rotaryTableConfig.radius);
+        applyDouble(rotaryTable, "height", config.simulation.rotaryTableConfig.height);
+        applyDouble(rotaryTable, "loadAngleDeg", config.simulation.rotaryTableConfig.loadAngleDeg);
+        applyDouble(rotaryTable, "pickAngleDeg", config.simulation.rotaryTableConfig.pickAngleDeg);
+        applyDouble(rotaryTable,
+                    "rotationSpeedDegPerSecond",
+                    config.simulation.rotaryTableConfig.rotationSpeedDegPerSecond);
+        applyDouble(rotaryTable, "loadDelaySeconds", config.simulation.rotaryTableConfig.loadDelaySeconds);
+
+        const auto exitConveyor = asObject(simulation, "exitConveyor");
+        applyDouble(exitConveyor, "length", config.simulation.exitConveyorConfig.length);
+        applyDouble(exitConveyor, "speed", config.simulation.exitConveyorConfig.speed);
+        applyDoubleArray(
+          exitConveyor, "sensorPositions", config.simulation.exitConveyorConfig.sensorPositions);
+        applyInt(exitConveyor, "damperSensorIndex", config.simulation.exitConveyorConfig.damperSensorIndex);
+        applyInt(exitConveyor,
+                 "damperCloseSensorIndex",
+                 config.simulation.exitConveyorConfig.damperCloseSensorIndex);
+        applyInt(exitConveyor, "endSensorIndex", config.simulation.exitConveyorConfig.endSensorIndex);
+        applyBool(
+          exitConveyor, "consumeAtEndSensor", config.simulation.exitConveyorConfig.consumeAtEndSensor);
+        applyDouble(exitConveyor,
+                    "damperOpenDelaySeconds",
+                    config.simulation.exitConveyorConfig.damperOpenDelaySeconds);
+
+        const auto localCell = asObject(simulation, "localCell");
+        applyBool(localCell, "enabled", config.simulation.localCell.enabled);
+        applyBool(localCell, "cyclePartTypes", config.simulation.localCell.cyclePartTypes);
+        applyInt(localCell, "markingDelayMs", config.simulation.localCell.markingDelayMs);
+        applyInt(localCell, "idleLoadDelayMs", config.simulation.localCell.idleLoadDelayMs);
+
+        const auto layout = asObject(simulation, "layout");
+        applyDouble(layout, "floorScale", config.simulation.layout.floorScale);
+
+        const auto layoutRotary = asObject(layout, "rotaryTable");
+        applyDouble(layoutRotary, "x", config.simulation.layout.rotaryTable.x);
+        applyDouble(layoutRotary, "y", config.simulation.layout.rotaryTable.y);
+        applyDouble(layoutRotary, "z", config.simulation.layout.rotaryTable.z);
+        applyDouble(layoutRotary, "rotationZ", config.simulation.layout.rotaryTable.rotationZ);
+
+        const auto layoutRobot = asObject(layout, "robot");
+        applyDouble(layoutRobot, "x", config.simulation.layout.robot.x);
+        applyDouble(layoutRobot, "y", config.simulation.layout.robot.y);
+        applyDouble(layoutRobot, "z", config.simulation.layout.robot.z);
+        applyDouble(layoutRobot, "rotationZ", config.simulation.layout.robot.rotationZ);
+
+        const auto layoutLaser = asObject(layout, "laser");
+        applyDouble(layoutLaser, "x", config.simulation.layout.laser.x);
+        applyDouble(layoutLaser, "y", config.simulation.layout.laser.y);
+        applyDouble(layoutLaser, "z", config.simulation.layout.laser.z);
+        applyDouble(layoutLaser, "rotationZ", config.simulation.layout.laser.rotationZ);
+
+        const auto layoutExitConveyor = asObject(layout, "exitConveyor");
+        applyDouble(layoutExitConveyor, "x", config.simulation.layout.exitConveyor.x);
+        applyDouble(layoutExitConveyor, "y", config.simulation.layout.exitConveyor.y);
+        applyDouble(layoutExitConveyor, "z", config.simulation.layout.exitConveyor.z);
+        applyDouble(layoutExitConveyor, "rotationZ", config.simulation.layout.exitConveyor.rotationZ);
+
+        if (config.simulation.localOnly || config.simulation.localPlcShadow) {
+            config.adsLink.inProcess = true;
+            if (config.adsLink.instanceName.empty()) {
+                config.adsLink.instanceName = "simple_cell_local_ads";
+            }
         }
 
         const auto analyzer = asObject(root, "analyzer");

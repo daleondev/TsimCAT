@@ -7,6 +7,8 @@ target_sources(
     RobotSimulator.cpp
     Kinematics.cpp
     ConveyorSimulator.cpp
+    RotaryTableSimulator.cpp
+    SimpleCellCoordinator.cpp
 
     PUBLIC
     FILE_SET HEADERS
@@ -16,6 +18,8 @@ target_sources(
         RobotSimulator.hpp
         Kinematics.hpp
         ConveyorSimulator.hpp
+        RotaryTableSimulator.hpp
+        SimpleCellCoordinator.hpp
         Part.hpp
         Components/IComponent.hpp
 )

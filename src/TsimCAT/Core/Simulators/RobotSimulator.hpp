@@ -95,6 +95,18 @@ namespace core::sim
         auto isInternalMode() const -> bool;
 
       private:
+                enum class JobId : uint16_t
+                {
+                        Home = 1,
+                        PickEntry = 2,
+                        PlaceLaser = 3,
+                        PickLaser = 4,
+                        PlaceExit = 7
+                };
+
+                auto targetPoseForJob(uint16_t jobId, Pose& outPose) const -> bool;
+                auto applyJobCompletionEffects(uint16_t jobId) -> void;
+
         auto planTrajectory(const std::array<double, 6>& startJoints,
                             const std::array<double, 6>& targetJoints) -> std::vector<std::array<double, 6>>;
 

@@ -1,6 +1,7 @@
 #include "RobotSimulator.hpp"
 #include "Coroutines/Task.hpp"
 #include "Link/Symbolic/ISymbolicLink.hpp"
+#include "Link/Symbolic/LocalAdsLink.hpp"
 #include "Logger/Logger.hpp"
 #include "Logger/TraceLogger.hpp"
 #include <cmath>
@@ -91,6 +92,14 @@ namespace core::sim
 
     auto RobotSimulator::update(double deltaTimeSeconds) -> void
     {
+        if (!m_internalMode) {
+            if (auto* localAds = dynamic_cast<link::symbolic::LocalAdsLink*>(m_link.get())) {
+                const auto control = localAds->readSync<RobotControl>(m_adsSymbols.controlSymbol);
+                std::scoped_lock controlLock(m_mutex);
+                m_control = control;
+            }
+        }
+
         // Logic Simulation
         std::scoped_lock lock(m_mutex);
 
@@ -103,35 +112,7 @@ namespace core::sim
 
                 using std::numbers::pi;
                 Pose targetPose;
-                bool validJob = true;
-
-                switch (m_control.nJobId) {
-                    case 1:
-                        targetPose = { 905.0, 0.0, 1080.0, 0.0, 0.0, 0.0 };
-                        break;
-                    case 2:
-                        targetPose = { 615.0, 650.0, 520.0, 0.0, 0.0, 90.0 * pi / 180.0 };
-                        break;
-                    case 3:
-                    case 4:
-                        targetPose = { 1270.0, 550.0, 580.0, 0.0, 0.0, 45.0 * pi / 180.0 };
-                        break;
-                    case 5:
-                    case 6:
-                        targetPose = { 1270.0, -550.0, 580.0, 0.0, 0.0, -45.0 * pi / 180.0 };
-                        break;
-                    case 7:
-                        targetPose = { 615.0, -690.0, 520.0, 0.0, 0.0, -90.0 * pi / 180.0 };
-                        break;
-                    default:
-                        validJob = false;
-                        logger::TraceLogger::instance().emit(
-                          logger::TraceCategory::Invariant,
-                          "robot",
-                          "unknown_job_id",
-                          { logger::traceField("job_id", static_cast<int>(m_control.nJobId)) });
-                        break;
-                }
+                const bool validJob = targetPoseForJob(m_control.nJobId, targetPose);
 
                 if (validJob) {
 
@@ -226,6 +207,13 @@ namespace core::sim
             }
             else {
                 m_status.bInMotion = 0;
+
+                if (m_trajectoryStep >= m_currentTrajectory.size() && !m_currentTrajectory.empty()) {
+                    applyJobCompletionEffects(m_control.nJobId);
+                    m_currentTrajectory.clear();
+                    m_trajectoryStep = 0;
+                }
+
                 // Check if we are at home position waypoints
                 std::array<double, 6> homeJoints = { 0.0, -90.0, 90.0, 0.0, 0.0, 0.0 };
                 bool atHome = true;
@@ -243,6 +231,57 @@ namespace core::sim
         }
 
         m_status.nJobIdFeedback = m_control.nJobId;
+
+        if (!m_internalMode) {
+            if (auto* localAds = dynamic_cast<link::symbolic::LocalAdsLink*>(m_link.get())) {
+                localAds->writeSync(m_adsSymbols.statusSymbol, m_status);
+            }
+        }
+    }
+
+    auto RobotSimulator::targetPoseForJob(uint16_t jobId, Pose& outPose) const -> bool
+    {
+        using std::numbers::pi;
+
+        switch (static_cast<JobId>(jobId)) {
+            case JobId::Home:
+                outPose = { 905.0, 0.0, 1080.0, 0.0, 0.0, 0.0 };
+                return true;
+            case JobId::PickEntry:
+                outPose = { 615.0, 650.0, 520.0, 0.0, 0.0, 90.0 * pi / 180.0 };
+                return true;
+            case JobId::PlaceLaser:
+            case JobId::PickLaser:
+                outPose = { 1270.0, 0.0, 580.0, 0.0, 0.0, 0.0 };
+                return true;
+            case JobId::PlaceExit:
+                outPose = { 615.0, -690.0, 520.0, 0.0, 0.0, -90.0 * pi / 180.0 };
+                return true;
+            default:
+                logger::TraceLogger::instance().emit(
+                  logger::TraceCategory::Invariant,
+                  "robot",
+                  "unknown_job_id",
+                  { logger::traceField("job_id", static_cast<int>(jobId)) });
+                return false;
+        }
+    }
+
+    auto RobotSimulator::applyJobCompletionEffects(uint16_t jobId) -> void
+    {
+        switch (static_cast<JobId>(jobId)) {
+            case JobId::PickEntry:
+            case JobId::PickLaser:
+                m_gripperGripped = true;
+                break;
+            case JobId::PlaceLaser:
+            case JobId::PlaceExit:
+                m_gripperGripped = false;
+                break;
+            case JobId::Home:
+            default:
+                break;
+        }
     }
 
     auto RobotSimulator::planTrajectory(const std::array<double, 6>& startJoints,
@@ -357,6 +396,10 @@ namespace core::sim
     {
         if (m_internalMode || !m_link)
             co_return;
+
+        if (dynamic_cast<link::symbolic::LocalAdsLink*>(m_link.get())) {
+            co_return;
+        }
 
         auto* symbolic = m_link->asSymbolic();
         if (!symbolic)
@@ -479,6 +522,17 @@ namespace core::sim
 
     auto RobotSimulator::triggerJob(uint16_t jobId) -> void
     {
+        if (auto* localAds = dynamic_cast<link::symbolic::LocalAdsLink*>(m_link.get())) {
+            auto control = localAds->readSync<RobotControl>(m_adsSymbols.controlSymbol);
+            control.nJobId = jobId;
+            control.bMoveEnable = 1;
+            if (control.nPartType == 0) {
+                control.nPartType = 1;
+            }
+            localAds->writeSync(m_adsSymbols.controlSymbol, control);
+            return;
+        }
+
         std::scoped_lock lock(m_mutex);
         if (!m_internalMode) {
             logger::TraceLogger::instance().emit(logger::TraceCategory::Lifecycle,

@@ -13,7 +13,11 @@ qt_add_qml_module(TsimCAT_UI
         controls/Robot3DView.qml
         controls/RobotModel.qml
         controls/GripperModel.qml
+        controls/StationModel.qml
+        controls/StationFrameModel.qml
+        controls/LaserModel.qml
         controls/ConveyorModel.qml
+        controls/RotaryTableModel.qml
         controls/PartModel.qml
         controls/FenceModel.qml
         controls/Plant3DView.qml

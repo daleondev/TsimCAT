@@ -12,28 +12,77 @@
             "ip": "127.0.0.1",
             "remoteNetId": "192.168.167.100.1.1",
             "localNetId": "192.168.167.100.1.20",
-            "port": 851
+            "port": 851,
+            "inProcess": true,
+            "instanceName": "simple_cell_local_ads"
         },
         "opcUa": {
             "endpoint": "opc.tcp://127.0.0.1:4840"
         }
     },
-    "simulation": {},
     "simulation": {
-        "localOnly": false,
+        "localOnly": true,
+        "localPlcShadow": true,
         "stationModes": {
-            "robotInternal": true,
-            "entryConveyorInternal": true,
-            "exitConveyorInternal": true
+            "robotInternal": false,
+            "rotaryTableInternal": false,
+            "exitConveyorInternal": false
+        },
+        "rotaryTable": {
+            "radius": 420.0,
+            "height": 760.0,
+            "loadAngleDeg": 0.0,
+            "pickAngleDeg": 180.0,
+            "rotationSpeedDegPerSecond": 95.0,
+            "loadDelaySeconds": 1.0
+        },
+        "exitConveyor": {
+            "length": 1250.0,
+            "speed": 250.0,
+            "sensorPositions": [
+                250.0,
+                700.0,
+                1150.0
+            ],
+            "damperSensorIndex": 0,
+            "damperCloseSensorIndex": 1,
+            "endSensorIndex": 2,
+            "consumeAtEndSensor": false,
+            "damperOpenDelaySeconds": 0.8
+        },
+        "localCell": {
+            "enabled": true,
+            "cyclePartTypes": true,
+            "markingDelayMs": 900,
+            "idleLoadDelayMs": 500
+        },
+        "layout": {
+            "floorScale": 180.0,
+            "rotaryTable": {
+                "x": -1350.0,
+                "y": 0.0,
+                "z": 1150.0,
+                "rotationZ": 0.0
+            },
+            "robot": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 350.0,
+                "rotationZ": 90.0
+            },
+            "laser": {
+                "x": 900.0,
+                "y": 0.0,
+                "z": -900.0,
+                "rotationZ": 0.0
+            },
+            "exitConveyor": {
+                "x": 1750.0,
+                "y": 0.0,
+                "z": 300.0,
+                "rotationZ": 0.0
+            }
         }
-        "enabled": false,
-        "autoStart": true,
-        "saveFrames": true,
-        "saveTrace": true,
-        "frameIntervalMs": 250,
-        "traceIntervalMs": 100,
-        "maxFrames": 240,
-        "outputFolder": "analysis/session"
     },
     "trace": {
         "enabled": true,
@@ -53,35 +102,16 @@
             "status": "MAIN.stRobotStatus"
         },
         "conveyors": {
-            "entryRun": "MAIN.bEntryConveyorRun",
-            "entrySensors": [
-                "MAIN.bEntrySensor1",
-                "MAIN.bEntrySensor2",
-                "MAIN.bEntrySensor3"
-            ],
             "exitRun": "MAIN.bExitConveyorRun",
             "exitSensors": [
                 "MAIN.bExitSensor1",
-                "MAIN.bExitSensor2"
-            ],
-            "transferRun": "MAIN.bTransferConveyorRun",
-            "transferSensors": [
-                "MAIN.bTransferSensor1",
-                "MAIN.bTransferSensor2",
-                "MAIN.bTransferSensor3"
+                "MAIN.bExitSensor2",
+                "MAIN.bExitSensor3"
             ]
         },
-        "future": {
-            "cameraTrigger": "MAIN.bCameraTrigger",
-            "cameraResult": "MAIN.nCameraResult",
-            "laserStart": "MAIN.bLaserStart",
-            "laserDone": "MAIN.bLaserDone",
-            "gantryPosX": "MAIN.fGantryPosX",
-            "gantryPosZ": "MAIN.fGantryPosZ",
-            "gantryGripCmd": "MAIN.bGantryGripCmd",
-            "gantryGripFb": "MAIN.bGantryGripFb",
-            "safetyDoorClosed": "MAIN.bSafetyDoorClosed",
-            "safetyEStopOk": "MAIN.bEStopOk"
+        "rotaryTable": {
+            "control": "MAIN.stRotaryTableControl",
+            "status": "MAIN.stRotaryTableStatus"
         }
     }
 }

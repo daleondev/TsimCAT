@@ -30,4 +30,6 @@ qt_add_qml_module(TsimCAT_Backend
         Controllers/RobotController.cpp
         Controllers/ConveyorController.h
         Controllers/ConveyorController.cpp
+        Controllers/RotaryTableController.h
+        Controllers/RotaryTableController.cpp
 )

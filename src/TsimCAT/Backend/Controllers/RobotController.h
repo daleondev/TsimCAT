@@ -3,10 +3,12 @@
 #include <QObject>
 #include <QString>
 #include <QtQml/qqmlregistration.h>
-#include <QCoroTask>
 #include <memory>
 
-namespace core::sim { class RobotSimulator; }
+namespace core::sim
+{
+    class RobotSimulator;
+}
 
 namespace backend::controllers
 {
@@ -15,7 +17,7 @@ namespace backend::controllers
         Q_OBJECT
         QML_ELEMENT
         QML_UNCREATABLE("Managed by Backend")
-        
+
         // Status from Robot (Read-only for UI)
         Q_PROPERTY(uint16_t jobIdFeedback READ jobIdFeedback NOTIFY stateChanged)
         Q_PROPERTY(uint8_t partTypeMirrored READ partTypeMirrored NOTIFY stateChanged)
@@ -59,8 +61,9 @@ namespace backend::controllers
         Q_PROPERTY(QString adsStatus READ adsStatus NOTIFY adsStatusChanged)
 
       public:
-        explicit RobotController(std::shared_ptr<core::sim::RobotSimulator> simulator, QObject* parent = nullptr);
-        
+        explicit RobotController(std::shared_ptr<core::sim::RobotSimulator> simulator,
+                                 QObject* parent = nullptr);
+
         uint16_t jobIdFeedback() const;
         uint8_t partTypeMirrored() const;
         bool inMotion() const;
