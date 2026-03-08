@@ -31,8 +31,8 @@
         "rotaryTable": {
             "radius": 420.0,
             "height": 760.0,
-            "loadAngleDeg": 0.0,
-            "pickAngleDeg": 180.0,
+            "loadAngleDeg": 180.0,
+            "pickAngleDeg": 0.0,
             "rotationSpeedDegPerSecond": 95.0,
             "loadDelaySeconds": 1.0
         },
@@ -47,7 +47,7 @@
             "damperSensorIndex": 0,
             "damperCloseSensorIndex": 1,
             "endSensorIndex": 2,
-            "consumeAtEndSensor": false,
+            "consumeAtEndSensor": true,
             "damperOpenDelaySeconds": 0.8
         },
         "localCell": {
@@ -61,7 +61,7 @@
             "rotaryTable": {
                 "x": -1350.0,
                 "y": 0.0,
-                "z": 1150.0,
+                "z": 120.0,
                 "rotationZ": 0.0
             },
             "robot": {
@@ -71,7 +71,7 @@
                 "rotationZ": 90.0
             },
             "laser": {
-                "x": 900.0,
+                "x": 0.0,
                 "y": 0.0,
                 "z": -900.0,
                 "rotationZ": 0.0
@@ -79,7 +79,7 @@
             "exitConveyor": {
                 "x": 1750.0,
                 "y": 0.0,
-                "z": 300.0,
+                "z": 120.0,
                 "rotationZ": 0.0
             }
         }

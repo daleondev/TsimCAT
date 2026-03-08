@@ -24,17 +24,17 @@ namespace backend
     struct PlantLayoutConfig
     {
         double floorScale{ 150.0 };
-        StationPoseConfig rotaryTable{ .x = -1350.0, .y = 0.0, .z = 1150.0, .rotationZ = 0.0 };
+        StationPoseConfig rotaryTable{ .x = -1350.0, .y = 0.0, .z = 120.0, .rotationZ = 0.0 };
         StationPoseConfig robot{ .x = 0.0, .y = 0.0, .z = 350.0, .rotationZ = 90.0 };
-        StationPoseConfig laser{ .x = 850.0, .y = 0.0, .z = -900.0, .rotationZ = 0.0 };
-        StationPoseConfig exitConveyor{ .x = 1750.0, .y = 0.0, .z = 300.0, .rotationZ = 0.0 };
+        StationPoseConfig laser{ .x = 0.0, .y = 0.0, .z = -900.0, .rotationZ = 0.0 };
+        StationPoseConfig exitConveyor{ .x = 1750.0, .y = 0.0, .z = 120.0, .rotationZ = 0.0 };
     };
 
     struct RotaryTableConfig
     {
         double radius{ 420.0 };
-        double loadAngleDeg{ 0.0 };
-        double pickAngleDeg{ 180.0 };
+        double loadAngleDeg{ 180.0 };
+        double pickAngleDeg{ 0.0 };
         double height{ 760.0 };
         double rotationSpeedDegPerSecond{ 95.0 };
         double loadDelaySeconds{ 1.0 };
@@ -48,7 +48,7 @@ namespace backend
         int damperSensorIndex{ 0 };
         int damperCloseSensorIndex{ 1 };
         int endSensorIndex{ 2 };
-        bool consumeAtEndSensor{ false };
+        bool consumeAtEndSensor{ true };
         double damperOpenDelaySeconds{ 0.8 };
     };
 

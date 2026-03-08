@@ -5,9 +5,7 @@ import QtQuick3D
 Item {
     id: root
     property var backend: null
-    property bool entryDamperOpen: false
     property bool exitDamperOpen: false
-    property bool doorOpen: false
 
     View3D {
         id: view
@@ -71,8 +69,8 @@ Item {
         Model {
             y: 1
             source: "#Rectangle"
-            position: Qt.vector3d(100, 0, 240)
-            scale: Qt.vector3d(52, 34, 1)
+            position: Qt.vector3d(80, 0, 120)
+            scale: Qt.vector3d(36, 34, 1)
             eulerRotation.x: -90
             materials: [
                 PrincipledMaterial {
@@ -84,16 +82,14 @@ Item {
 
         FenceModel {
             id: fence
-            position: Qt.vector3d(450, 0, 120)
-            entryDamperOpen: root.entryDamperOpen
+            position: Qt.vector3d(150, 0, 120)
             exitDamperOpen: root.exitDamperOpen
-            doorOpen: root.doorOpen
         }
 
         Model {
-            position: Qt.vector3d(-1320, 4, 1180)
+            position: Qt.vector3d(-1420, 4, 120)
             source: "#Rectangle"
-            scale: Qt.vector3d(16, 12, 1)
+            scale: Qt.vector3d(9, 12, 1)
             eulerRotation.x: -90
             materials: [
                 PrincipledMaterial {
@@ -105,10 +101,12 @@ Item {
 
         Node {
             id: rotaryStation
-            position: Qt.vector3d(-1350, 0, 1150)
+            position: Qt.vector3d(-1350, 0, 120)
 
             StationFrameModel {
-                position: Qt.vector3d(0, 0, 0)
+                width: 760
+                depth: 1200
+                position: Qt.vector3d(120, 0, 0)
             }
 
             RotaryTableModel {
@@ -137,7 +135,7 @@ Item {
 
         Node {
             id: laserStation
-            position: Qt.vector3d(900, 0, -900)
+            position: Qt.vector3d(0, 0, -900)
 
             StationModel {
                 color: "#b45e43"
@@ -167,7 +165,7 @@ Item {
 
         ConveyorModel {
             id: exitConveyor
-            position: Qt.vector3d(1750, 0, 300)
+            position: Qt.vector3d(1750, 0, 120)
             length: 1250
             height: 720
             width: 430

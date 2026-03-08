@@ -51,8 +51,8 @@ namespace core::sim
             std::string name{ "RotaryTable" };
             double radius{ 420.0 };
             double height{ 760.0 };
-            double loadAngleDeg{ 0.0 };
-            double pickAngleDeg{ 180.0 };
+            double loadAngleDeg{ 180.0 };
+            double pickAngleDeg{ 0.0 };
             double rotationSpeedDegPerSecond{ 95.0 };
             double loadDelaySeconds{ 1.0 };
         };

@@ -16,9 +16,7 @@ Control {
             id: plantView
             anchors.fill: parent
             backend: root.backend
-            entryDamperOpen: entryDamperToggle.checked
             exitDamperOpen: (root.backend && root.backend.exitConveyor.autoLogic) ? root.backend.exitConveyor.damperOpen : exitDamperToggle.checked
-            doorOpen: doorToggle.checked
         }
 
         Rectangle {
@@ -117,20 +115,10 @@ Control {
                     }
 
                     CheckBox {
-                        id: entryDamperToggle
-                        text: "Entry Damper"
-                    }
-
-                    CheckBox {
                         id: exitDamperToggle
                         text: "Exit Damper"
                         enabled: !(root.backend && root.backend.exitConveyor.autoLogic)
                         checked: (root.backend && root.backend.exitConveyor.autoLogic) ? root.backend.exitConveyor.damperOpen : false
-                    }
-
-                    CheckBox {
-                        id: doorToggle
-                        text: "Safety Door"
                     }
 
                     Rectangle {
