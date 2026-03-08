@@ -160,6 +160,22 @@ namespace backend
           rotarySymbols,
           m_runtimeConfig.adsVariables.conveyors.exitRun);
 
+        m_localSimulationEnabled = m_runtimeConfig.simulation.localCell.enabled;
+        m_localTableSimulationEnabled = true;
+        m_localRobotSimulationEnabled = true;
+        m_localLaserSimulationEnabled = true;
+        m_localConveyorSimulationEnabled = true;
+        m_autoSpawnPartsEnabled = true;
+        m_autoDespawnPartsEnabled = m_runtimeConfig.simulation.exitConveyorConfig.consumeAtEndSensor;
+
+        m_cellCoordinator->setEnabled(m_localSimulationEnabled);
+        m_cellCoordinator->setTableSimulationEnabled(m_localTableSimulationEnabled);
+        m_cellCoordinator->setRobotSimulationEnabled(m_localRobotSimulationEnabled);
+        m_cellCoordinator->setLaserSimulationEnabled(m_localLaserSimulationEnabled);
+        m_cellCoordinator->setConveyorSimulationEnabled(m_localConveyorSimulationEnabled);
+        m_cellCoordinator->setAutoSpawnParts(m_autoSpawnPartsEnabled);
+        m_exitConveyorSim->setConsumeAtEndSensor(m_autoDespawnPartsEnabled);
+
         ensureRobotCommTask();
         ensureRotaryTableCommTask();
         ensureExitConveyorCommTask();
@@ -225,11 +241,119 @@ namespace backend
 
     bool Backend::localPlcShadow() const { return m_runtimeConfig.simulation.localPlcShadow; }
 
+    bool Backend::localSimulationEnabled() const { return m_localSimulationEnabled; }
+
+    bool Backend::localTableSimulationEnabled() const { return m_localTableSimulationEnabled; }
+
+    bool Backend::localRobotSimulationEnabled() const { return m_localRobotSimulationEnabled; }
+
+    bool Backend::localLaserSimulationEnabled() const { return m_localLaserSimulationEnabled; }
+
+    bool Backend::localConveyorSimulationEnabled() const { return m_localConveyorSimulationEnabled; }
+
+    bool Backend::autoSpawnPartsEnabled() const { return m_autoSpawnPartsEnabled; }
+
+    bool Backend::autoDespawnPartsEnabled() const { return m_autoDespawnPartsEnabled; }
+
     bool Backend::localRobotMode() const { return m_runtimeConfig.simulation.robot.internal; }
 
     bool Backend::localRotaryTableMode() const { return m_runtimeConfig.simulation.rotaryTable.internal; }
 
     bool Backend::localExitConveyorMode() const { return m_runtimeConfig.simulation.exitConveyor.internal; }
+
+    void Backend::setLocalSimulationEnabled(bool enabled)
+    {
+        if (m_localSimulationEnabled == enabled) {
+            return;
+        }
+
+        m_localSimulationEnabled = enabled;
+        if (m_cellCoordinator) {
+            m_cellCoordinator->setEnabled(enabled);
+        }
+        emit simulationSettingsChanged();
+    }
+
+    void Backend::setLocalTableSimulationEnabled(bool enabled)
+    {
+        if (m_localTableSimulationEnabled == enabled) {
+            return;
+        }
+
+        m_localTableSimulationEnabled = enabled;
+        if (m_cellCoordinator) {
+            m_cellCoordinator->setTableSimulationEnabled(enabled);
+        }
+        emit simulationSettingsChanged();
+    }
+
+    void Backend::setLocalRobotSimulationEnabled(bool enabled)
+    {
+        if (m_localRobotSimulationEnabled == enabled) {
+            return;
+        }
+
+        m_localRobotSimulationEnabled = enabled;
+        if (m_cellCoordinator) {
+            m_cellCoordinator->setRobotSimulationEnabled(enabled);
+        }
+        emit simulationSettingsChanged();
+    }
+
+    void Backend::setLocalLaserSimulationEnabled(bool enabled)
+    {
+        if (m_localLaserSimulationEnabled == enabled) {
+            return;
+        }
+
+        m_localLaserSimulationEnabled = enabled;
+        if (m_cellCoordinator) {
+            m_cellCoordinator->setLaserSimulationEnabled(enabled);
+        }
+        emit simulationSettingsChanged();
+    }
+
+    void Backend::setLocalConveyorSimulationEnabled(bool enabled)
+    {
+        if (m_localConveyorSimulationEnabled == enabled) {
+            return;
+        }
+
+        m_localConveyorSimulationEnabled = enabled;
+        if (m_cellCoordinator) {
+            m_cellCoordinator->setConveyorSimulationEnabled(enabled);
+        }
+        emit simulationSettingsChanged();
+    }
+
+    void Backend::setAutoSpawnPartsEnabled(bool enabled)
+    {
+        if (m_autoSpawnPartsEnabled == enabled) {
+            return;
+        }
+
+        m_autoSpawnPartsEnabled = enabled;
+        if (m_cellCoordinator) {
+            m_cellCoordinator->setAutoSpawnParts(enabled);
+        }
+        emit simulationSettingsChanged();
+    }
+
+    void Backend::setAutoDespawnPartsEnabled(bool enabled)
+    {
+        if (m_autoDespawnPartsEnabled == enabled) {
+            return;
+        }
+
+        m_autoDespawnPartsEnabled = enabled;
+        if (m_exitConveyorSim) {
+            m_exitConveyorSim->setConsumeAtEndSensor(enabled);
+        }
+        if (m_exitConveyorController) {
+            emit m_exitConveyorController->stateChanged();
+        }
+        emit simulationSettingsChanged();
+    }
 
     void Backend::setLocalRobotMode(bool enabled)
     {
@@ -284,6 +408,39 @@ namespace backend
         });
     }
 
+    void Backend::spawnTablePart()
+    {
+        if (!m_rotaryTableSim) {
+            return;
+        }
+
+        const int partType = m_runtimeConfig.simulation.localCell.cyclePartTypes ? m_nextManualPartType : 1;
+        const auto desiredType = static_cast<uint8_t>(partType);
+        if (!m_rotaryTableSim->tryLoadPart(desiredType)) {
+            m_rotaryTableSim->queuePart(desiredType);
+        }
+        if (m_runtimeConfig.simulation.localCell.cyclePartTypes) {
+            m_nextManualPartType = (m_nextManualPartType == 1) ? 2 : 1;
+        }
+        if (m_rotaryTableController) {
+            emit m_rotaryTableController->stateChanged();
+        }
+        emit simulationSettingsChanged();
+    }
+
+    bool Backend::despawnExitPart()
+    {
+        if (!m_exitConveyorSim) {
+            return false;
+        }
+
+        const bool removed = m_exitConveyorSim->takePartAtEnd().has_value();
+        if (removed && m_exitConveyorController) {
+            emit m_exitConveyorController->stateChanged();
+        }
+        return removed;
+    }
+
     void Backend::startBackgroundTask(core::coro::Task<void>&& task)
     {
         m_backgroundTasks.push_back(std::move(task));
@@ -307,13 +464,13 @@ namespace backend
             if (m_cellCoordinator) {
                 m_cellCoordinator->update(dt);
             }
-            if (m_rotaryTableSim) {
+            if (m_rotaryTableSim && m_localSimulationEnabled && m_localTableSimulationEnabled) {
                 m_rotaryTableSim->update(dt);
             }
-            if (m_robotSim) {
+            if (m_robotSim && m_localSimulationEnabled && m_localRobotSimulationEnabled) {
                 m_robotSim->update(dt);
             }
-            if (m_exitConveyorSim) {
+            if (m_exitConveyorSim && m_localSimulationEnabled && m_localConveyorSimulationEnabled) {
                 m_exitConveyorSim->update(dt);
             }
 

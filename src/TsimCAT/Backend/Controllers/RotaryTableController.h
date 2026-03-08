@@ -21,6 +21,7 @@ namespace backend::controllers
         Q_PROPERTY(double angleDegrees READ angleDegrees NOTIFY stateChanged)
         Q_PROPERTY(bool partPresent READ partPresent NOTIFY stateChanged)
         Q_PROPERTY(bool readyToPick READ readyToPick NOTIFY stateChanged)
+        Q_PROPERTY(bool atLoadPosition READ atLoadPosition NOTIFY stateChanged)
         Q_PROPERTY(bool busy READ busy NOTIFY stateChanged)
         Q_PROPERTY(int partType READ partType NOTIFY stateChanged)
 
@@ -32,6 +33,7 @@ namespace backend::controllers
         double angleDegrees() const;
         bool partPresent() const;
         bool readyToPick() const;
+        bool atLoadPosition() const;
         bool busy() const;
         int partType() const;
 

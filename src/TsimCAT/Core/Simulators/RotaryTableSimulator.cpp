@@ -178,6 +178,18 @@ namespace core::sim
         return m_status.bReadyToPick != 0;
     }
 
+    auto RotaryTableSimulator::atLoadPosition() const -> bool
+    {
+        std::scoped_lock lock(m_mutex);
+        return m_status.bAtLoadPosition != 0;
+    }
+
+    auto RotaryTableSimulator::atPickPosition() const -> bool
+    {
+        std::scoped_lock lock(m_mutex);
+        return m_status.bAtPickPosition != 0;
+    }
+
     auto RotaryTableSimulator::isBusy() const -> bool
     {
         std::scoped_lock lock(m_mutex);
@@ -216,6 +228,30 @@ namespace core::sim
         m_control.bLoadPart = 1;
         m_control.bIndex = 0;
         m_control.nRequestedPartType = partType;
+    }
+
+    auto RotaryTableSimulator::tryLoadPart(uint8_t partType) -> bool
+    {
+        RotaryTableStatus statusCopy{};
+        {
+            std::scoped_lock lock(m_mutex);
+            const bool atLoad = std::abs(m_currentAngleDeg - m_config.loadAngleDeg) <= angleToleranceDegrees;
+            if (m_hasPart || !atLoad) {
+                return false;
+            }
+
+            m_hasPart = true;
+            m_partType = partType > 0 ? partType : 1;
+            m_loadTimerSeconds = 0.0;
+            updateStatusLocked();
+            statusCopy = m_status;
+        }
+
+        if (auto* localAds = dynamic_cast<link::symbolic::LocalAdsLink*>(m_link.get())) {
+            localAds->writeSync(m_adsSymbols.statusSymbol, statusCopy);
+        }
+
+        return true;
     }
 
     auto RotaryTableSimulator::takePartForRobot() -> uint8_t

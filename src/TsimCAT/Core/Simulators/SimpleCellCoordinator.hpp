@@ -34,6 +34,18 @@ namespace core::sim
         auto update(double deltaTimeSeconds) -> void;
         auto laserStationHasPart() const -> bool { return m_laserStationHasPart; }
         auto laserStationPartType() const -> uint8_t { return m_laserStationPartType; }
+        auto setEnabled(bool enabled) -> void { m_config.enabled = enabled; }
+        auto enabled() const -> bool { return m_config.enabled; }
+        auto setTableSimulationEnabled(bool enabled) -> void { m_tableSimulationEnabled = enabled; }
+        auto tableSimulationEnabled() const -> bool { return m_tableSimulationEnabled; }
+        auto setRobotSimulationEnabled(bool enabled) -> void { m_robotSimulationEnabled = enabled; }
+        auto robotSimulationEnabled() const -> bool { return m_robotSimulationEnabled; }
+        auto setLaserSimulationEnabled(bool enabled) -> void { m_laserSimulationEnabled = enabled; }
+        auto laserSimulationEnabled() const -> bool { return m_laserSimulationEnabled; }
+        auto setConveyorSimulationEnabled(bool enabled) -> void { m_conveyorSimulationEnabled = enabled; }
+        auto conveyorSimulationEnabled() const -> bool { return m_conveyorSimulationEnabled; }
+        auto setAutoSpawnParts(bool enabled) -> void { m_autoSpawnParts = enabled; }
+        auto autoSpawnParts() const -> bool { return m_autoSpawnParts; }
 
       private:
         enum class FlowState
@@ -62,6 +74,11 @@ namespace core::sim
         RotaryTableSimulator::AdsSymbols m_rotarySymbols;
         std::string m_exitRunSymbol;
         FlowState m_state{ FlowState::WaitTableReady };
+        bool m_tableSimulationEnabled{ true };
+        bool m_robotSimulationEnabled{ true };
+        bool m_laserSimulationEnabled{ true };
+        bool m_conveyorSimulationEnabled{ true };
+        bool m_autoSpawnParts{ true };
         double m_markingTimerSeconds{ 0.0 };
         double m_idleLoadTimerSeconds{ 0.0 };
         bool m_laserStationHasPart{ false };

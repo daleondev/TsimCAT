@@ -31,6 +31,11 @@ namespace backend::controllers
         return m_simulator ? m_simulator->readyToPick() : false;
     }
 
+    bool RotaryTableController::atLoadPosition() const
+    {
+        return m_simulator ? m_simulator->atLoadPosition() : false;
+    }
+
     bool RotaryTableController::busy() const { return m_simulator ? m_simulator->isBusy() : false; }
 
     int RotaryTableController::partType() const

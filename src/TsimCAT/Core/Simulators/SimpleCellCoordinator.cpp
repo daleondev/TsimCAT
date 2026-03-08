@@ -34,7 +34,9 @@ namespace core::sim
             return;
         }
 
-        ensureExitConveyorRunning();
+        if (m_conveyorSimulationEnabled) {
+            ensureExitConveyorRunning();
+        }
 
         const auto robotStatus = localAds->readSync<RobotStatus>(m_robotSymbols.statusSymbol);
         const auto rotaryStatus = localAds->readSync<RotaryTableStatus>(m_rotarySymbols.statusSymbol);
@@ -44,14 +46,28 @@ namespace core::sim
             case FlowState::WaitTableReady:
                 m_idleLoadTimerSeconds += deltaTimeSeconds;
                 if (!rotaryStatus.bPartPresent) {
-                    if (m_idleLoadTimerSeconds * 1000.0 >= static_cast<double>(m_config.idleLoadDelayMs)) {
-                        requestRotaryLoad(nextPartType());
+                    if (m_autoSpawnParts &&
+                        m_idleLoadTimerSeconds * 1000.0 >= static_cast<double>(m_config.idleLoadDelayMs)) {
+                        const auto partType = nextPartType();
+                        if (!m_tableSimulationEnabled) {
+                            (void)m_rotaryTable->tryLoadPart(partType);
+                        }
+                        else {
+                            requestRotaryLoad(partType);
+                        }
                     }
                     break;
                 }
 
                 if (!rotaryStatus.bReadyToPick) {
+                    if (!m_tableSimulationEnabled) {
+                        break;
+                    }
                     requestRotaryIndex(rotaryStatus.nPartType > 0 ? rotaryStatus.nPartType : nextPartType());
+                    break;
+                }
+
+                if (!m_robotSimulationEnabled) {
                     break;
                 }
 
@@ -62,6 +78,10 @@ namespace core::sim
                 break;
 
             case FlowState::WaitPickEntryDone:
+                if (!m_robotSimulationEnabled) {
+                    break;
+                }
+
                 if (inMotion || robotStatus.nJobIdFeedback != 2) {
                     break;
                 }
@@ -76,6 +96,10 @@ namespace core::sim
                 break;
 
             case FlowState::WaitPlaceLaserDone:
+                if (!m_robotSimulationEnabled) {
+                    break;
+                }
+
                 if (inMotion || robotStatus.nJobIdFeedback != 3) {
                     break;
                 }
@@ -87,6 +111,10 @@ namespace core::sim
                 break;
 
             case FlowState::WaitMarkingDone:
+                if (!m_laserSimulationEnabled || !m_robotSimulationEnabled) {
+                    break;
+                }
+
                 m_markingTimerSeconds += deltaTimeSeconds;
                 if (m_markingTimerSeconds * 1000.0 < static_cast<double>(m_config.markingDelayMs)) {
                     break;
@@ -97,6 +125,10 @@ namespace core::sim
                 break;
 
             case FlowState::WaitPickLaserDone:
+                if (!m_robotSimulationEnabled) {
+                    break;
+                }
+
                 if (inMotion || robotStatus.nJobIdFeedback != 4) {
                     break;
                 }
@@ -107,6 +139,10 @@ namespace core::sim
                 break;
 
             case FlowState::WaitPlaceExitDone:
+                if (!m_robotSimulationEnabled) {
+                    break;
+                }
+
                 if (inMotion || robotStatus.nJobIdFeedback != 7) {
                     break;
                 }
@@ -117,6 +153,10 @@ namespace core::sim
                 break;
 
             case FlowState::WaitHomeDone:
+                if (!m_robotSimulationEnabled) {
+                    break;
+                }
+
                 if (inMotion || robotStatus.nJobIdFeedback != 1) {
                     break;
                 }

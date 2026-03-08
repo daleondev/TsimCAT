@@ -74,11 +74,14 @@ namespace core::sim
         auto partType() const -> uint8_t;
         auto partPresent() const -> bool;
         auto readyToPick() const -> bool;
+        auto atLoadPosition() const -> bool;
+        auto atPickPosition() const -> bool;
         auto isBusy() const -> bool;
 
         auto setInternalMode(bool internalMode) -> void;
         auto isInternalMode() const -> bool;
         auto queuePart(uint8_t partType) -> void;
+        auto tryLoadPart(uint8_t partType) -> bool;
         auto takePartForRobot() -> uint8_t;
 
       private:

@@ -65,6 +65,8 @@ namespace core::sim
 
         auto autoLogic() const -> bool { return m_autoLogic; }
         auto setAutoLogic(bool enable) -> void { m_autoLogic = enable; }
+        auto consumeAtEndSensor() const -> bool { return m_config.consumeAtEndSensor; }
+        auto setConsumeAtEndSensor(bool enable) -> void { m_config.consumeAtEndSensor = enable; }
 
         auto damperOpen() const -> bool { return m_damperOpen; }
         auto setDamperOpen(bool open) -> void { m_damperOpen = open; }

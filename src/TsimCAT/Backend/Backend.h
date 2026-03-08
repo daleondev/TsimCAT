@@ -44,6 +44,20 @@ namespace backend
         Q_PROPERTY(int laserPartType READ laserPartType NOTIFY partVisualizationChanged)
         Q_PROPERTY(bool usingLocalAdsShadow READ usingLocalAdsShadow CONSTANT)
         Q_PROPERTY(bool localPlcShadow READ localPlcShadow CONSTANT)
+        Q_PROPERTY(bool localSimulationEnabled READ localSimulationEnabled WRITE setLocalSimulationEnabled
+                     NOTIFY simulationSettingsChanged)
+        Q_PROPERTY(bool localTableSimulationEnabled READ localTableSimulationEnabled WRITE
+                     setLocalTableSimulationEnabled NOTIFY simulationSettingsChanged)
+        Q_PROPERTY(bool localRobotSimulationEnabled READ localRobotSimulationEnabled WRITE
+                     setLocalRobotSimulationEnabled NOTIFY simulationSettingsChanged)
+        Q_PROPERTY(bool localLaserSimulationEnabled READ localLaserSimulationEnabled WRITE
+                     setLocalLaserSimulationEnabled NOTIFY simulationSettingsChanged)
+        Q_PROPERTY(bool localConveyorSimulationEnabled READ localConveyorSimulationEnabled WRITE
+                     setLocalConveyorSimulationEnabled NOTIFY simulationSettingsChanged)
+        Q_PROPERTY(bool autoSpawnPartsEnabled READ autoSpawnPartsEnabled WRITE setAutoSpawnPartsEnabled NOTIFY
+                     simulationSettingsChanged)
+        Q_PROPERTY(bool autoDespawnPartsEnabled READ autoDespawnPartsEnabled WRITE setAutoDespawnPartsEnabled
+                     NOTIFY simulationSettingsChanged)
         Q_PROPERTY(bool localRobotMode READ localRobotMode WRITE setLocalRobotMode NOTIFY stationModesChanged)
         Q_PROPERTY(bool localRotaryTableMode READ localRotaryTableMode WRITE setLocalRotaryTableMode NOTIFY
                      stationModesChanged)
@@ -65,19 +79,36 @@ namespace backend
         int laserPartType() const;
         bool usingLocalAdsShadow() const;
         bool localPlcShadow() const;
+        bool localSimulationEnabled() const;
+        bool localTableSimulationEnabled() const;
+        bool localRobotSimulationEnabled() const;
+        bool localLaserSimulationEnabled() const;
+        bool localConveyorSimulationEnabled() const;
+        bool autoSpawnPartsEnabled() const;
+        bool autoDespawnPartsEnabled() const;
         bool localRobotMode() const;
         bool localRotaryTableMode() const;
         bool localExitConveyorMode() const;
+        void setLocalSimulationEnabled(bool enabled);
+        void setLocalTableSimulationEnabled(bool enabled);
+        void setLocalRobotSimulationEnabled(bool enabled);
+        void setLocalLaserSimulationEnabled(bool enabled);
+        void setLocalConveyorSimulationEnabled(bool enabled);
+        void setAutoSpawnPartsEnabled(bool enabled);
+        void setAutoDespawnPartsEnabled(bool enabled);
         void setLocalRobotMode(bool enabled);
         void setLocalRotaryTableMode(bool enabled);
         void setLocalExitConveyorMode(bool enabled);
 
         Q_INVOKABLE void runAsyncTest();
+        Q_INVOKABLE void spawnTablePart();
+        Q_INVOKABLE bool despawnExitPart();
 
       signals:
         void asyncTestStatusChanged();
         void stationModesChanged();
         void partVisualizationChanged();
+        void simulationSettingsChanged();
 
       private:
         void startBackgroundTask(core::coro::Task<void>&& task);
@@ -103,6 +134,14 @@ namespace backend
         bool m_robotCommTaskStarted{ false };
         bool m_rotaryTableCommTaskStarted{ false };
         bool m_exitConveyorCommTaskStarted{ false };
+        bool m_localSimulationEnabled{ true };
+        bool m_localTableSimulationEnabled{ true };
+        bool m_localRobotSimulationEnabled{ true };
+        bool m_localLaserSimulationEnabled{ true };
+        bool m_localConveyorSimulationEnabled{ true };
+        bool m_autoSpawnPartsEnabled{ true };
+        bool m_autoDespawnPartsEnabled{ true };
+        int m_nextManualPartType{ 1 };
         QTimer* m_updateTimer{ nullptr };
         std::chrono::steady_clock::time_point m_lastUpdateTime{};
         std::vector<core::coro::Task<void>> m_backgroundTasks;

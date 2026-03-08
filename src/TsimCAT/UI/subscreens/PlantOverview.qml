@@ -8,15 +8,55 @@ Control {
     property string title: "Plant Overview"
     property var backend: null
     property bool showControls: false
+    property bool showRobotManual: false
+    property int manualRobotMode: 0
+
+    readonly property var robot: backend ? backend.robot : null
 
     padding: 0
+
+    function updateJoint(index, value) {
+        if (!robot)
+            return;
+
+        let joints = [robot.axis1, robot.axis2, robot.axis3, robot.axis4, robot.axis5, robot.axis6];
+        joints[index] = value;
+        robot.setJoints(joints[0], joints[1], joints[2], joints[3], joints[4], joints[5]);
+    }
+
+    function updateTcp(axis, value) {
+        if (!robot)
+            return;
+
+        let x = robot.tcpX;
+        let y = robot.tcpY;
+        let z = robot.tcpZ;
+        let roll = robot.tcpRoll;
+        let pitch = robot.tcpPitch;
+        let yaw = robot.tcpYaw;
+
+        if (axis === "x")
+            x = value;
+        else if (axis === "y")
+            y = value;
+        else if (axis === "z")
+            z = value;
+        else if (axis === "roll")
+            roll = value;
+        else if (axis === "pitch")
+            pitch = value;
+        else if (axis === "yaw")
+            yaw = value;
+
+        robot.setTcp(x, y, z, roll, pitch, yaw);
+    }
 
     contentItem: Item {
         Controls.Plant3DView {
             id: plantView
             anchors.fill: parent
             backend: root.backend
-            exitDamperOpen: (root.backend && root.backend.exitConveyor.autoLogic) ? root.backend.exitConveyor.damperOpen : exitDamperToggle.checked
+            exitDamperOpen: root.backend ? root.backend.exitConveyor.damperOpen : false
         }
 
         Rectangle {
@@ -62,6 +102,13 @@ Control {
                     flat: true
                     palette.buttonText: "white"
                     onClicked: root.showControls = !root.showControls
+                }
+
+                Button {
+                    text: root.showRobotManual ? "Hide Robot" : "Manual Robot"
+                    flat: true
+                    palette.buttonText: "white"
+                    onClicked: root.showRobotManual = !root.showRobotManual
                 }
             }
         }
@@ -114,13 +161,6 @@ Control {
                         color: "#444"
                     }
 
-                    CheckBox {
-                        id: exitDamperToggle
-                        text: "Exit Damper"
-                        enabled: !(root.backend && root.backend.exitConveyor.autoLogic)
-                        checked: (root.backend && root.backend.exitConveyor.autoLogic) ? root.backend.exitConveyor.damperOpen : false
-                    }
-
                     Rectangle {
                         Layout.fillWidth: true
                         height: 1
@@ -128,31 +168,85 @@ Control {
                     }
 
                     Text {
-                        text: "Station Modes"
+                        text: "Simulation"
                         color: "#a0aec0"
                         font.pixelSize: 12
                         font.bold: true
                     }
 
                     Switch {
-                        text: "Robot local simulation"
-                        checked: root.backend ? root.backend.localRobotMode : false
+                        text: "Enable local simulation"
+                        checked: root.backend ? root.backend.localSimulationEnabled : true
                         onToggled: if (root.backend)
-                            root.backend.localRobotMode = checked
+                            root.backend.localSimulationEnabled = checked
                     }
 
                     Switch {
-                        text: "Rotary table direct local mode"
-                        checked: root.backend ? root.backend.localRotaryTableMode : false
+                        text: "Enable table simulation"
+                        enabled: root.backend ? root.backend.localSimulationEnabled : false
+                        checked: root.backend ? root.backend.localTableSimulationEnabled : true
                         onToggled: if (root.backend)
-                            root.backend.localRotaryTableMode = checked
+                            root.backend.localTableSimulationEnabled = checked
                     }
 
                     Switch {
-                        text: "Exit conveyor local simulation"
-                        checked: root.backend ? root.backend.localExitConveyorMode : false
+                        text: "Enable robot simulation"
+                        enabled: root.backend ? root.backend.localSimulationEnabled : false
+                        checked: root.backend ? root.backend.localRobotSimulationEnabled : true
                         onToggled: if (root.backend)
-                            root.backend.localExitConveyorMode = checked
+                            root.backend.localRobotSimulationEnabled = checked
+                    }
+
+                    Switch {
+                        text: "Enable laser simulation"
+                        enabled: root.backend ? root.backend.localSimulationEnabled : false
+                        checked: root.backend ? root.backend.localLaserSimulationEnabled : true
+                        onToggled: if (root.backend)
+                            root.backend.localLaserSimulationEnabled = checked
+                    }
+
+                    Switch {
+                        text: "Enable conveyor simulation"
+                        enabled: root.backend ? root.backend.localSimulationEnabled : false
+                        checked: root.backend ? root.backend.localConveyorSimulationEnabled : true
+                        onToggled: if (root.backend)
+                            root.backend.localConveyorSimulationEnabled = checked
+                    }
+
+                    Switch {
+                        text: "Auto spawn parts"
+                        enabled: root.backend ? root.backend.localSimulationEnabled : false
+                        checked: root.backend ? root.backend.autoSpawnPartsEnabled : true
+                        onToggled: if (root.backend)
+                            root.backend.autoSpawnPartsEnabled = checked
+                    }
+
+                    Button {
+                        text: "Spawn part"
+                        Layout.fillWidth: true
+                        enabled: root.backend
+                                 ? (root.backend.localSimulationEnabled && !root.backend.autoSpawnPartsEnabled && root.backend.rotaryTable && root.backend.rotaryTable.atLoadPosition && !root.backend.rotaryTable.partPresent)
+                                 : false
+                        onClicked: if (root.backend)
+                            root.backend.spawnTablePart()
+                    }
+
+                    Switch {
+                        text: "Auto despawn parts"
+                        enabled: root.backend ? (root.backend.localSimulationEnabled && root.backend.localConveyorSimulationEnabled) : false
+                        checked: root.backend ? root.backend.autoDespawnPartsEnabled : true
+                        onToggled: if (root.backend)
+                            root.backend.autoDespawnPartsEnabled = checked
+                    }
+
+                    Button {
+                        text: "Despawn part"
+                        Layout.fillWidth: true
+                        enabled: root.backend
+                                 ? (root.backend.localSimulationEnabled && !root.backend.autoDespawnPartsEnabled && root.backend.exitConveyor && root.backend.exitConveyor.partAtEndSensor)
+                                 : false
+                        onClicked: if (root.backend)
+                            root.backend.despawnExitPart()
                     }
 
                     Rectangle {
@@ -184,33 +278,238 @@ Control {
                         font.pixelSize: 11
                     }
 
+                    Text {
+                        text: root.backend && root.backend.exitConveyor
+                              ? "Exit parts: " + root.backend.exitConveyor.parts.length
+                              : "Exit parts: 0"
+                        color: "#c7d2d9"
+                        font.pixelSize: 11
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            id: robotManualPanel
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.leftMargin: 20
+            anchors.topMargin: 140
+            anchors.bottomMargin: 20
+            width: 420
+            color: "#ee1b1d20"
+            radius: 10
+            visible: root.showRobotManual
+            z: 10
+            opacity: root.backend && root.backend.localSimulationEnabled && root.backend.localRobotSimulationEnabled ? 1.0 : 0.72
+
+            ScrollView {
+                anchors.fill: parent
+                anchors.margins: 16
+                clip: true
+
+                ColumnLayout {
+                    width: robotManualPanel.width - 48
+                    spacing: 10
+
                     RowLayout {
                         Layout.fillWidth: true
-                        Button {
-                            text: "Queue Type 1"
-                            Layout.fillWidth: true
-                            onClicked: if (root.backend)
-                                root.backend.rotaryTable.queuePart(1)
+
+                        Text {
+                            text: "Robot Manual"
+                            color: "white"
+                            font.pixelSize: 18
+                            font.bold: true
                         }
+
+                        Item { Layout.fillWidth: true }
+
                         Button {
-                            text: "Queue Type 2"
-                            Layout.fillWidth: true
-                            onClicked: if (root.backend)
-                                root.backend.rotaryTable.queuePart(2)
+                            text: "Close"
+                            flat: true
+                            palette.buttonText: "white"
+                            onClicked: root.showRobotManual = false
                         }
                     }
 
-                    Switch {
-                        text: "Exit auto logic"
-                        checked: root.backend ? root.backend.exitConveyor.autoLogic : false
-                        onToggled: if (root.backend)
-                            root.backend.exitConveyor.autoLogic = checked
+                    Text {
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                        text: root.backend && root.backend.localSimulationEnabled && root.backend.localRobotSimulationEnabled
+                              ? "Use sliders to set the simulated robot joints or TCP pose directly."
+                              : "Enable local simulation and robot simulation to drive the robot manually."
+                        color: "#a9bdba"
+                        font.pixelSize: 11
                     }
 
-                    Button {
-                        text: "Clear Exit Conveyor"
-                        onClicked: if (root.backend)
-                            root.backend.exitConveyor.clearParts();
+                    TabBar {
+                        id: manualModeTabs
+                        Layout.fillWidth: true
+                        currentIndex: root.manualRobotMode
+                        onCurrentIndexChanged: root.manualRobotMode = currentIndex
+
+                        TabButton { text: "Joints" }
+                        TabButton { text: "Cartesian" }
+                    }
+
+                    StackLayout {
+                        Layout.fillWidth: true
+                        currentIndex: root.manualRobotMode
+                        enabled: root.backend && root.backend.localSimulationEnabled && root.backend.localRobotSimulationEnabled
+
+                        ColumnLayout {
+                            spacing: 8
+
+                            ManualSlider {
+                                label: "A1"
+                                from: -180
+                                to: 180
+                                currentValue: root.robot ? root.robot.axis1 : 0
+                                onCommitted: function(value) { root.updateJoint(0, value) }
+                            }
+                            ManualSlider {
+                                label: "A2"
+                                from: -150
+                                to: 150
+                                currentValue: root.robot ? root.robot.axis2 : 0
+                                onCommitted: function(value) { root.updateJoint(1, value) }
+                            }
+                            ManualSlider {
+                                label: "A3"
+                                from: -150
+                                to: 150
+                                currentValue: root.robot ? root.robot.axis3 : 0
+                                onCommitted: function(value) { root.updateJoint(2, value) }
+                            }
+                            ManualSlider {
+                                label: "A4"
+                                from: -180
+                                to: 180
+                                currentValue: root.robot ? root.robot.axis4 : 0
+                                onCommitted: function(value) { root.updateJoint(3, value) }
+                            }
+                            ManualSlider {
+                                label: "A5"
+                                from: -125
+                                to: 125
+                                currentValue: root.robot ? root.robot.axis5 : 0
+                                onCommitted: function(value) { root.updateJoint(4, value) }
+                            }
+                            ManualSlider {
+                                label: "A6"
+                                from: -180
+                                to: 180
+                                currentValue: root.robot ? root.robot.axis6 : 0
+                                onCommitted: function(value) { root.updateJoint(5, value) }
+                            }
+                        }
+
+                        ColumnLayout {
+                            spacing: 8
+
+                            ManualSlider {
+                                label: "X"
+                                from: 0
+                                to: 1500
+                                currentValue: root.robot ? root.robot.tcpX : 0
+                                onCommitted: function(value) { root.updateTcp("x", value) }
+                            }
+                            ManualSlider {
+                                label: "Y"
+                                from: -1200
+                                to: 1200
+                                currentValue: root.robot ? root.robot.tcpY : 0
+                                onCommitted: function(value) { root.updateTcp("y", value) }
+                            }
+                            ManualSlider {
+                                label: "Z"
+                                from: 200
+                                to: 1500
+                                currentValue: root.robot ? root.robot.tcpZ : 0
+                                onCommitted: function(value) { root.updateTcp("z", value) }
+                            }
+                            ManualSlider {
+                                label: "Roll"
+                                from: -180
+                                to: 180
+                                currentValue: root.robot ? root.robot.tcpRoll : 0
+                                onCommitted: function(value) { root.updateTcp("roll", value) }
+                            }
+                            ManualSlider {
+                                label: "Pitch"
+                                from: -180
+                                to: 180
+                                currentValue: root.robot ? root.robot.tcpPitch : 0
+                                onCommitted: function(value) { root.updateTcp("pitch", value) }
+                            }
+                            ManualSlider {
+                                label: "Yaw"
+                                from: -180
+                                to: 180
+                                currentValue: root.robot ? root.robot.tcpYaw : 0
+                                onCommitted: function(value) { root.updateTcp("yaw", value) }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    component ManualSlider : Rectangle {
+        id: manualSliderRoot
+        property string label: ""
+        property real from: 0
+        property real to: 100
+        property real currentValue: 0
+        signal committed(real value)
+
+        Layout.fillWidth: true
+        implicitHeight: 52
+        color: "#22272b"
+        border.color: "#394047"
+        radius: 8
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 8
+            spacing: 2
+
+            RowLayout {
+                Layout.fillWidth: true
+
+                Text {
+                    text: manualSliderRoot.label
+                    color: "#d6e4e0"
+                    font.pixelSize: 11
+                    font.bold: true
+                }
+
+                Item { Layout.fillWidth: true }
+
+                Text {
+                    text: Number(slider.value).toFixed(1)
+                    color: "white"
+                    font.pixelSize: 11
+                }
+            }
+
+            Slider {
+                id: slider
+                Layout.fillWidth: true
+                from: manualSliderRoot.from
+                to: manualSliderRoot.to
+                value: manualSliderRoot.currentValue
+
+                onMoved: manualSliderRoot.committed(value)
+
+                Connections {
+                    target: manualSliderRoot
+                    function onCurrentValueChanged() {
+                        if (!slider.pressed) {
+                            slider.value = manualSliderRoot.currentValue
+                        }
                     }
                 }
             }
