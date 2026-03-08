@@ -172,7 +172,7 @@ Item {
                 width: 520
                 depth: 520
                 height: 820
-                color: "#b45e43"
+                color: "#767d82"
             }
 
             PartModel {
@@ -185,7 +185,7 @@ Item {
             }
 
             Node {
-                position: Qt.vector3d(560, 0, 0)
+                position: Qt.vector3d(0, 0, 0)
 
                 PrincipledMaterial {
                     id: enclosureFrameMaterial
@@ -203,34 +203,34 @@ Item {
 
                 PrincipledMaterial {
                     id: safetyGlassMaterial
-                    baseColor: "#b86f20"
-                    opacity: 0.42
+                    baseColor: "#99a1a5"
+                    opacity: 0.24
                     alphaMode: PrincipledMaterial.Blend
                     metalness: 0.0
-                    roughness: 0.14
+                    roughness: 0.2
                     cullMode: PrincipledMaterial.NoCulling
                 }
 
                 Model {
                     position: Qt.vector3d(0, 20, 0)
                     source: "#Cube"
-                    scale: Qt.vector3d(10.6, 0.4, 8.6)
+                    scale: Qt.vector3d(12.0, 0.4, 9.0)
                     materials: [ enclosureBodyMaterial ]
                 }
 
                 Model {
                     position: Qt.vector3d(0, 1860, 0)
                     source: "#Cube"
-                    scale: Qt.vector3d(10.6, 0.44, 8.6)
+                    scale: Qt.vector3d(12.0, 0.44, 9.0)
                     materials: [ enclosureBodyMaterial ]
                 }
 
                 Repeater3D {
                     model: [
-                        Qt.vector3d(-500, 930, -400),
-                        Qt.vector3d(500, 930, -400),
-                        Qt.vector3d(-500, 930, 400),
-                        Qt.vector3d(500, 930, 400)
+                        Qt.vector3d(-580, 930, -420),
+                        Qt.vector3d(580, 930, -420),
+                        Qt.vector3d(-580, 930, 420),
+                        Qt.vector3d(580, 930, 420)
                     ]
 
                     delegate: Model {
@@ -243,91 +243,76 @@ Item {
                 }
 
                 Model {
-                    position: Qt.vector3d(0, 930, -400)
+                    position: Qt.vector3d(0, 930, -420)
                     source: "#Cube"
-                    scale: Qt.vector3d(10.0, 0.24, 0.24)
+                    scale: Qt.vector3d(11.6, 0.24, 0.24)
                     materials: [ enclosureFrameMaterial ]
                 }
 
                 Model {
-                    position: Qt.vector3d(0, 930, 400)
+                    position: Qt.vector3d(0, 930, 420)
                     source: "#Cube"
-                    scale: Qt.vector3d(10.0, 0.24, 0.24)
+                    scale: Qt.vector3d(11.6, 0.24, 0.24)
                     materials: [ enclosureFrameMaterial ]
                 }
 
                 Model {
-                    position: Qt.vector3d(-500, 930, 0)
+                    position: Qt.vector3d(-580, 930, 0)
                     source: "#Cube"
-                    scale: Qt.vector3d(0.24, 0.24, 8.0)
+                    scale: Qt.vector3d(0.24, 0.24, 8.4)
                     materials: [ enclosureFrameMaterial ]
                 }
 
                 Model {
-                    position: Qt.vector3d(500, 930, 0)
+                    position: Qt.vector3d(580, 930, 0)
                     source: "#Cube"
-                    scale: Qt.vector3d(0.24, 0.24, 8.0)
+                    scale: Qt.vector3d(0.24, 0.24, 8.4)
                     materials: [ enclosureFrameMaterial ]
                 }
 
                 Model {
-                    position: Qt.vector3d(0, 900, -398)
+                    position: Qt.vector3d(0, 900, -418)
                     source: "#Cube"
-                    scale: Qt.vector3d(9.4, 17.2, 0.03)
+                    scale: Qt.vector3d(10.8, 17.2, 0.03)
                     materials: [ safetyGlassMaterial ]
                 }
 
                 Model {
-                    position: Qt.vector3d(-498, 900, 0)
+                    position: Qt.vector3d(-578, 900, 0)
                     source: "#Cube"
-                    scale: Qt.vector3d(0.03, 17.2, 7.8)
+                    scale: Qt.vector3d(0.03, 17.2, 8.2)
                     materials: [ safetyGlassMaterial ]
                 }
 
                 Model {
-                    position: Qt.vector3d(498, 900, 0)
+                    position: Qt.vector3d(578, 900, 0)
                     source: "#Cube"
-                    scale: Qt.vector3d(0.03, 17.2, 7.8)
                     materials: [ safetyGlassMaterial ]
                 }
 
                 Model {
-                    position: Qt.vector3d(-180, 900, 398)
+                    position: Qt.vector3d(0, 1760, 420)
                     source: "#Cube"
-                    scale: Qt.vector3d(5.8, 17.2, 0.03)
-                    materials: [ safetyGlassMaterial ]
-                }
-
-                Model {
-                    position: Qt.vector3d(360, 900, 398)
-                    source: "#Cube"
-                    scale: Qt.vector3d(2.2, 17.2, 0.03)
-                    materials: [ safetyGlassMaterial ]
-                }
-
-                Model {
-                    position: Qt.vector3d(-340, 900, 410)
-                    source: "#Cube"
-                    scale: Qt.vector3d(0.22, 17.0, 0.4)
+                    scale: Qt.vector3d(7.2, 1.0, 0.28)
                     materials: [ enclosureFrameMaterial ]
                 }
 
                 Model {
-                    position: Qt.vector3d(110, 1680, 398)
+                    position: Qt.vector3d(0, 1600, 420)
                     source: "#Cube"
-                    scale: Qt.vector3d(4.6, 1.5, 0.4)
+                    scale: Qt.vector3d(5.8, 2.8, 0.38)
                     materials: [ enclosureBodyMaterial ]
                 }
 
                 Model {
-                    position: Qt.vector3d(120, 980, 425)
+                    position: Qt.vector3d(0, 1860, -120)
                     source: "#Cube"
-                    scale: Qt.vector3d(4.4, 9.2, 0.08)
-                    materials: [ safetyGlassMaterial ]
+                    scale: Qt.vector3d(3.2, 0.56, 5.6)
+                    materials: [ enclosureBodyMaterial ]
                 }
 
                 LaserModel {
-                    position: Qt.vector3d(0, 1730, -40)
+                    position: Qt.vector3d(0, 1700, -80)
                     eulerRotation.z: -18
                     laserOn: true
                 }

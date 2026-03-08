@@ -5,12 +5,16 @@ import QtQuick3D
 Node {
     id: rotaryRoot
 
-    property real radius: 420
+    property real radius: 480
     property real height: 760
     property real angleDegrees: 0
     property bool partPresent: false
     property int partType: 0
     property bool busy: false
+
+    readonly property real platterScale: rotaryRoot.radius / 50
+    readonly property real innerPlatterScale: rotaryRoot.platterScale * 0.8
+    readonly property real pedestalScale: rotaryRoot.radius / 95
 
     PrincipledMaterial {
         id: darkSteel
@@ -50,28 +54,28 @@ Node {
     Model {
         source: "#Cube"
         position: Qt.vector3d(0, 90, 0)
-        scale: Qt.vector3d(7.2, 1.8, 7.2)
+        scale: Qt.vector3d(rotaryRoot.platterScale * 1.34, 1.8, rotaryRoot.platterScale * 1.34)
         materials: [ machineBasePaint ]
     }
 
     Model {
         source: "#Cube"
         position: Qt.vector3d(0, 245, 0)
-        scale: Qt.vector3d(5.6, 1.35, 5.6)
+        scale: Qt.vector3d(rotaryRoot.platterScale * 1.06, 1.35, rotaryRoot.platterScale * 1.06)
         materials: [ trimPaint ]
     }
 
     Model {
         source: "#Cylinder"
         position: Qt.vector3d(0, 120, 0)
-        scale: Qt.vector3d(4.4, 1.2, 4.4)
+        scale: Qt.vector3d(rotaryRoot.pedestalScale, 1.2, rotaryRoot.pedestalScale)
         materials: [ darkSteel ]
     }
 
     Model {
         source: "#Cylinder"
         position: Qt.vector3d(0, rotaryRoot.height - 190, 0)
-        scale: Qt.vector3d(3.3, 5.3, 3.3)
+        scale: Qt.vector3d(rotaryRoot.pedestalScale * 0.76, 5.3, rotaryRoot.pedestalScale * 0.76)
         materials: [ brushedSteel ]
     }
 
@@ -82,14 +86,14 @@ Node {
 
         Model {
             source: "#Cylinder"
-            scale: Qt.vector3d(5.6, 0.42, 5.6)
+            scale: Qt.vector3d(rotaryRoot.platterScale, 0.42, rotaryRoot.platterScale)
             materials: [ accentPaint ]
         }
 
         Model {
             source: "#Cylinder"
             position: Qt.vector3d(0, 18, 0)
-            scale: Qt.vector3d(4.45, 0.18, 4.45)
+            scale: Qt.vector3d(rotaryRoot.innerPlatterScale, 0.18, rotaryRoot.innerPlatterScale)
             materials: [ brushedSteel ]
         }
 
@@ -102,7 +106,7 @@ Node {
                 Model {
                     source: "#Cube"
                     position: Qt.vector3d(rotaryRoot.radius * 0.48, 22, 0)
-                    scale: Qt.vector3d(1.1, 0.26, 1.7)
+                    scale: Qt.vector3d(1.25, 0.26, 2.0)
                     materials: [ darkSteel ]
                 }
             }
@@ -121,21 +125,21 @@ Node {
     Model {
         source: "#Cube"
         position: Qt.vector3d(-120, rotaryRoot.height + 54, 0)
-        scale: Qt.vector3d(0.34, 0.3, 5.2)
+        scale: Qt.vector3d(0.34, 0.3, rotaryRoot.platterScale * 0.95)
         materials: [ darkSteel ]
     }
 
     Model {
         source: "#Cube"
         position: Qt.vector3d(120, rotaryRoot.height + 54, 0)
-        scale: Qt.vector3d(0.34, 0.3, 5.2)
+        scale: Qt.vector3d(0.34, 0.3, rotaryRoot.platterScale * 0.95)
         materials: [ darkSteel ]
     }
 
     Model {
         source: "#Cube"
-        position: Qt.vector3d(0, rotaryRoot.height + 54, -225)
-        scale: Qt.vector3d(2.7, 0.24, 0.28)
+        position: Qt.vector3d(0, rotaryRoot.height + 54, -rotaryRoot.radius * 0.48)
+        scale: Qt.vector3d(rotaryRoot.platterScale * 0.48, 0.24, 0.28)
         materials: [ darkSteel ]
     }
 }
