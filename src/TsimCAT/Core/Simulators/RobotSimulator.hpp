@@ -60,6 +60,9 @@ namespace core::sim
     };
 #pragma pack(pop)
 
+    static_assert(sizeof(RobotControl) == 5, "RobotControl must be 5 bytes for ADS/TwinCAT compatibility");
+    static_assert(sizeof(RobotStatus) == 10, "RobotStatus must be 10 bytes for ADS/TwinCAT compatibility");
+
     class RobotSimulator : public ISimulator
     {
       public:

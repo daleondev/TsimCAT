@@ -19,6 +19,18 @@ Item {
             antialiasingQuality: SceneEnvironment.High
         }
 
+        // Screenshot capture: listen for capturePending flag from backend
+        Connections {
+            target: root.backend ? root.backend.screenshotProvider : null
+            function onCapturePendingChanged() {
+                if (root.backend && root.backend.screenshotProvider && root.backend.screenshotProvider.capturePending) {
+                    view.grabToImage(function(result) {
+                        root.backend.screenshotProvider.onFrameCaptured(result.image);
+                    });
+                }
+            }
+        }
+
         Node {
             id: cameraPivot
             eulerRotation: Qt.vector3d(-26, 34, 0)
@@ -177,11 +189,10 @@ Item {
 
             PartModel {
                 visible: root.backend ? root.backend.laserPartVisible : false
-                position: Qt.vector3d(0, 815, 0)
+                position: Qt.vector3d(0, 860, 0)
                 width: 140
                 length: 140
                 height: 80
-                color: (root.backend && root.backend.laserPartType === 2) ? "#2ecc71" : "#8f8f8f"
             }
 
             Node {
@@ -312,9 +323,8 @@ Item {
                 }
 
                 LaserModel {
-                    position: Qt.vector3d(0, 1700, -80)
-                    eulerRotation.z: -18
-                    laserOn: true
+                    position: Qt.vector3d(0, 1700, 0)
+                    laserOn: root.backend ? root.backend.laserPartVisible : false
                 }
 
                 Model {

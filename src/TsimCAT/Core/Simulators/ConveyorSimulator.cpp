@@ -129,6 +129,11 @@ namespace core::sim
                 if (m_damperTimer > m_config.damperOpenDelaySeconds) {
                     m_damperOpen = true;
                     m_damperTimer = 0;
+                    logger::TraceLogger::instance().emit(
+                      logger::TraceCategory::State,
+                      m_config.name,
+                      "damper_opened",
+                      { logger::traceField("delay_s", m_config.damperOpenDelaySeconds) });
                 }
             }
             else {
@@ -144,6 +149,8 @@ namespace core::sim
                     // Auto-close damper based on configured close sensor (or default behavior)
                     m_damperOpen = false;
                     m_damperTimer = 0;
+                    logger::TraceLogger::instance().emit(
+                      logger::TraceCategory::State, m_config.name, "damper_closed", {});
                 }
 
                 if (!partAtDamper) {

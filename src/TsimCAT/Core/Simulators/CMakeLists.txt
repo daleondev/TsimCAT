@@ -30,6 +30,7 @@ target_link_libraries(
     core::common
     core::coroutines
     core::link
+    core::logger
     orocos-kdl
     Eigen3::Eigen
     ompl

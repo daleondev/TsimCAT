@@ -6,6 +6,7 @@
 #include "Link/LinkFactory.hpp"
 #include "Logger/Logger.hpp"
 #include "Logger/TraceLogger.hpp"
+#include "ScreenshotProvider.h"
 #include "Simulators/ConveyorSimulator.hpp"
 #include "Simulators/RobotSimulator.hpp"
 #include "Simulators/RotaryTableSimulator.hpp"
@@ -221,6 +222,16 @@ namespace backend
         m_exitConveyorController =
           std::make_unique<backend::controllers::ConveyorController>(m_exitConveyorSim, this);
 
+        m_screenshotProvider = std::make_unique<backend::ScreenshotProvider>(
+          ScreenshotProvider::SimulatorRefs{ .robot = m_robotSim,
+                                             .rotaryTable = m_rotaryTableSim,
+                                             .exitConveyor = m_exitConveyorSim,
+                                             .coordinator = m_cellCoordinator },
+          m_runtimeConfig.analyzer.outputFolder,
+          m_runtimeConfig.analyzer.frameIntervalMs,
+          m_runtimeConfig.analyzer.maxFrames,
+          this);
+
         startUpdateLoop();
     }
 
@@ -249,6 +260,8 @@ namespace backend
     {
         return m_exitConveyorController.get();
     }
+
+    backend::ScreenshotProvider* Backend::screenshotProvider() const { return m_screenshotProvider.get(); }
 
     bool Backend::robotCarriedPartVisible() const
     {

@@ -97,6 +97,21 @@ Node {
             materials: [ brushedSteel ]
         }
 
+        // Center safety shield
+        Model {
+            source: "#Cylinder"
+            position: Qt.vector3d(0, 170, 0)
+            scale: Qt.vector3d(1.2, 3.0, 1.2)
+            materials: [ darkSteel ]
+        }
+
+        Model {
+            source: "#Cylinder"
+            position: Qt.vector3d(0, 320, 0)
+            scale: Qt.vector3d(2.4, 0.3, 2.4)
+            materials: [ brushedSteel ]
+        }
+
         Repeater3D {
             model: 4
             delegate: Node {
@@ -118,7 +133,7 @@ Node {
             width: 140
             length: 140
             height: 80
-            color: rotaryRoot.partType === 2 ? "#2ea970" : "#a6adb3"
+            color: "#a6adb3"
         }
     }
 

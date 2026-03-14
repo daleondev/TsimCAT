@@ -90,7 +90,7 @@ Node {
             width: modelData.width
             length: modelData.length
             height: modelData.height
-            color: modelData.type === 2 ? "#2ecc71" : "#8f8f8f"
+            color: "#a6adb3"
         }
     }
 }

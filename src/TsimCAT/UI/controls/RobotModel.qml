@@ -176,7 +176,6 @@ Node {
                                             width: 140
                                             length: 140
                                             height: 80
-                                            color: robotRoot.carriedPartType === 2 ? "#2ecc71" : "#8f8f8f"
                                         }
                                     }
                                 }

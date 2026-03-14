@@ -6,7 +6,7 @@ Node {
     property real width: 100
     property real length: 100
     property real height: 50
-    property color color: "#e67e22"
+    property color color: "#a6adb3"
 
     Model {
         source: "#Cube"
@@ -15,8 +15,8 @@ Node {
         materials: [
             PrincipledMaterial {
                 baseColor: partRoot.color
-                metalness: 0.1
-                roughness: 0.5
+                metalness: 0.35
+                roughness: 0.42
             }
         ]
     }

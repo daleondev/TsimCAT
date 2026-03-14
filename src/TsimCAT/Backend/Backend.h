@@ -6,6 +6,7 @@
 #include "Controllers/RobotController.h"
 #include "Controllers/RotaryTableController.h"
 #include "RuntimeConfig.h"
+#include "ScreenshotProvider.h"
 
 #include <QObject>
 #include <QString>
@@ -63,6 +64,7 @@ namespace backend
                      stationModesChanged)
         Q_PROPERTY(bool localExitConveyorMode READ localExitConveyorMode WRITE setLocalExitConveyorMode NOTIFY
                      stationModesChanged)
+        Q_PROPERTY(backend::ScreenshotProvider* screenshotProvider READ screenshotProvider CONSTANT)
 
       public:
         explicit Backend(QObject* parent = nullptr);
@@ -73,6 +75,7 @@ namespace backend
         backend::controllers::RobotController* robot() const;
         backend::controllers::RotaryTableController* rotaryTable() const;
         backend::controllers::ConveyorController* exitConveyor() const;
+        backend::ScreenshotProvider* screenshotProvider() const;
         bool robotCarriedPartVisible() const;
         int robotCarriedPartType() const;
         bool laserPartVisible() const;
@@ -130,6 +133,7 @@ namespace backend
         std::unique_ptr<backend::controllers::RobotController> m_robotController;
         std::unique_ptr<backend::controllers::RotaryTableController> m_rotaryTableController;
         std::unique_ptr<backend::controllers::ConveyorController> m_exitConveyorController;
+        std::unique_ptr<backend::ScreenshotProvider> m_screenshotProvider;
 
         bool m_robotCommTaskStarted{ false };
         bool m_rotaryTableCommTaskStarted{ false };

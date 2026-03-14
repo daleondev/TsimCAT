@@ -32,4 +32,6 @@ qt_add_qml_module(TsimCAT_Backend
         Controllers/ConveyorController.cpp
         Controllers/RotaryTableController.h
         Controllers/RotaryTableController.cpp
+        ScreenshotProvider.h
+        ScreenshotProvider.cpp
 )

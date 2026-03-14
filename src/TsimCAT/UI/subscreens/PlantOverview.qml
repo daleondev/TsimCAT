@@ -294,6 +294,45 @@ Control {
                         color: "#edf3f6"
                         font.pixelSize: 11
                     }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 1
+                        color: "#444"
+                    }
+
+                    Text {
+                        text: "Debugging"
+                        color: "#e5edf2"
+                        font.pixelSize: 12
+                        font.bold: true
+                    }
+
+                    Button {
+                        text: "Capture Snapshot"
+                        palette.buttonText: "#eef5f3"
+                        Layout.fillWidth: true
+                        enabled: root.backend && root.backend.screenshotProvider
+                        onClicked: if (root.backend && root.backend.screenshotProvider)
+                            root.backend.screenshotProvider.requestCapture()
+                    }
+
+                    Switch {
+                        text: "Auto capture"
+                        palette.windowText: "#eef5f3"
+                        checked: root.backend && root.backend.screenshotProvider ? root.backend.screenshotProvider.autoCaptureEnabled : false
+                        onToggled: if (root.backend && root.backend.screenshotProvider)
+                            root.backend.screenshotProvider.autoCaptureEnabled = checked
+                    }
+
+                    Text {
+                        visible: root.backend && root.backend.screenshotProvider
+                        text: root.backend && root.backend.screenshotProvider
+                              ? "Captures: " + root.backend.screenshotProvider.captureCount
+                              : "Captures: 0"
+                        color: "#a0b0b8"
+                        font.pixelSize: 10
+                    }
                 }
             }
         }

@@ -37,6 +37,11 @@ namespace core::sim
     };
 #pragma pack(pop)
 
+    static_assert(sizeof(RotaryTableControl) == 2,
+                  "RotaryTableControl must be 2 bytes for ADS/TwinCAT compatibility");
+    static_assert(sizeof(RotaryTableStatus) == 8,
+                  "RotaryTableStatus must be 8 bytes for ADS/TwinCAT compatibility");
+
     class RotaryTableSimulator : public ISimulator
     {
       public:

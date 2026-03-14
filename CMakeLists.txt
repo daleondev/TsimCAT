@@ -24,4 +24,7 @@ qt_standard_project_setup()
 
 include(extern/extern.cmake)
 
+enable_testing()
+
 add_subdirectory(src)
+add_subdirectory(tests)

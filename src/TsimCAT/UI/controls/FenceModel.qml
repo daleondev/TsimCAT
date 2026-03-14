@@ -200,6 +200,13 @@ Node {
             position: Qt.vector3d(0, fenceRoot.height, 0)
         }
 
+        // Safety barrier above rotary table entry gap
+        FencePanel {
+            position: Qt.vector3d(0, fenceRoot.height * 0.55, 0)
+            panelWidth: 1000
+            scale: Qt.vector3d(1, 0.45, 1)
+        }
+
         FencePanel {
             position: Qt.vector3d(1000, 0, 0)
         }

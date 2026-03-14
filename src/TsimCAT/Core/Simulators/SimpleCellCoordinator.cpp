@@ -1,6 +1,8 @@
 #include "SimpleCellCoordinator.hpp"
 
 #include "Link/Symbolic/LocalAdsLink.hpp"
+#include "Logger/Logger.hpp"
+#include "Logger/TraceLogger.hpp"
 
 namespace core::sim
 {
@@ -75,6 +77,11 @@ namespace core::sim
                 if (!inMotion) {
                     dispatchRobotJob(2, rotaryStatus.nPartType > 0 ? rotaryStatus.nPartType : nextPartType());
                     m_state = FlowState::WaitPickEntryDone;
+                    logger::TraceLogger::instance().emit(logger::TraceCategory::Flow,
+                                                         "coordinator",
+                                                         "state_transition",
+                                                         { logger::traceField("from", "WaitTableReady"),
+                                                           logger::traceField("to", "WaitPickEntryDone") });
                 }
                 break;
 
@@ -94,6 +101,13 @@ namespace core::sim
 
                 dispatchRobotJob(3, m_activePartType);
                 m_state = FlowState::WaitPlaceLaserDone;
+                logger::TraceLogger::instance().emit(
+                  logger::TraceCategory::Flow,
+                  "coordinator",
+                  "state_transition",
+                  { logger::traceField("from", "WaitPickEntryDone"),
+                    logger::traceField("to", "WaitPlaceLaserDone"),
+                    logger::traceField("part_type", static_cast<int>(m_activePartType)) });
                 break;
 
             case FlowState::WaitPlaceLaserDone:
@@ -109,6 +123,13 @@ namespace core::sim
                 m_laserStationPartType = m_activePartType;
                 m_markingTimerSeconds = 0.0;
                 m_state = FlowState::WaitMarkingDone;
+                logger::TraceLogger::instance().emit(
+                  logger::TraceCategory::Flow,
+                  "coordinator",
+                  "state_transition",
+                  { logger::traceField("from", "WaitPlaceLaserDone"),
+                    logger::traceField("to", "WaitMarkingDone"),
+                    logger::traceField("laser_part_type", static_cast<int>(m_activePartType)) });
                 break;
 
             case FlowState::WaitMarkingDone:
@@ -123,6 +144,11 @@ namespace core::sim
 
                 dispatchRobotJob(4, m_laserStationPartType);
                 m_state = FlowState::WaitPickLaserDone;
+                logger::TraceLogger::instance().emit(logger::TraceCategory::Flow,
+                                                     "coordinator",
+                                                     "state_transition",
+                                                     { logger::traceField("from", "WaitMarkingDone"),
+                                                       logger::traceField("to", "WaitPickLaserDone") });
                 break;
 
             case FlowState::WaitPickLaserDone:
@@ -141,6 +167,11 @@ namespace core::sim
                 m_laserStationHasPart = false;
                 dispatchRobotJob(7, m_laserStationPartType > 0 ? m_laserStationPartType : m_activePartType);
                 m_state = FlowState::WaitPlaceExitDone;
+                logger::TraceLogger::instance().emit(logger::TraceCategory::Flow,
+                                                     "coordinator",
+                                                     "state_transition",
+                                                     { logger::traceField("from", "WaitPickLaserDone"),
+                                                       logger::traceField("to", "WaitPlaceExitDone") });
                 break;
 
             case FlowState::WaitPlaceExitDone:
@@ -155,6 +186,13 @@ namespace core::sim
                 m_exitConveyor->spawnPartAtPosition(m_activePartType > 0 ? m_activePartType : 1, 120.0);
                 dispatchRobotJob(1, m_activePartType);
                 m_state = FlowState::WaitHomeDone;
+                logger::TraceLogger::instance().emit(
+                  logger::TraceCategory::Flow,
+                  "coordinator",
+                  "state_transition",
+                  { logger::traceField("from", "WaitPlaceExitDone"),
+                    logger::traceField("to", "WaitHomeDone"),
+                    logger::traceField("exit_part_type", static_cast<int>(m_activePartType)) });
                 break;
 
             case FlowState::WaitHomeDone:
@@ -168,6 +206,11 @@ namespace core::sim
 
                 m_idleLoadTimerSeconds = 0.0;
                 m_state = FlowState::WaitTableReady;
+                logger::TraceLogger::instance().emit(
+                  logger::TraceCategory::Flow,
+                  "coordinator",
+                  "cycle_complete",
+                  { logger::traceField("from", "WaitHomeDone"), logger::traceField("to", "WaitTableReady") });
                 break;
         }
     }
@@ -185,6 +228,11 @@ namespace core::sim
         control.bMoveEnable = 1;
         control.bReset = 0;
         localAds->writeSync(m_robotSymbols.controlSymbol, control);
+        logger::TraceLogger::instance().emit(logger::TraceCategory::Flow,
+                                             "coordinator",
+                                             "dispatch_robot_job",
+                                             { logger::traceField("job_id", static_cast<int>(jobId)),
+                                               logger::traceField("part_type", static_cast<int>(partType)) });
     }
 
     auto SimpleCellCoordinator::requestRotaryLoad(uint8_t partType) -> void

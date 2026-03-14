@@ -2,6 +2,8 @@
 
 #include "Link/Symbolic/ISymbolicLink.hpp"
 #include "Link/Symbolic/LocalAdsLink.hpp"
+#include "Logger/Logger.hpp"
+#include "Logger/TraceLogger.hpp"
 
 #include <cmath>
 
@@ -80,6 +82,12 @@ namespace core::sim
                         m_hasPart = true;
                         m_partType = m_control.nRequestedPartType > 0 ? m_control.nRequestedPartType : 1;
                         m_loadTimerSeconds = 0.0;
+                        logger::TraceLogger::instance().emit(
+                          logger::TraceCategory::State,
+                          "rotary_table",
+                          "part_loaded",
+                          { logger::traceField("part_type", static_cast<int>(m_partType)),
+                            logger::traceField("angle", m_currentAngleDeg) });
                     }
                 }
                 else {
@@ -88,6 +96,12 @@ namespace core::sim
 
                 if (m_control.bIndex && m_hasPart && atLoad) {
                     m_targetAngleDeg = m_config.pickAngleDeg;
+                    logger::TraceLogger::instance().emit(
+                      logger::TraceCategory::State,
+                      "rotary_table",
+                      "index_started",
+                      { logger::traceField("target_angle", m_config.pickAngleDeg),
+                        logger::traceField("part_type", static_cast<int>(m_partType)) });
                 }
             }
 
@@ -128,6 +142,14 @@ namespace core::sim
                 if (control) {
                     std::scoped_lock lock(m_mutex);
                     m_control = *control;
+                    logger::TraceLogger::instance().emit(
+                      logger::TraceCategory::Protocol,
+                      "rotary_table",
+                      "ads_rx_control",
+                      { logger::traceField("enable", m_control.bEnable != 0),
+                        logger::traceField("index", m_control.bIndex != 0),
+                        logger::traceField("load", m_control.bLoadPart != 0),
+                        logger::traceField("part_type", static_cast<int>(m_control.nRequestedPartType)) });
                 }
 
                 RotaryTableStatus statusCopy{};
@@ -136,6 +158,14 @@ namespace core::sim
                     statusCopy = m_status;
                 }
                 (void)co_await symbolic->write(m_adsSymbols.statusSymbol, statusCopy);
+                logger::TraceLogger::instance().emit(
+                  logger::TraceCategory::Protocol,
+                  "rotary_table",
+                  "ads_tx_status",
+                  { logger::traceField("angle", static_cast<double>(statusCopy.fAngleDeg)),
+                    logger::traceField("part_present", statusCopy.bPartPresent != 0),
+                    logger::traceField("ready_to_pick", statusCopy.bReadyToPick != 0),
+                    logger::traceField("busy", statusCopy.bBusy != 0) });
             }
 
             co_await coro::sleep(std::chrono::milliseconds(50));
@@ -266,6 +296,11 @@ namespace core::sim
         m_partType = 0;
         m_targetAngleDeg = m_config.loadAngleDeg;
         updateStatusLocked();
+        logger::TraceLogger::instance().emit(logger::TraceCategory::State,
+                                             "rotary_table",
+                                             "part_taken_by_robot",
+                                             { logger::traceField("part_type", static_cast<int>(partType)),
+                                               logger::traceField("return_angle", m_config.loadAngleDeg) });
         return partType;
     }
 

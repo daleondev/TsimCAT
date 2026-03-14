@@ -124,3 +124,16 @@ The next major work in this repository is focused on:
 ## Status
 
 TsimCAT is under active restructuring toward a cleaner simple-cell architecture. Some stations already simulate internal behavior, but the repository is being aligned so station visuals, runtime configuration, and local PLC-like data flow are all driven from the same design.
+
+# Major Update: Finalizing debugging features, visuals and simulation
+Goals:
+1. Create advanced debugging features for AI agents to autonomously update the plant layout and station logic based on runtime observations. This means the AI needs to be able to take screenshots of the application, analyze the plant state, and make informed decisions about how to adjust the layout or station logic to optimize performance or address issues.
+2. Finalize the plant visuals to accurately represent the simple cell, including the rotary table, robot, laser station and exit conveyor:
+	- Add a Fence part above the rotary table to act as a safety barrier.
+	- Update the rotatory table model to a contain a shield in its center as a safety feature.
+	- adjust the fence height at the output conveyor to match the conveyor height.
+	- Update the robot gripper to look more like a real gripper, and ensure it can interact with the parts on the rotary table and laser station in a visually realistic way.
+	- Update the part visuals when gripped by the robot to look natural.
+	- Remove the different colorings of the parts and make them all the same material, as they are all the same type of part in the simple cell.
+	- Update the parts position in the laser station to be visible and adjust the laser beam in the laser station to point onto the part. (keep the general laser station layout the same)
+3. Verify the correctness of the internal simulation logic for all stations and also prepare everything for control via external login through an actual PLC. This includes ensuring that the internal state of each station is accurately represented in the simulation and that the logic for processing parts through the stations is correct.
