@@ -14,10 +14,10 @@ using namespace core::sim;
 // ============================================================
 // These static_asserts verify that the packed struct binary layouts
 // match what TwinCAT expects over ADS communication.
-static_assert(sizeof(RobotControl) == 5);
-static_assert(sizeof(RobotStatus) == 10);
-static_assert(sizeof(RotaryTableControl) == 2);
-static_assert(sizeof(RotaryTableStatus) == 8);
+static_assert(sizeof(RobotControl) == 4);
+static_assert(sizeof(RobotStatus) == 9);
+static_assert(sizeof(RotaryTableControl) == 1);
+static_assert(sizeof(RotaryTableStatus) == 7);
 
 // ============================================================
 // Helpers
@@ -68,15 +68,14 @@ TEST_F(RotaryTableTest, StartsAtLoadPosition)
 
 TEST_F(RotaryTableTest, TryLoadPartSucceeds)
 {
-    EXPECT_TRUE(table->tryLoadPart(1));
+    EXPECT_TRUE(table->tryLoadPart());
     EXPECT_TRUE(table->partPresent());
-    EXPECT_EQ(table->partType(), 1);
 }
 
 TEST_F(RotaryTableTest, TryLoadPartFailsWhenAlreadyLoaded)
 {
-    EXPECT_TRUE(table->tryLoadPart(1));
-    EXPECT_FALSE(table->tryLoadPart(2));
+    EXPECT_TRUE(table->tryLoadPart());
+    EXPECT_FALSE(table->tryLoadPart());
 }
 
 TEST_F(RotaryTableTest, LoadViaControlRequiresDelay)
@@ -85,7 +84,6 @@ TEST_F(RotaryTableTest, LoadViaControlRequiresDelay)
     RotaryTableControl ctrl{};
     ctrl.bEnable = 1;
     ctrl.bLoadPart = 1;
-    ctrl.nRequestedPartType = 2;
     link->writeSync("MAIN.stRotaryTableControl", ctrl);
 
     // Tick for less than load delay
@@ -95,19 +93,17 @@ TEST_F(RotaryTableTest, LoadViaControlRequiresDelay)
     // Tick past the delay
     tickN(*table, 10, 0.04); // 0.4s more = 0.8s total
     EXPECT_TRUE(table->partPresent());
-    EXPECT_EQ(table->partType(), 2);
 }
 
 TEST_F(RotaryTableTest, IndexRotatesToPickPosition)
 {
-    table->tryLoadPart(1);
+    table->tryLoadPart();
     EXPECT_TRUE(table->atLoadPosition());
 
     // Write control: enable + index
     RotaryTableControl ctrl{};
     ctrl.bEnable = 1;
     ctrl.bIndex = 1;
-    ctrl.nRequestedPartType = 1;
     link->writeSync("MAIN.stRotaryTableControl", ctrl);
 
     // Tick until rotation completes (180 degrees at 180 deg/s = ~1s)
@@ -116,31 +112,30 @@ TEST_F(RotaryTableTest, IndexRotatesToPickPosition)
     EXPECT_TRUE(table->readyToPick());
 }
 
-TEST_F(RotaryTableTest, TakePartForRobotReturnsType)
+TEST_F(RotaryTableTest, TakePartForRobotReturnsTrue)
 {
-    table->tryLoadPart(1);
+    table->tryLoadPart();
 
     // Index to pick
     RotaryTableControl ctrl{};
     ctrl.bEnable = 1;
     ctrl.bIndex = 1;
-    ctrl.nRequestedPartType = 1;
     link->writeSync("MAIN.stRotaryTableControl", ctrl);
     tickN(*table, 100, 0.016);
     ASSERT_TRUE(table->readyToPick());
 
-    uint8_t type = table->takePartForRobot();
-    EXPECT_EQ(type, 1);
+    bool taken = table->takePartForRobot();
+    EXPECT_TRUE(taken);
     EXPECT_FALSE(table->partPresent());
 }
 
 TEST_F(RotaryTableTest, TakePartFailsWhenNotReady)
 {
-    EXPECT_EQ(table->takePartForRobot(), 0);
+    EXPECT_FALSE(table->takePartForRobot());
 
-    table->tryLoadPart(1);
+    table->tryLoadPart();
     // Still at load position, not at pick
-    EXPECT_EQ(table->takePartForRobot(), 0);
+    EXPECT_FALSE(table->takePartForRobot());
 }
 
 // ============================================================
@@ -347,7 +342,6 @@ TEST_F(RobotTest, TriggerJobViaAdsLink)
     RobotControl ctrl{};
     ctrl.nJobId = 2; // PickEntry
     ctrl.bMoveEnable = 1;
-    ctrl.nPartType = 1;
     link->writeSync("MAIN.stRobotControl", ctrl);
 
     // Update several times to start trajectory
@@ -383,18 +377,6 @@ TEST_F(RobotTest, ForwardKinematicsProducesValidPose)
     auto pose = robot->currentPose();
     // Home position should produce a reasonable pose
     EXPECT_GT(pose.x + pose.y + pose.z, 0.0); // not all zeros
-}
-
-TEST_F(RobotTest, StatusMirrorsPartType)
-{
-    RobotControl ctrl{};
-    ctrl.nPartType = 2;
-    ctrl.bMoveEnable = 0;
-    link->writeSync("MAIN.stRobotControl", ctrl);
-
-    robot->update(0.016);
-    auto s = robot->status();
-    EXPECT_EQ(s.nPartTypeMirrored, 2);
 }
 
 // ============================================================
@@ -434,7 +416,6 @@ class CoordinatorTest : public ::testing::Test
 
         SimpleCellCoordinator::Config coordCfg;
         coordCfg.enabled = true;
-        coordCfg.cyclePartTypes = true;
         coordCfg.markingDelayMs = 100;
         coordCfg.idleLoadDelayMs = 50;
 
@@ -469,7 +450,6 @@ TEST_F(CoordinatorTest, StartsInWaitTableReady)
 {
     // The coordinator should not have a laser part yet
     EXPECT_FALSE(coordinator->laserStationHasPart());
-    EXPECT_EQ(coordinator->laserStationPartType(), 0);
 }
 
 TEST_F(CoordinatorTest, AutoSpawnsPartAfterIdleDelay)
@@ -507,10 +487,9 @@ TEST_F(CoordinatorTest, DisablingStopsProgress)
     EXPECT_FALSE(coordinator->laserStationHasPart());
 }
 
-TEST_F(CoordinatorTest, LaserStationPartTypeTracked)
+TEST_F(CoordinatorTest, LaserStationTracked)
 {
-    // Run until laser station gets a part (full table→robot→laser cycle)
-    // This may take many ticks due to rotary load delay + rotation + robot motion
+    // Run until laser station gets a part (full table->robot->laser cycle)
     bool laserGotPart = false;
     for (int i = 0; i < 5000 && !laserGotPart; ++i) {
         tickAll(0.016);
@@ -518,7 +497,7 @@ TEST_F(CoordinatorTest, LaserStationPartTypeTracked)
     }
 
     if (laserGotPart) {
-        EXPECT_GT(coordinator->laserStationPartType(), 0);
+        EXPECT_TRUE(coordinator->laserStationHasPart());
     }
     // If we didn't reach laser in 5000 ticks, the test is inconclusive
     // but not a failure - the trajectory may be too long
@@ -546,19 +525,18 @@ TEST(PLCReadiness, StructBitfieldLayout)
     // Verify bitfield packing produces correct byte values for TwinCAT
     RobotControl ctrl{};
     ctrl.nJobId = 0;
-    ctrl.nPartType = 0;
     ctrl.bMoveEnable = 1;
     ctrl.bReset = 0;
     ctrl.nAreaFree_PLC = 0;
     // bMoveEnable=1 should set bit 0 of the control bits byte
     auto* bytes = reinterpret_cast<const uint8_t*>(&ctrl);
-    EXPECT_EQ(bytes[3] & 0x01, 1); // bit 0 = bMoveEnable
+    EXPECT_EQ(bytes[2] & 0x01, 1); // bit 0 = bMoveEnable
 
     RobotStatus status{};
     status.bInMotion = 1;
     status.bInHome = 0;
     status.bEnabled = 1;
     auto* sBytes = reinterpret_cast<const uint8_t*>(&status);
-    EXPECT_EQ(sBytes[3] & 0x01, 1); // bit 0 = bInMotion
-    EXPECT_EQ(sBytes[3] & 0x04, 4); // bit 2 = bEnabled
+    EXPECT_EQ(sBytes[2] & 0x01, 1); // bit 0 = bInMotion
+    EXPECT_EQ(sBytes[2] & 0x04, 4); // bit 2 = bEnabled
 }

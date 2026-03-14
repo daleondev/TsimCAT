@@ -118,7 +118,6 @@ Item {
             RotaryTableModel {
                 angleDegrees: root.backend ? root.backend.rotaryTable.angleDegrees : 0
                 partPresent: root.backend ? root.backend.rotaryTable.partPresent : false
-                partType: root.backend ? root.backend.rotaryTable.partType : 0
                 busy: root.backend ? root.backend.rotaryTable.busy : false
                 readyToPick: root.backend ? root.backend.rotaryTable.readyToPick : false
                 atLoadPosition: root.backend ? root.backend.rotaryTable.atLoadPosition : false
@@ -138,7 +137,6 @@ Item {
             axis6: root.backend ? root.backend.robot.axis6 : 0
             gripperGripped: root.backend ? root.backend.robot.gripperGripped : false
             carriedPartVisible: root.backend ? root.backend.robotCarriedPartVisible : false
-            carriedPartType: root.backend ? root.backend.robotCarriedPartType : 0
             gripperSensorBlocked: root.backend ? root.backend.robot.gripperSensorBlocked : false
         }
 

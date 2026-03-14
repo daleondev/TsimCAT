@@ -40,9 +40,7 @@ namespace backend
         Q_PROPERTY(backend::controllers::RotaryTableController* rotaryTable READ rotaryTable CONSTANT)
         Q_PROPERTY(backend::controllers::ConveyorController* exitConveyor READ exitConveyor CONSTANT)
         Q_PROPERTY(bool robotCarriedPartVisible READ robotCarriedPartVisible NOTIFY partVisualizationChanged)
-        Q_PROPERTY(int robotCarriedPartType READ robotCarriedPartType NOTIFY partVisualizationChanged)
         Q_PROPERTY(bool laserPartVisible READ laserPartVisible NOTIFY partVisualizationChanged)
-        Q_PROPERTY(int laserPartType READ laserPartType NOTIFY partVisualizationChanged)
         Q_PROPERTY(bool laserSensorBlocked READ laserSensorBlocked NOTIFY partVisualizationChanged)
         Q_PROPERTY(bool usingLocalAdsShadow READ usingLocalAdsShadow CONSTANT)
         Q_PROPERTY(bool localPlcShadow READ localPlcShadow CONSTANT)
@@ -78,9 +76,7 @@ namespace backend
         backend::controllers::ConveyorController* exitConveyor() const;
         backend::ScreenshotProvider* screenshotProvider() const;
         bool robotCarriedPartVisible() const;
-        int robotCarriedPartType() const;
         bool laserPartVisible() const;
-        int laserPartType() const;
         bool laserSensorBlocked() const;
         bool usingLocalAdsShadow() const;
         bool localPlcShadow() const;
@@ -148,7 +144,6 @@ namespace backend
         bool m_localConveyorSimulationEnabled{ true };
         bool m_autoSpawnPartsEnabled{ true };
         bool m_autoDespawnPartsEnabled{ true };
-        int m_nextManualPartType{ 1 };
         QTimer* m_updateTimer{ nullptr };
         std::chrono::steady_clock::time_point m_lastUpdateTime{};
         std::vector<core::coro::Task<void>> m_backgroundTasks;

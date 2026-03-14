@@ -31,11 +31,8 @@ namespace core::sim
     {
         m_state = FlowState::WaitTableReady;
         m_laserStationHasPart = false;
-        m_laserStationPartType = 0;
-        m_activePartType = 1;
         m_markingTimerSeconds = 0.0;
         m_idleLoadTimerSeconds = 0.0;
-        m_lastSpawnedPartType = 0;
 
         if (m_robot) {
             m_robot->setGripper(false);
@@ -100,12 +97,11 @@ namespace core::sim
                 if (!rotaryStatus.bPartPresent) {
                     if (m_autoSpawnParts &&
                         m_idleLoadTimerSeconds * 1000.0 >= static_cast<double>(m_config.idleLoadDelayMs)) {
-                        const auto partType = nextPartType();
                         if (!m_tableSimulationEnabled) {
-                            (void)m_rotaryTable->tryLoadPart(partType);
+                            (void)m_rotaryTable->tryLoadPart();
                         }
                         else {
-                            requestRotaryLoad(partType);
+                            requestRotaryLoad();
                         }
                     }
                     break;
@@ -115,7 +111,7 @@ namespace core::sim
                     if (!m_tableSimulationEnabled) {
                         break;
                     }
-                    requestRotaryIndex(rotaryStatus.nPartType > 0 ? rotaryStatus.nPartType : nextPartType());
+                    requestRotaryIndex();
                     break;
                 }
 
@@ -128,7 +124,7 @@ namespace core::sim
                     if (m_robot) {
                         m_robot->setGripperSensorBlocked(true);
                     }
-                    dispatchRobotJob(2, rotaryStatus.nPartType > 0 ? rotaryStatus.nPartType : nextPartType());
+                    dispatchRobotJob(2);
                     m_state = FlowState::WaitPickEntryDone;
                     logger::TraceLogger::instance().emit(logger::TraceCategory::Flow,
                                                          "coordinator",
@@ -147,20 +143,15 @@ namespace core::sim
                     break;
                 }
 
-                m_activePartType = m_rotaryTable->takePartForRobot();
-                if (m_activePartType == 0) {
-                    m_activePartType = robotStatus.nPartTypeMirrored > 0 ? robotStatus.nPartTypeMirrored : 1;
-                }
+                m_rotaryTable->takePartForRobot();
 
-                dispatchRobotJob(3, m_activePartType);
+                dispatchRobotJob(3);
                 m_state = FlowState::WaitPlaceLaserDone;
-                logger::TraceLogger::instance().emit(
-                  logger::TraceCategory::Flow,
-                  "coordinator",
-                  "state_transition",
-                  { logger::traceField("from", "WaitPickEntryDone"),
-                    logger::traceField("to", "WaitPlaceLaserDone"),
-                    logger::traceField("part_type", static_cast<int>(m_activePartType)) });
+                logger::TraceLogger::instance().emit(logger::TraceCategory::Flow,
+                                                     "coordinator",
+                                                     "state_transition",
+                                                     { logger::traceField("from", "WaitPickEntryDone"),
+                                                       logger::traceField("to", "WaitPlaceLaserDone") });
                 break;
 
             case FlowState::WaitPlaceLaserDone:
@@ -173,16 +164,13 @@ namespace core::sim
                 }
 
                 m_laserStationHasPart = true;
-                m_laserStationPartType = m_activePartType;
                 m_markingTimerSeconds = 0.0;
                 m_state = FlowState::WaitMarkingDone;
-                logger::TraceLogger::instance().emit(
-                  logger::TraceCategory::Flow,
-                  "coordinator",
-                  "state_transition",
-                  { logger::traceField("from", "WaitPlaceLaserDone"),
-                    logger::traceField("to", "WaitMarkingDone"),
-                    logger::traceField("laser_part_type", static_cast<int>(m_activePartType)) });
+                logger::TraceLogger::instance().emit(logger::TraceCategory::Flow,
+                                                     "coordinator",
+                                                     "state_transition",
+                                                     { logger::traceField("from", "WaitPlaceLaserDone"),
+                                                       logger::traceField("to", "WaitMarkingDone") });
                 break;
 
             case FlowState::WaitMarkingDone:
@@ -200,7 +188,7 @@ namespace core::sim
                     m_robot->setGripperSensorBlocked(m_laserStationHasPart);
                 }
 
-                dispatchRobotJob(4, m_laserStationPartType);
+                dispatchRobotJob(4);
                 m_state = FlowState::WaitPickLaserDone;
                 logger::TraceLogger::instance().emit(logger::TraceCategory::Flow,
                                                      "coordinator",
@@ -223,7 +211,7 @@ namespace core::sim
                 }
 
                 m_laserStationHasPart = false;
-                dispatchRobotJob(7, m_laserStationPartType > 0 ? m_laserStationPartType : m_activePartType);
+                dispatchRobotJob(7);
                 m_state = FlowState::WaitPlaceExitDone;
                 logger::TraceLogger::instance().emit(logger::TraceCategory::Flow,
                                                      "coordinator",
@@ -241,16 +229,14 @@ namespace core::sim
                     break;
                 }
 
-                m_exitConveyor->spawnPartAtPosition(m_activePartType > 0 ? m_activePartType : 1, 120.0);
-                dispatchRobotJob(1, m_activePartType);
+                m_exitConveyor->spawnPartAtPosition(1, 120.0);
+                dispatchRobotJob(1);
                 m_state = FlowState::WaitHomeDone;
-                logger::TraceLogger::instance().emit(
-                  logger::TraceCategory::Flow,
-                  "coordinator",
-                  "state_transition",
-                  { logger::traceField("from", "WaitPlaceExitDone"),
-                    logger::traceField("to", "WaitHomeDone"),
-                    logger::traceField("exit_part_type", static_cast<int>(m_activePartType)) });
+                logger::TraceLogger::instance().emit(logger::TraceCategory::Flow,
+                                                     "coordinator",
+                                                     "state_transition",
+                                                     { logger::traceField("from", "WaitPlaceExitDone"),
+                                                       logger::traceField("to", "WaitHomeDone") });
                 break;
 
             case FlowState::WaitHomeDone:
@@ -273,7 +259,7 @@ namespace core::sim
         }
     }
 
-    auto SimpleCellCoordinator::dispatchRobotJob(uint16_t jobId, uint8_t partType) -> void
+    auto SimpleCellCoordinator::dispatchRobotJob(uint16_t jobId) -> void
     {
         auto* localAds = dynamic_cast<link::symbolic::LocalAdsLink*>(m_link.get());
         if (!localAds) {
@@ -282,18 +268,16 @@ namespace core::sim
 
         auto control = localAds->readSync<RobotControl>(m_robotSymbols.controlSymbol);
         control.nJobId = jobId;
-        control.nPartType = partType;
         control.bMoveEnable = 1;
         control.bReset = 0;
         localAds->writeSync(m_robotSymbols.controlSymbol, control);
         logger::TraceLogger::instance().emit(logger::TraceCategory::Flow,
                                              "coordinator",
                                              "dispatch_robot_job",
-                                             { logger::traceField("job_id", static_cast<int>(jobId)),
-                                               logger::traceField("part_type", static_cast<int>(partType)) });
+                                             { logger::traceField("job_id", static_cast<int>(jobId)) });
     }
 
-    auto SimpleCellCoordinator::requestRotaryLoad(uint8_t partType) -> void
+    auto SimpleCellCoordinator::requestRotaryLoad() -> void
     {
         auto* localAds = dynamic_cast<link::symbolic::LocalAdsLink*>(m_link.get());
         if (!localAds) {
@@ -304,12 +288,10 @@ namespace core::sim
         control.bEnable = 1;
         control.bLoadPart = 1;
         control.bIndex = 0;
-        control.nRequestedPartType = partType;
         localAds->writeSync(m_rotarySymbols.controlSymbol, control);
-        m_lastSpawnedPartType = partType;
     }
 
-    auto SimpleCellCoordinator::requestRotaryIndex(uint8_t partType) -> void
+    auto SimpleCellCoordinator::requestRotaryIndex() -> void
     {
         auto* localAds = dynamic_cast<link::symbolic::LocalAdsLink*>(m_link.get());
         if (!localAds) {
@@ -319,7 +301,6 @@ namespace core::sim
         RotaryTableControl control{};
         control.bEnable = 1;
         control.bIndex = 1;
-        control.nRequestedPartType = partType;
         localAds->writeSync(m_rotarySymbols.controlSymbol, control);
     }
 
@@ -331,15 +312,5 @@ namespace core::sim
         }
 
         localAds->writeSync(m_exitRunSymbol, true);
-    }
-
-    auto SimpleCellCoordinator::nextPartType() -> uint8_t
-    {
-        if (!m_config.cyclePartTypes) {
-            return 1;
-        }
-
-        m_lastSpawnedPartType = m_lastSpawnedPartType == 1 ? 2 : 1;
-        return m_lastSpawnedPartType == 0 ? 1 : m_lastSpawnedPartType;
     }
 }

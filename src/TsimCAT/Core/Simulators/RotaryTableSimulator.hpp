@@ -20,7 +20,6 @@ namespace core::sim
         uint8_t bLoadPart : 1;
         uint8_t bReset : 1;
         uint8_t reserved : 4;
-        uint8_t nRequestedPartType;
     };
 
     struct RotaryTableStatus
@@ -32,15 +31,14 @@ namespace core::sim
         uint8_t bAtPickPosition : 1;
         uint8_t bBusy : 1;
         uint8_t reserved : 3;
-        uint8_t nPartType;
         uint16_t nIndexPosition;
     };
 #pragma pack(pop)
 
-    static_assert(sizeof(RotaryTableControl) == 2,
-                  "RotaryTableControl must be 2 bytes for ADS/TwinCAT compatibility");
-    static_assert(sizeof(RotaryTableStatus) == 8,
-                  "RotaryTableStatus must be 8 bytes for ADS/TwinCAT compatibility");
+    static_assert(sizeof(RotaryTableControl) == 1,
+                  "RotaryTableControl must be 1 byte for ADS/TwinCAT compatibility");
+    static_assert(sizeof(RotaryTableStatus) == 7,
+                  "RotaryTableStatus must be 7 bytes for ADS/TwinCAT compatibility");
 
     class RotaryTableSimulator : public ISimulator
     {
@@ -76,7 +74,6 @@ namespace core::sim
         auto control() const -> RotaryTableControl;
         auto status() const -> RotaryTableStatus;
         auto currentAngleDegrees() const -> double;
-        auto partType() const -> uint8_t;
         auto partPresent() const -> bool;
         auto readyToPick() const -> bool;
         auto atLoadPosition() const -> bool;
@@ -85,9 +82,9 @@ namespace core::sim
 
         auto setInternalMode(bool internalMode) -> void;
         auto isInternalMode() const -> bool;
-        auto queuePart(uint8_t partType) -> void;
-        auto tryLoadPart(uint8_t partType) -> bool;
-        auto takePartForRobot() -> uint8_t;
+        auto queuePart() -> void;
+        auto tryLoadPart() -> bool;
+        auto takePartForRobot() -> bool;
 
       private:
         auto updateStatusLocked() -> void;
@@ -105,6 +102,5 @@ namespace core::sim
         double m_targetAngleDeg{ 0.0 };
         double m_loadTimerSeconds{ 0.0 };
         bool m_hasPart{ false };
-        uint8_t m_partType{ 0 };
     };
 }

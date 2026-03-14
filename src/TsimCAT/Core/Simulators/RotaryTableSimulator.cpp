@@ -64,7 +64,6 @@ namespace core::sim
 
             if (m_control.bReset) {
                 m_hasPart = false;
-                m_partType = 0;
                 m_currentAngleDeg = m_config.loadAngleDeg;
                 m_targetAngleDeg = m_config.loadAngleDeg;
                 m_loadTimerSeconds = 0.0;
@@ -80,14 +79,12 @@ namespace core::sim
                     m_loadTimerSeconds += deltaTimeSeconds;
                     if (m_loadTimerSeconds >= m_config.loadDelaySeconds) {
                         m_hasPart = true;
-                        m_partType = m_control.nRequestedPartType > 0 ? m_control.nRequestedPartType : 1;
                         m_loadTimerSeconds = 0.0;
                         logger::TraceLogger::instance().emit(
                           logger::TraceCategory::State,
                           "rotary_table",
                           "part_loaded",
-                          { logger::traceField("part_type", static_cast<int>(m_partType)),
-                            logger::traceField("angle", m_currentAngleDeg) });
+                          { logger::traceField("angle", m_currentAngleDeg) });
                     }
                 }
                 else {
@@ -100,8 +97,7 @@ namespace core::sim
                       logger::TraceCategory::State,
                       "rotary_table",
                       "index_started",
-                      { logger::traceField("target_angle", m_config.pickAngleDeg),
-                        logger::traceField("part_type", static_cast<int>(m_partType)) });
+                      { logger::traceField("target_angle", m_config.pickAngleDeg) });
                 }
             }
 
@@ -148,8 +144,7 @@ namespace core::sim
                       "ads_rx_control",
                       { logger::traceField("enable", m_control.bEnable != 0),
                         logger::traceField("index", m_control.bIndex != 0),
-                        logger::traceField("load", m_control.bLoadPart != 0),
-                        logger::traceField("part_type", static_cast<int>(m_control.nRequestedPartType)) });
+                        logger::traceField("load", m_control.bLoadPart != 0) });
                 }
 
                 RotaryTableStatus statusCopy{};
@@ -188,12 +183,6 @@ namespace core::sim
     {
         std::scoped_lock lock(m_mutex);
         return m_currentAngleDeg;
-    }
-
-    auto RotaryTableSimulator::partType() const -> uint8_t
-    {
-        std::scoped_lock lock(m_mutex);
-        return m_partType;
     }
 
     auto RotaryTableSimulator::partPresent() const -> bool
@@ -238,13 +227,12 @@ namespace core::sim
         return m_internalMode;
     }
 
-    auto RotaryTableSimulator::queuePart(uint8_t partType) -> void
+    auto RotaryTableSimulator::queuePart() -> void
     {
         if (auto* localAds = dynamic_cast<link::symbolic::LocalAdsLink*>(m_link.get())) {
             RotaryTableControl control{};
             control.bEnable = 1;
             control.bLoadPart = 1;
-            control.nRequestedPartType = partType > 0 ? partType : 1;
             localAds->writeSync(m_adsSymbols.controlSymbol, control);
             return;
         }
@@ -257,10 +245,9 @@ namespace core::sim
         m_control.bEnable = 1;
         m_control.bLoadPart = 1;
         m_control.bIndex = 0;
-        m_control.nRequestedPartType = partType;
     }
 
-    auto RotaryTableSimulator::tryLoadPart(uint8_t partType) -> bool
+    auto RotaryTableSimulator::tryLoadPart() -> bool
     {
         RotaryTableStatus statusCopy{};
         {
@@ -271,7 +258,6 @@ namespace core::sim
             }
 
             m_hasPart = true;
-            m_partType = partType > 0 ? partType : 1;
             m_loadTimerSeconds = 0.0;
             updateStatusLocked();
             statusCopy = m_status;
@@ -284,24 +270,21 @@ namespace core::sim
         return true;
     }
 
-    auto RotaryTableSimulator::takePartForRobot() -> uint8_t
+    auto RotaryTableSimulator::takePartForRobot() -> bool
     {
         std::scoped_lock lock(m_mutex);
         if (!m_hasPart || m_status.bReadyToPick == 0) {
-            return 0;
+            return false;
         }
 
-        const auto partType = m_partType;
         m_hasPart = false;
-        m_partType = 0;
         m_targetAngleDeg = m_config.loadAngleDeg;
         updateStatusLocked();
         logger::TraceLogger::instance().emit(logger::TraceCategory::State,
                                              "rotary_table",
                                              "part_taken_by_robot",
-                                             { logger::traceField("part_type", static_cast<int>(partType)),
-                                               logger::traceField("return_angle", m_config.loadAngleDeg) });
-        return partType;
+                                             { logger::traceField("return_angle", m_config.loadAngleDeg) });
+        return true;
     }
 
     auto RotaryTableSimulator::updateStatusLocked() -> void
@@ -315,7 +298,6 @@ namespace core::sim
         m_status.bAtLoadPosition = atLoad ? 1 : 0;
         m_status.bAtPickPosition = atPick ? 1 : 0;
         m_status.bBusy = std::abs(m_currentAngleDeg - m_targetAngleDeg) > angleToleranceDegrees ? 1 : 0;
-        m_status.nPartType = m_partType;
         m_status.nIndexPosition = atPick ? 1 : 0;
     }
 }

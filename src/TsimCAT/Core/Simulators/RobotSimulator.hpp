@@ -20,8 +20,7 @@ namespace core::sim
 #pragma pack(push, 1)
     struct RobotControl
     {
-        uint16_t nJobId;   // Job number to execute
-        uint8_t nPartType; // Type of part to process
+        uint16_t nJobId; // Job number to execute
 
         // Control Bits (1 byte total)
         uint8_t bMoveEnable : 1; // Bit 0: Permission to move
@@ -36,8 +35,7 @@ namespace core::sim
      */
     struct RobotStatus
     {
-        uint16_t nJobIdFeedback;   // Currently active / last completed job
-        uint8_t nPartTypeMirrored; // Echo of the received part type
+        uint16_t nJobIdFeedback; // Currently active / last completed job
 
         // Status Bits (1 byte total)
         uint8_t bInMotion : 1;    // Bit 0: Robot is currently moving
@@ -60,8 +58,8 @@ namespace core::sim
     };
 #pragma pack(pop)
 
-    static_assert(sizeof(RobotControl) == 5, "RobotControl must be 5 bytes for ADS/TwinCAT compatibility");
-    static_assert(sizeof(RobotStatus) == 10, "RobotStatus must be 10 bytes for ADS/TwinCAT compatibility");
+    static_assert(sizeof(RobotControl) == 4, "RobotControl must be 4 bytes for ADS/TwinCAT compatibility");
+    static_assert(sizeof(RobotStatus) == 9, "RobotStatus must be 9 bytes for ADS/TwinCAT compatibility");
 
     class RobotSimulator : public ISimulator
     {

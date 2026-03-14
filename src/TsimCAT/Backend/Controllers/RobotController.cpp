@@ -22,10 +22,6 @@ namespace backend::controllers
     {
         return m_simulator ? m_simulator->status().nJobIdFeedback : 0;
     }
-    uint8_t RobotController::partTypeMirrored() const
-    {
-        return m_simulator ? m_simulator->status().nPartTypeMirrored : 0;
-    }
     bool RobotController::inMotion() const { return m_simulator ? m_simulator->status().bInMotion : false; }
     bool RobotController::inHome() const { return m_simulator ? m_simulator->status().bInHome : false; }
     bool RobotController::enabled() const { return m_simulator ? m_simulator->status().bEnabled : false; }
@@ -91,10 +87,6 @@ namespace backend::controllers
 
     // --- Control Getters ---
     uint16_t RobotController::controlJobId() const { return m_simulator ? m_simulator->control().nJobId : 0; }
-    uint8_t RobotController::controlPartType() const
-    {
-        return m_simulator ? m_simulator->control().nPartType : 0;
-    }
     bool RobotController::controlMoveEnable() const
     {
         return m_simulator ? m_simulator->control().bMoveEnable : false;

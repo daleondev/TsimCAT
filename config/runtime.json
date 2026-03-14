@@ -157,7 +157,6 @@
         },
         "localCell": {
             "enabled": true,
-            "cyclePartTypes": true,
             "markingDelayMs": 900,
             "idleLoadDelayMs": 500
         },

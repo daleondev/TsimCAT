@@ -38,15 +38,10 @@ namespace backend::controllers
 
     bool RotaryTableController::busy() const { return m_simulator ? m_simulator->isBusy() : false; }
 
-    int RotaryTableController::partType() const
-    {
-        return m_simulator ? static_cast<int>(m_simulator->partType()) : 0;
-    }
-
-    void RotaryTableController::queuePart(int partType)
+    void RotaryTableController::queuePart()
     {
         if (m_simulator) {
-            m_simulator->queuePart(static_cast<uint8_t>(partType > 0 ? partType : 1));
+            m_simulator->queuePart();
             emit stateChanged();
         }
     }

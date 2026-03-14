@@ -78,7 +78,6 @@ namespace backend
     struct LocalCellConfig
     {
         bool enabled{ true };
-        bool cyclePartTypes{ true };
         int markingDelayMs{ 900 };
         int idleLoadDelayMs{ 500 };
     };

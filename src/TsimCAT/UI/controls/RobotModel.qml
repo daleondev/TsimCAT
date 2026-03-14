@@ -13,7 +13,6 @@ Node {
     property real axis6: 0
     property bool gripperGripped: false
     property bool carriedPartVisible: false
-    property int carriedPartType: 0
     property bool gripperSensorBlocked: false
     onGripperGrippedChanged: console.log("RobotModel: gripperGripped changed to " + gripperGripped)
 

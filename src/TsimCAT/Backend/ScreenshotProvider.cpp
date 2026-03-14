@@ -134,9 +134,7 @@ namespace backend
             robot[QStringLiteral("error")] = static_cast<bool>(status.bError);
             robot[QStringLiteral("errorCode")] = static_cast<int>(status.nErrorCode);
             robot[QStringLiteral("jobIdFeedback")] = static_cast<int>(status.nJobIdFeedback);
-            robot[QStringLiteral("partTypeMirrored")] = static_cast<int>(status.nPartTypeMirrored);
             robot[QStringLiteral("controlJobId")] = static_cast<int>(control.nJobId);
-            robot[QStringLiteral("controlPartType")] = static_cast<int>(control.nPartType);
             robot[QStringLiteral("controlMoveEnable")] = static_cast<bool>(control.bMoveEnable);
             robot[QStringLiteral("internalMode")] = m_refs.robot->isInternalMode();
             root[QStringLiteral("robot")] = robot;
@@ -152,7 +150,6 @@ namespace backend
             table[QStringLiteral("atLoadPosition")] = static_cast<bool>(status.bAtLoadPosition);
             table[QStringLiteral("atPickPosition")] = static_cast<bool>(status.bAtPickPosition);
             table[QStringLiteral("busy")] = static_cast<bool>(status.bBusy);
-            table[QStringLiteral("partType")] = static_cast<int>(status.nPartType);
             table[QStringLiteral("internalMode")] = m_refs.rotaryTable->isInternalMode();
             root[QStringLiteral("rotaryTable")] = table;
         }
@@ -195,8 +192,6 @@ namespace backend
             QJsonObject coord;
             coord[QStringLiteral("enabled")] = m_refs.coordinator->enabled();
             coord[QStringLiteral("laserStationHasPart")] = m_refs.coordinator->laserStationHasPart();
-            coord[QStringLiteral("laserStationPartType")] =
-              static_cast<int>(m_refs.coordinator->laserStationPartType());
             coord[QStringLiteral("tableSimEnabled")] = m_refs.coordinator->tableSimulationEnabled();
             coord[QStringLiteral("robotSimEnabled")] = m_refs.coordinator->robotSimulationEnabled();
             coord[QStringLiteral("laserSimEnabled")] = m_refs.coordinator->laserSimulationEnabled();

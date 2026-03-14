@@ -20,7 +20,6 @@ namespace backend::controllers
 
         // Status from Robot (Read-only for UI)
         Q_PROPERTY(uint16_t jobIdFeedback READ jobIdFeedback NOTIFY stateChanged)
-        Q_PROPERTY(uint8_t partTypeMirrored READ partTypeMirrored NOTIFY stateChanged)
         Q_PROPERTY(bool inMotion READ inMotion NOTIFY stateChanged)
         Q_PROPERTY(bool inHome READ inHome NOTIFY stateChanged)
         Q_PROPERTY(bool enabled READ enabled NOTIFY stateChanged)
@@ -54,7 +53,6 @@ namespace backend::controllers
 
         // Control from PLC (Observing what PLC sends)
         Q_PROPERTY(uint16_t controlJobId READ controlJobId NOTIFY stateChanged)
-        Q_PROPERTY(uint8_t controlPartType READ controlPartType NOTIFY stateChanged)
         Q_PROPERTY(bool controlMoveEnable READ controlMoveEnable NOTIFY stateChanged)
         Q_PROPERTY(bool controlReset READ controlReset NOTIFY stateChanged)
         Q_PROPERTY(uint8_t areaFreePlc READ areaFreePlc NOTIFY stateChanged)
@@ -66,7 +64,6 @@ namespace backend::controllers
                                  QObject* parent = nullptr);
 
         uint16_t jobIdFeedback() const;
-        uint8_t partTypeMirrored() const;
         bool inMotion() const;
         bool inHome() const;
         bool enabled() const;
@@ -99,7 +96,6 @@ namespace backend::controllers
         bool gripperSensorBlocked() const;
 
         uint16_t controlJobId() const;
-        uint8_t controlPartType() const;
         bool controlMoveEnable() const;
         bool controlReset() const;
         uint8_t areaFreePlc() const;

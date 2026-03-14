@@ -9,7 +9,6 @@ Node {
     property real height: 760
     property real angleDegrees: 0
     property bool partPresent: false
-    property int partType: 0
     property bool busy: false
     property bool readyToPick: false
     property bool atLoadPosition: false

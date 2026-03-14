@@ -171,8 +171,6 @@ namespace core::sim
         // Logic Simulation
         std::scoped_lock lock(m_mutex);
 
-        m_status.nPartTypeMirrored = m_control.nPartType;
-
         const bool autoCommandActive =
           m_externalCommandSimulationEnabled && m_control.bMoveEnable && !m_status.bError;
         const bool motionRequested = m_manualTrajectoryActive || autoCommandActive;
@@ -516,7 +514,6 @@ namespace core::sim
                       "ads_rx_control",
                       { logger::traceField("job_id", static_cast<int>(m_control.nJobId)),
                         logger::traceField("move_enable", m_control.bMoveEnable != 0),
-                        logger::traceField("part_type", static_cast<int>(m_control.nPartType)),
                         logger::traceField("symbol", m_adsSymbols.controlSymbol) });
                 }
 
@@ -649,9 +646,6 @@ namespace core::sim
             auto control = localAds->readSync<RobotControl>(m_adsSymbols.controlSymbol);
             control.nJobId = jobId;
             control.bMoveEnable = 1;
-            if (control.nPartType == 0) {
-                control.nPartType = 1;
-            }
             localAds->writeSync(m_adsSymbols.controlSymbol, control);
             return;
         }

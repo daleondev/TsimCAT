@@ -17,7 +17,6 @@ namespace core::sim
         struct Config
         {
             bool enabled{ true };
-            bool cyclePartTypes{ true };
             int markingDelayMs{ 900 };
             int idleLoadDelayMs{ 500 };
         };
@@ -35,7 +34,6 @@ namespace core::sim
         auto update(double deltaTimeSeconds) -> void;
         auto reset() -> void;
         auto laserStationHasPart() const -> bool { return m_laserStationHasPart; }
-        auto laserStationPartType() const -> uint8_t { return m_laserStationPartType; }
         auto setEnabled(bool enabled) -> void { m_config.enabled = enabled; }
         auto enabled() const -> bool { return m_config.enabled; }
         auto setTableSimulationEnabled(bool enabled) -> void { m_tableSimulationEnabled = enabled; }
@@ -61,11 +59,10 @@ namespace core::sim
             WaitHomeDone
         };
 
-        auto dispatchRobotJob(uint16_t jobId, uint8_t partType) -> void;
-        auto requestRotaryLoad(uint8_t partType) -> void;
-        auto requestRotaryIndex(uint8_t partType) -> void;
+        auto dispatchRobotJob(uint16_t jobId) -> void;
+        auto requestRotaryLoad() -> void;
+        auto requestRotaryIndex() -> void;
         auto ensureExitConveyorRunning() -> void;
-        auto nextPartType() -> uint8_t;
 
         Config m_config;
         std::shared_ptr<link::ILink> m_link;
@@ -85,8 +82,5 @@ namespace core::sim
         double m_markingTimerSeconds{ 0.0 };
         double m_idleLoadTimerSeconds{ 0.0 };
         bool m_laserStationHasPart{ false };
-        uint8_t m_laserStationPartType{ 0 };
-        uint8_t m_activePartType{ 1 };
-        uint8_t m_lastSpawnedPartType{ 0 };
     };
 }

@@ -114,10 +114,7 @@ Control {
                     anchors.fill: parent
                     spacing: 12
 
-                    RowLayout {
-                        ValueBox { label: "JOB ID"; value: root.robot ? root.robot.controlJobId : 0; Layout.fillWidth: true }
-                        ValueBox { label: "PART TYPE"; value: root.robot ? root.robot.controlPartType : 0; Layout.fillWidth: true }
-                    }
+                    ValueBox { label: "JOB ID"; value: root.robot ? root.robot.controlJobId : 0; Layout.fillWidth: true }
 
                     ValueBox { 
                         label: "AREA FREE (PLC)"
@@ -143,10 +140,7 @@ Control {
                     anchors.fill: parent
                     spacing: 10
 
-                    RowLayout {
-                        ValueBox { label: "FEEDBACK ID"; value: root.robot ? root.robot.jobIdFeedback : 0; Layout.fillWidth: true }
-                        ValueBox { label: "PART ECHO"; value: root.robot ? root.robot.partTypeMirrored : 0; Layout.fillWidth: true }
-                    }
+                    ValueBox { label: "FEEDBACK ID"; value: root.robot ? root.robot.jobIdFeedback : 0; Layout.fillWidth: true }
 
                     // State Grid
                     GridLayout {

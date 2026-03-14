@@ -186,7 +186,6 @@ namespace backend
         m_cellCoordinator = std::make_shared<core::sim::SimpleCellCoordinator>(
           core::sim::SimpleCellCoordinator::Config{
             .enabled = m_runtimeConfig.simulation.localCell.enabled,
-            .cyclePartTypes = m_runtimeConfig.simulation.localCell.cyclePartTypes,
             .markingDelayMs = m_runtimeConfig.simulation.localCell.markingDelayMs,
             .idleLoadDelayMs = m_runtimeConfig.simulation.localCell.idleLoadDelayMs },
           m_adsLink,
@@ -271,21 +270,9 @@ namespace backend
         return m_robotSim ? m_robotSim->isGripperGripped() : false;
     }
 
-    int Backend::robotCarriedPartType() const
-    {
-        return robotCarriedPartVisible() && m_robotSim
-                 ? static_cast<int>(m_robotSim->status().nPartTypeMirrored)
-                 : 0;
-    }
-
     bool Backend::laserPartVisible() const
     {
         return m_cellCoordinator ? m_cellCoordinator->laserStationHasPart() : false;
-    }
-
-    int Backend::laserPartType() const
-    {
-        return m_cellCoordinator ? static_cast<int>(m_cellCoordinator->laserStationPartType()) : 0;
     }
 
     bool Backend::laserSensorBlocked() const
@@ -473,13 +460,8 @@ namespace backend
             return;
         }
 
-        const int partType = m_runtimeConfig.simulation.localCell.cyclePartTypes ? m_nextManualPartType : 1;
-        const auto desiredType = static_cast<uint8_t>(partType);
-        if (!m_rotaryTableSim->tryLoadPart(desiredType)) {
-            m_rotaryTableSim->queuePart(desiredType);
-        }
-        if (m_runtimeConfig.simulation.localCell.cyclePartTypes) {
-            m_nextManualPartType = (m_nextManualPartType == 1) ? 2 : 1;
+        if (!m_rotaryTableSim->tryLoadPart()) {
+            m_rotaryTableSim->queuePart();
         }
         if (m_rotaryTableController) {
             emit m_rotaryTableController->stateChanged();

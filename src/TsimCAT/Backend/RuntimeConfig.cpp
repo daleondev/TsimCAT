@@ -388,7 +388,6 @@ namespace backend
 
         const auto localCell = asObject(simulation, "localCell");
         applyBool(localCell, "enabled", config.simulation.localCell.enabled);
-        applyBool(localCell, "cyclePartTypes", config.simulation.localCell.cyclePartTypes);
         applyInt(localCell, "markingDelayMs", config.simulation.localCell.markingDelayMs);
         applyInt(localCell, "idleLoadDelayMs", config.simulation.localCell.idleLoadDelayMs);
 

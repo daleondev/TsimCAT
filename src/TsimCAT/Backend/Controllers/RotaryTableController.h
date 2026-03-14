@@ -23,7 +23,6 @@ namespace backend::controllers
         Q_PROPERTY(bool readyToPick READ readyToPick NOTIFY stateChanged)
         Q_PROPERTY(bool atLoadPosition READ atLoadPosition NOTIFY stateChanged)
         Q_PROPERTY(bool busy READ busy NOTIFY stateChanged)
-        Q_PROPERTY(int partType READ partType NOTIFY stateChanged)
 
       public:
         explicit RotaryTableController(std::shared_ptr<core::sim::RotaryTableSimulator> simulator,
@@ -35,9 +34,8 @@ namespace backend::controllers
         bool readyToPick() const;
         bool atLoadPosition() const;
         bool busy() const;
-        int partType() const;
 
-        Q_INVOKABLE void queuePart(int partType);
+        Q_INVOKABLE void queuePart();
 
       signals:
         void stateChanged();
