@@ -138,7 +138,7 @@ Item {
 
         RobotModel {
             id: plantRobot
-            position: Qt.vector3d(0, 0, 350)
+            position: Qt.vector3d(0, 0, 1000)
             eulerRotation.z: 90
 
             axis1: root.backend ? root.backend.robot.axis1 : 0
