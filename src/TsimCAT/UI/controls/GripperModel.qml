@@ -22,7 +22,7 @@ Node {
 
     Node {
         id: leftFinger
-        x: root.gripped ? 25 : 75
+        x: root.gripped ? 50 : 75
         z: root.gripperWidth
 
         Behavior on x {
@@ -33,7 +33,7 @@ Node {
         }
 
         Model {
-            position: Qt.vector3d(0, root.gripperLength / 2 / 100, 0)
+            position: Qt.vector3d(0, 0.8, 0)
             source: "#Cube"
             scale: Qt.vector3d(0.1, 0.4, 0.8)
             materials: [
@@ -47,7 +47,7 @@ Node {
 
     Node {
         id: rightFinger
-        x: root.gripped ? -25 : -75
+        x: root.gripped ? -50 : -75
         z: root.gripperWidth
 
         Behavior on x {

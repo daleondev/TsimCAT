@@ -174,7 +174,9 @@ Node {
 
                                         PartModel {
                                             visible: robotRoot.carriedPartVisible
-                                            position: Qt.vector3d(220, 0, 0)
+                                            position: Qt.vector3d(100, 0, -25)
+                                            eulerRotation.y: 90
+                                            eulerRotation.z: 90
                                             scale: Qt.vector3d(0.625, 0.625, 0.625)
                                             width: 140
                                             length: 140
