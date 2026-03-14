@@ -18,19 +18,6 @@ Node {
     readonly property real innerPlatterScale: rotaryRoot.platterScale * 0.8
     readonly property real pedestalScale: rotaryRoot.radius / 95
 
-    PrincipledMaterial {
-        id: darkSteel
-        baseColor: "#44515a"
-        metalness: 0.82
-        roughness: 0.24
-    }
-
-    PrincipledMaterial {
-        id: brushedSteel
-        baseColor: "#95a4ad"
-        metalness: 0.9
-        roughness: 0.16
-    }
 
     PrincipledMaterial {
         id: accentPaint
@@ -56,29 +43,22 @@ Node {
     Model {
         source: "#Cube"
         position: Qt.vector3d(0, 90, 0)
-        scale: Qt.vector3d(rotaryRoot.platterScale * 1.34, 1.8, rotaryRoot.platterScale * 1.34)
+        scale: Qt.vector3d(rotaryRoot.platterScale * 1, 1.8, rotaryRoot.platterScale * 1)
         materials: [ machineBasePaint ]
     }
 
     Model {
         source: "#Cube"
         position: Qt.vector3d(0, 245, 0)
-        scale: Qt.vector3d(rotaryRoot.platterScale * 1.06, 1.35, rotaryRoot.platterScale * 1.06)
+        scale: Qt.vector3d(rotaryRoot.platterScale * 0.75, 1.35, rotaryRoot.platterScale * 0.75)
         materials: [ trimPaint ]
-    }
-
-    Model {
-        source: "#Cylinder"
-        position: Qt.vector3d(0, 120, 0)
-        scale: Qt.vector3d(rotaryRoot.pedestalScale, 1.2, rotaryRoot.pedestalScale)
-        materials: [ darkSteel ]
     }
 
     Model {
         source: "#Cylinder"
         position: Qt.vector3d(0, rotaryRoot.height - 190, 0)
         scale: Qt.vector3d(rotaryRoot.pedestalScale * 0.76, 5.3, rotaryRoot.pedestalScale * 0.76)
-        materials: [ brushedSteel ]
+        materials: [ machineBasePaint ]
     }
 
     Node {
@@ -96,7 +76,7 @@ Node {
             source: "#Cylinder"
             position: Qt.vector3d(0, 18, 0)
             scale: Qt.vector3d(rotaryRoot.innerPlatterScale, 0.18, rotaryRoot.innerPlatterScale)
-            materials: [ brushedSteel ]
+            materials: [ machineBasePaint ]
         }
 
         // Center safety shield
@@ -104,32 +84,24 @@ Node {
             source: "#Cylinder"
             position: Qt.vector3d(0, 170, 0)
             scale: Qt.vector3d(1.2, 3.0, 1.2)
-            materials: [ darkSteel ]
+            materials: [ machineBasePaint ]
         }
 
         Model {
             source: "#Cylinder"
             position: Qt.vector3d(0, 320, 0)
             scale: Qt.vector3d(2.4, 0.3, 2.4)
-            materials: [ brushedSteel ]
+            materials: [ machineBasePaint ]
         }
 
-        Repeater3D {
-            model: 4
-            delegate: Node {
-                required property int index
-                eulerRotation.y: index * 90
-
-                Model {
-                    source: "#Cube"
-                    position: Qt.vector3d(rotaryRoot.radius * 0.48, 22, 0)
-                    scale: Qt.vector3d(1.25, 0.26, 2.0)
-                    materials: [ darkSteel ]
-                }
-            }
+        Model {
+            source: "#Cube"
+            position: Qt.vector3d(0, 195, 0)
+            scale: Qt.vector3d(0.2, 2.2, rotaryRoot.platterScale * 1)
+            materials: [ machineBasePaint ]
         }
 
-        PartModel {
+        PartModel { // PART
             visible: rotaryRoot.partPresent
             position: Qt.vector3d(rotaryRoot.radius * 0.5, 58, 0)
             width: 140
@@ -139,32 +111,11 @@ Node {
         }
     }
 
-    Model {
-        source: "#Cube"
-        position: Qt.vector3d(-120, rotaryRoot.height + 54, 0)
-        scale: Qt.vector3d(0.34, 0.3, rotaryRoot.platterScale * 0.95)
-        materials: [ darkSteel ]
-    }
-
-    Model {
-        source: "#Cube"
-        position: Qt.vector3d(120, rotaryRoot.height + 54, 0)
-        scale: Qt.vector3d(0.34, 0.3, rotaryRoot.platterScale * 0.95)
-        materials: [ darkSteel ]
-    }
-
-    Model {
-        source: "#Cube"
-        position: Qt.vector3d(0, rotaryRoot.height + 54, -rotaryRoot.radius * 0.48)
-        scale: Qt.vector3d(rotaryRoot.platterScale * 0.48, 0.24, 0.28)
-        materials: [ darkSteel ]
-    }
-
     // Sensor indicators (like conveyor light barriers)
     // Part presence sensor — at the load side of the platter
     Model {
         source: "#Sphere"
-        position: Qt.vector3d(-rotaryRoot.radius * 0.5, rotaryRoot.height + 80, 0)
+        position: Qt.vector3d(-rotaryRoot.radius * 0.9, rotaryRoot.height + 40, 0)
         scale: Qt.vector3d(0.2, 0.2, 0.2)
         materials: [
             DefaultMaterial {
@@ -177,7 +128,7 @@ Node {
     // Ready-to-pick sensor
     Model {
         source: "#Sphere"
-        position: Qt.vector3d(rotaryRoot.radius * 0.7, rotaryRoot.height + 40, 0)
+        position: Qt.vector3d(rotaryRoot.radius * 0.9, rotaryRoot.height + 40, 0)
         scale: Qt.vector3d(0.2, 0.2, 0.2)
         materials: [
             DefaultMaterial {

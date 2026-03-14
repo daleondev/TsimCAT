@@ -222,12 +222,11 @@ Node {
         }
 
         FencePanel {
-            scale: Qt.vector3d(1, 0.45, 1)
+            scale: Qt.vector3d(1, 0.3, 1)
         }
 
         GuillotineDamper {
             position: Qt.vector3d(0, 0, 0)
-            ratio: 0.45
             open: fenceRoot.exitDamperOpen
         }
 

@@ -115,31 +115,6 @@ Item {
             id: rotaryStation
             position: Qt.vector3d(-1350, 0, 120)
 
-            Model {
-                position: Qt.vector3d(0, 18, 0)
-                source: "#Cube"
-                scale: Qt.vector3d(10.4, 0.36, 9.4)
-                materials: [
-                    PrincipledMaterial {
-                        baseColor: "#616b67"
-                        roughness: 0.88
-                    }
-                ]
-            }
-
-            Model {
-                position: Qt.vector3d(0, 150, -380)
-                source: "#Cube"
-                scale: Qt.vector3d(4.2, 2.6, 1.8)
-                materials: [
-                    PrincipledMaterial {
-                        baseColor: "#394148"
-                        metalness: 0.35
-                        roughness: 0.42
-                    }
-                ]
-            }
-
             RotaryTableModel {
                 angleDegrees: root.backend ? root.backend.rotaryTable.angleDegrees : 0
                 partPresent: root.backend ? root.backend.rotaryTable.partPresent : false

@@ -33,14 +33,14 @@ Node {
 
     Model {
         visible: laserRoot.laserOn
-        position: Qt.vector3d(0, -420, 0)
+        position: Qt.vector3d(0, -500, 0)
         source: "#Cylinder"
-        scale: Qt.vector3d(0.03, 7.8, 0.03)
+        scale: Qt.vector3d(0.05, 10, 0.05)
         materials: [
             DefaultMaterial {
                 diffuseColor: laserRoot.beamColor
                 emissiveFactor: Qt.vector3d(1, 0, 0)
-                opacity: 0.7
+                opacity: 0.6
             }
         ]
     }
