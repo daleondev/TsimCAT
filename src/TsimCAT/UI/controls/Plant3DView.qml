@@ -152,7 +152,7 @@ Item {
                 scale: Qt.vector3d(13.5, 0.3, 10.5)
                 materials: [
                     PrincipledMaterial {
-                        baseColor: "#616b67"
+                        baseColor: '#6b6161'
                         roughness: 0.9
                     }
                 ]
@@ -162,7 +162,6 @@ Item {
                 width: 520
                 depth: 520
                 height: 820
-                color: "#767d82"
             }
 
             PartModel {
@@ -176,7 +175,7 @@ Item {
             // Laser station light barrier sensor
             Model {
                 source: "#Sphere"
-                position: Qt.vector3d(0, 870, 280)
+                position: Qt.vector3d(0, 900, -160)
                 scale: Qt.vector3d(0.2, 0.2, 0.2)
                 materials: [
                     DefaultMaterial {
@@ -205,12 +204,10 @@ Item {
 
                 PrincipledMaterial {
                     id: safetyGlassMaterial
-                    baseColor: "#99a1a5"
-                    opacity: 0.24
-                    alphaMode: PrincipledMaterial.Blend
+                    baseColor: '#1c2626'
+                    opacity: 0.32
                     metalness: 0.0
                     roughness: 0.2
-                    cullMode: PrincipledMaterial.NoCulling
                 }
 
                 Model {
@@ -280,6 +277,13 @@ Item {
                 }
 
                 Model {
+                    position: Qt.vector3d(0, 500, 418)
+                    source: "#Cube"
+                    scale: Qt.vector3d(10.8, 8.6, 0.03)
+                    materials: [ safetyGlassMaterial ]
+                }
+
+                Model {
                     position: Qt.vector3d(-578, 900, 0)
                     source: "#Cube"
                     scale: Qt.vector3d(0.03, 17.2, 8.2)
@@ -289,6 +293,7 @@ Item {
                 Model {
                     position: Qt.vector3d(578, 900, 0)
                     source: "#Cube"
+                    scale: Qt.vector3d(0.03, 17.2, 8.2)
                     materials: [ safetyGlassMaterial ]
                 }
 
@@ -324,9 +329,9 @@ Item {
                     scale: Qt.vector3d(4.4, 1.1, 4.0)
                     materials: [
                         PrincipledMaterial {
-                            baseColor: "#59636a"
-                            metalness: 0.32
-                            roughness: 0.4
+                            baseColor: "#2a3138"
+                            metalness: 0.35
+                            roughness: 0.46
                         }
                     ]
                 }

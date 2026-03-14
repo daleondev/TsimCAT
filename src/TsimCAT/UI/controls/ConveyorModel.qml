@@ -20,8 +20,9 @@ Node {
         scale: Qt.vector3d(conveyorRoot.length / 100, conveyorRoot.frameThickness / 100, conveyorRoot.width / 100)
         materials: [
             PrincipledMaterial {
-                baseColor: "#2c3e50"
-                metalness: 0.5
+                baseColor: "#3f6d7a"
+                metalness: 0.28
+                roughness: 0.36
             }
         ]
     }
