@@ -13,7 +13,8 @@ namespace core::sim
                                                  std::shared_ptr<ConveyorSimulator> exitConveyor,
                                                  RobotSimulator::AdsSymbols robotSymbols,
                                                  RotaryTableSimulator::AdsSymbols rotarySymbols,
-                                                 std::string exitRunSymbol)
+                                                 std::string exitRunSymbol,
+                                                 std::string laserSensorSymbol)
       : m_config(std::move(config))
       , m_link(std::move(link))
       , m_rotaryTable(std::move(rotaryTable))
@@ -22,7 +23,50 @@ namespace core::sim
       , m_robotSymbols(std::move(robotSymbols))
       , m_rotarySymbols(std::move(rotarySymbols))
       , m_exitRunSymbol(std::move(exitRunSymbol))
+      , m_laserSensorSymbol(std::move(laserSensorSymbol))
     {
+    }
+
+    auto SimpleCellCoordinator::reset() -> void
+    {
+        m_state = FlowState::WaitTableReady;
+        m_laserStationHasPart = false;
+        m_laserStationPartType = 0;
+        m_activePartType = 1;
+        m_markingTimerSeconds = 0.0;
+        m_idleLoadTimerSeconds = 0.0;
+        m_lastSpawnedPartType = 0;
+
+        if (m_robot) {
+            m_robot->setGripper(false);
+            m_robot->setGripperSensorBlocked(false);
+            double homeAngles[6] = { 0.0, -90.0, 90.0, 0.0, 0.0, 0.0 };
+            m_robot->setJointAngles(homeAngles);
+        }
+
+        if (m_exitConveyor) {
+            m_exitConveyor->clearParts();
+            m_exitConveyor->setDamperOpen(false);
+        }
+
+        // Reset ADS control commands
+        auto* localAds = dynamic_cast<link::symbolic::LocalAdsLink*>(m_link.get());
+        if (localAds) {
+            RobotControl robotCtrl{};
+            localAds->writeSync(m_robotSymbols.controlSymbol, robotCtrl);
+
+            RotaryTableControl rotaryCtrl{};
+            localAds->writeSync(m_rotarySymbols.controlSymbol, rotaryCtrl);
+
+            if (!m_laserSensorSymbol.empty()) {
+                localAds->writeSync(m_laserSensorSymbol, false);
+            }
+        }
+
+        logger::TraceLogger::instance().emit(logger::TraceCategory::Flow,
+                                             "coordinator",
+                                             "reset",
+                                             { logger::traceField("reason", "user_requested") });
     }
 
     auto SimpleCellCoordinator::update(double deltaTimeSeconds) -> void
@@ -38,6 +82,11 @@ namespace core::sim
 
         if (m_conveyorSimulationEnabled) {
             ensureExitConveyorRunning();
+        }
+
+        // Write laser part sensor to ADS
+        if (!m_laserSensorSymbol.empty()) {
+            localAds->writeSync(m_laserSensorSymbol, m_laserStationHasPart);
         }
 
         const auto robotStatus = localAds->readSync<RobotStatus>(m_robotSymbols.statusSymbol);
@@ -75,6 +124,10 @@ namespace core::sim
                 }
 
                 if (!inMotion) {
+                    // Set gripper sensor BEFORE dispatch so applyJobCompletionEffects sees it
+                    if (m_robot) {
+                        m_robot->setGripperSensorBlocked(true);
+                    }
                     dispatchRobotJob(2, rotaryStatus.nPartType > 0 ? rotaryStatus.nPartType : nextPartType());
                     m_state = FlowState::WaitPickEntryDone;
                     logger::TraceLogger::instance().emit(logger::TraceCategory::Flow,
@@ -140,6 +193,11 @@ namespace core::sim
                 m_markingTimerSeconds += deltaTimeSeconds;
                 if (m_markingTimerSeconds * 1000.0 < static_cast<double>(m_config.markingDelayMs)) {
                     break;
+                }
+
+                // Set gripper sensor: part is at laser station ready for pick
+                if (m_robot) {
+                    m_robot->setGripperSensorBlocked(m_laserStationHasPart);
                 }
 
                 dispatchRobotJob(4, m_laserStationPartType);

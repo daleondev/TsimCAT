@@ -145,6 +145,8 @@ Item {
                 partPresent: root.backend ? root.backend.rotaryTable.partPresent : false
                 partType: root.backend ? root.backend.rotaryTable.partType : 0
                 busy: root.backend ? root.backend.rotaryTable.busy : false
+                readyToPick: root.backend ? root.backend.rotaryTable.readyToPick : false
+                atLoadPosition: root.backend ? root.backend.rotaryTable.atLoadPosition : false
             }
         }
 
@@ -162,6 +164,7 @@ Item {
             gripperGripped: root.backend ? root.backend.robot.gripperGripped : false
             carriedPartVisible: root.backend ? root.backend.robotCarriedPartVisible : false
             carriedPartType: root.backend ? root.backend.robotCarriedPartType : 0
+            gripperSensorBlocked: root.backend ? root.backend.robot.gripperSensorBlocked : false
         }
 
         Node {
@@ -193,6 +196,19 @@ Item {
                 width: 140
                 length: 140
                 height: 80
+            }
+
+            // Laser station light barrier sensor
+            Model {
+                source: "#Sphere"
+                position: Qt.vector3d(0, 870, 280)
+                scale: Qt.vector3d(0.2, 0.2, 0.2)
+                materials: [
+                    DefaultMaterial {
+                        diffuseColor: (root.backend && root.backend.laserSensorBlocked) ? "#e74c3c" : "#2ecc71"
+                        emissiveFactor: Qt.vector3d(diffuseColor.r, diffuseColor.g, diffuseColor.b)
+                    }
+                ]
             }
 
             Node {

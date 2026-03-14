@@ -344,6 +344,12 @@ namespace backend
         applyString(adsRotaryTable, "control", config.adsVariables.rotaryTable.control);
         applyString(adsRotaryTable, "status", config.adsVariables.rotaryTable.status);
 
+        const auto adsLaser = asObject(adsVariables, "laser");
+        applyString(adsLaser, "partPresentSensor", config.adsVariables.laser.partPresentSensor);
+
+        const auto adsGripper = asObject(adsVariables, "gripper");
+        applyString(adsGripper, "partDetectedSensor", config.adsVariables.gripper.partDetectedSensor);
+
         const auto simulation = asObject(root, "simulation");
         applyBool(simulation, "localOnly", config.simulation.localOnly);
         applyBool(simulation, "localPlcShadow", config.simulation.localPlcShadow);

@@ -152,6 +152,16 @@ namespace backend
             std::string control{ "MAIN.stRotaryTableControl" };
             std::string status{ "MAIN.stRotaryTableStatus" };
         } rotaryTable;
+
+        struct Laser
+        {
+            std::string partPresentSensor{ "MAIN.bLaserPartPresent" };
+        } laser;
+
+        struct Gripper
+        {
+            std::string partDetectedSensor{ "MAIN.bGripperPartDetected" };
+        } gripper;
     };
 
     struct RuntimeConfig

@@ -4,6 +4,7 @@ import QtQuick3D
 Node {
     id: root
     property bool gripped: false
+    property bool sensorBlocked: false
     property real gripperLength: 200
     property real gripperWidth: 100
 
@@ -67,5 +68,18 @@ Node {
                 }
             ]
         }
+    }
+
+    // Gripper light barrier sensor
+    Model {
+        source: "#Sphere"
+        position: Qt.vector3d(0, root.gripperLength / 100, root.gripperWidth + 15)
+        scale: Qt.vector3d(0.12, 0.12, 0.12)
+        materials: [
+            DefaultMaterial {
+                diffuseColor: root.sensorBlocked ? "#e74c3c" : "#2ecc71"
+                emissiveFactor: Qt.vector3d(diffuseColor.r, diffuseColor.g, diffuseColor.b)
+            }
+        ]
     }
 }

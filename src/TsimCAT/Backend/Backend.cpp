@@ -135,7 +135,9 @@ namespace backend
 
         const auto robotSymbols =
           core::sim::RobotSimulator::AdsSymbols{ .controlSymbol = m_runtimeConfig.adsVariables.robot.control,
-                                                 .statusSymbol = m_runtimeConfig.adsVariables.robot.status };
+                                                 .statusSymbol = m_runtimeConfig.adsVariables.robot.status,
+                                                 .gripperSensorSymbol =
+                                                   m_runtimeConfig.adsVariables.gripper.partDetectedSensor };
         const auto rotarySymbols = core::sim::RotaryTableSimulator::AdsSymbols{
             .controlSymbol = m_runtimeConfig.adsVariables.rotaryTable.control,
             .statusSymbol = m_runtimeConfig.adsVariables.rotaryTable.status
@@ -193,7 +195,8 @@ namespace backend
           m_exitConveyorSim,
           robotSymbols,
           rotarySymbols,
-          m_runtimeConfig.adsVariables.conveyors.exitRun);
+          m_runtimeConfig.adsVariables.conveyors.exitRun,
+          m_runtimeConfig.adsVariables.laser.partPresentSensor);
 
         m_localSimulationEnabled = m_runtimeConfig.simulation.localCell.enabled;
         m_localTableSimulationEnabled = true;
@@ -283,6 +286,11 @@ namespace backend
     int Backend::laserPartType() const
     {
         return m_cellCoordinator ? static_cast<int>(m_cellCoordinator->laserStationPartType()) : 0;
+    }
+
+    bool Backend::laserSensorBlocked() const
+    {
+        return m_cellCoordinator ? m_cellCoordinator->laserStationHasPart() : false;
     }
 
     bool Backend::usingLocalAdsShadow() const { return m_adsLink && m_runtimeConfig.adsLink.inProcess; }
@@ -490,6 +498,27 @@ namespace backend
             emit m_exitConveyorController->stateChanged();
         }
         return removed;
+    }
+
+    void Backend::resetSimulation()
+    {
+        if (m_cellCoordinator) {
+            m_cellCoordinator->reset();
+        }
+
+        if (m_rotaryTableController) {
+            emit m_rotaryTableController->stateChanged();
+        }
+        if (m_robotController) {
+            emit m_robotController->stateChanged();
+        }
+        if (m_exitConveyorController) {
+            emit m_exitConveyorController->stateChanged();
+        }
+        emit partVisualizationChanged();
+        emit simulationSettingsChanged();
+
+        core::logger::info("Backend: Simulation reset by user");
     }
 
     void Backend::startBackgroundTask(core::coro::Task<void>&& task)

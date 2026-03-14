@@ -43,6 +43,7 @@ namespace backend
         Q_PROPERTY(int robotCarriedPartType READ robotCarriedPartType NOTIFY partVisualizationChanged)
         Q_PROPERTY(bool laserPartVisible READ laserPartVisible NOTIFY partVisualizationChanged)
         Q_PROPERTY(int laserPartType READ laserPartType NOTIFY partVisualizationChanged)
+        Q_PROPERTY(bool laserSensorBlocked READ laserSensorBlocked NOTIFY partVisualizationChanged)
         Q_PROPERTY(bool usingLocalAdsShadow READ usingLocalAdsShadow CONSTANT)
         Q_PROPERTY(bool localPlcShadow READ localPlcShadow CONSTANT)
         Q_PROPERTY(bool localSimulationEnabled READ localSimulationEnabled WRITE setLocalSimulationEnabled
@@ -80,6 +81,7 @@ namespace backend
         int robotCarriedPartType() const;
         bool laserPartVisible() const;
         int laserPartType() const;
+        bool laserSensorBlocked() const;
         bool usingLocalAdsShadow() const;
         bool localPlcShadow() const;
         bool localSimulationEnabled() const;
@@ -106,6 +108,7 @@ namespace backend
         Q_INVOKABLE void runAsyncTest();
         Q_INVOKABLE void spawnTablePart();
         Q_INVOKABLE bool despawnExitPart();
+        Q_INVOKABLE void resetSimulation();
 
       signals:
         void asyncTestStatusChanged();

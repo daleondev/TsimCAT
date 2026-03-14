@@ -138,6 +138,16 @@ Control {
 
                     Text { text: "Cell Controls"; color: "#f4f7f8"; font.pixelSize: 18; font.bold: true; Layout.alignment: Qt.AlignHCenter }
 
+                    Button {
+                        text: "Reset Simulation"
+                        palette.button: "#c0392b"
+                        palette.buttonText: "white"
+                        Layout.fillWidth: true
+                        enabled: root.backend !== null
+                        onClicked: if (root.backend)
+                            root.backend.resetSimulation()
+                    }
+
                     Rectangle { Layout.fillWidth: true; radius: 8; color: "#1f2b2f"; implicitHeight: modeColumn.implicitHeight + 20
                         ColumnLayout {
                             id: modeColumn

@@ -84,6 +84,11 @@ namespace backend::controllers
         }
     }
 
+    bool RobotController::gripperSensorBlocked() const
+    {
+        return m_simulator ? m_simulator->isGripperSensorBlocked() : false;
+    }
+
     // --- Control Getters ---
     uint16_t RobotController::controlJobId() const { return m_simulator ? m_simulator->control().nJobId : 0; }
     uint8_t RobotController::controlPartType() const

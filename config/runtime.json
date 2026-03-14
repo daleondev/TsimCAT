@@ -218,6 +218,12 @@
         "rotaryTable": {
             "control": "MAIN.stRotaryTableControl",
             "status": "MAIN.stRotaryTableStatus"
+        },
+        "laser": {
+            "partPresentSensor": "MAIN.bLaserPartPresent"
+        },
+        "gripper": {
+            "partDetectedSensor": "MAIN.bGripperPartDetected"
         }
     }
 }

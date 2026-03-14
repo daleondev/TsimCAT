@@ -11,6 +11,8 @@ Node {
     property bool partPresent: false
     property int partType: 0
     property bool busy: false
+    property bool readyToPick: false
+    property bool atLoadPosition: false
 
     readonly property real platterScale: rotaryRoot.radius / 50
     readonly property real innerPlatterScale: rotaryRoot.platterScale * 0.8
@@ -32,7 +34,7 @@ Node {
 
     PrincipledMaterial {
         id: accentPaint
-        baseColor: rotaryRoot.busy ? "#cf6b38" : "#3f6d7a"
+        baseColor: "#3f6d7a"
         metalness: 0.28
         roughness: 0.36
     }
@@ -156,5 +158,32 @@ Node {
         position: Qt.vector3d(0, rotaryRoot.height + 54, -rotaryRoot.radius * 0.48)
         scale: Qt.vector3d(rotaryRoot.platterScale * 0.48, 0.24, 0.28)
         materials: [ darkSteel ]
+    }
+
+    // Sensor indicators (like conveyor light barriers)
+    // Part presence sensor — at the load side of the platter
+    Model {
+        source: "#Sphere"
+        position: Qt.vector3d(-rotaryRoot.radius * 0.5, rotaryRoot.height + 80, 0)
+        scale: Qt.vector3d(0.2, 0.2, 0.2)
+        materials: [
+            DefaultMaterial {
+                diffuseColor: rotaryRoot.partPresent ? "#e74c3c" : "#2ecc71"
+                emissiveFactor: Qt.vector3d(diffuseColor.r, diffuseColor.g, diffuseColor.b)
+            }
+        ]
+    }
+
+    // Ready-to-pick sensor
+    Model {
+        source: "#Sphere"
+        position: Qt.vector3d(rotaryRoot.radius * 0.7, rotaryRoot.height + 40, 0)
+        scale: Qt.vector3d(0.2, 0.2, 0.2)
+        materials: [
+            DefaultMaterial {
+                diffuseColor: rotaryRoot.readyToPick ? "#e74c3c" : "#2ecc71"
+                emissiveFactor: Qt.vector3d(diffuseColor.r, diffuseColor.g, diffuseColor.b)
+            }
+        ]
     }
 }

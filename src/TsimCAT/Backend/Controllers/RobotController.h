@@ -42,6 +42,7 @@ namespace backend::controllers
         Q_PROPERTY(double axis5 READ axis5 NOTIFY stateChanged)
         Q_PROPERTY(double axis6 READ axis6 NOTIFY stateChanged)
         Q_PROPERTY(bool gripperGripped READ gripperGripped WRITE setGripperGripped NOTIFY stateChanged)
+        Q_PROPERTY(bool gripperSensorBlocked READ gripperSensorBlocked NOTIFY stateChanged)
 
         // TCP Pose (X, Y, Z in mm; Roll, Pitch, Yaw in Degrees)
         Q_PROPERTY(double tcpX READ tcpX NOTIFY stateChanged)
@@ -95,6 +96,7 @@ namespace backend::controllers
 
         bool gripperGripped() const;
         void setGripperGripped(bool gripped);
+        bool gripperSensorBlocked() const;
 
         uint16_t controlJobId() const;
         uint8_t controlPartType() const;

@@ -296,6 +296,9 @@ namespace core::sim
         if (!m_internalMode) {
             if (auto* localAds = dynamic_cast<link::symbolic::LocalAdsLink*>(m_link.get())) {
                 localAds->writeSync(m_adsSymbols.statusSymbol, m_status);
+                if (!m_adsSymbols.gripperSensorSymbol.empty()) {
+                    localAds->writeSync(m_adsSymbols.gripperSensorSymbol, m_gripperSensorBlocked);
+                }
             }
         }
     }
@@ -395,11 +398,14 @@ namespace core::sim
         switch (static_cast<JobId>(jobId)) {
             case JobId::PickEntry:
             case JobId::PickLaser:
-                m_gripperGripped = true;
+                if (m_gripperSensorBlocked) {
+                    m_gripperGripped = true;
+                }
                 break;
             case JobId::PlaceLaser:
             case JobId::PlaceExit:
                 m_gripperGripped = false;
+                m_gripperSensorBlocked = false;
                 break;
             case JobId::Home:
             default:
@@ -564,6 +570,18 @@ namespace core::sim
     {
         std::scoped_lock lock(m_mutex);
         m_gripperGripped = gripped;
+    }
+
+    auto RobotSimulator::isGripperSensorBlocked() const -> bool
+    {
+        std::scoped_lock lock(m_mutex);
+        return m_gripperSensorBlocked;
+    }
+
+    auto RobotSimulator::setGripperSensorBlocked(bool blocked) -> void
+    {
+        std::scoped_lock lock(m_mutex);
+        m_gripperSensorBlocked = blocked;
     }
 
     auto RobotSimulator::setJointAngles(const double* anglesDegrees) -> void

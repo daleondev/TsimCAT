@@ -29,9 +29,11 @@ namespace core::sim
                               std::shared_ptr<ConveyorSimulator> exitConveyor,
                               RobotSimulator::AdsSymbols robotSymbols,
                               RotaryTableSimulator::AdsSymbols rotarySymbols,
-                              std::string exitRunSymbol);
+                              std::string exitRunSymbol,
+                              std::string laserSensorSymbol = "MAIN.bLaserPartPresent");
 
         auto update(double deltaTimeSeconds) -> void;
+        auto reset() -> void;
         auto laserStationHasPart() const -> bool { return m_laserStationHasPart; }
         auto laserStationPartType() const -> uint8_t { return m_laserStationPartType; }
         auto setEnabled(bool enabled) -> void { m_config.enabled = enabled; }
@@ -73,6 +75,7 @@ namespace core::sim
         RobotSimulator::AdsSymbols m_robotSymbols;
         RotaryTableSimulator::AdsSymbols m_rotarySymbols;
         std::string m_exitRunSymbol;
+        std::string m_laserSensorSymbol;
         FlowState m_state{ FlowState::WaitTableReady };
         bool m_tableSimulationEnabled{ true };
         bool m_robotSimulationEnabled{ true };

@@ -81,6 +81,7 @@ namespace core::sim
         {
             std::string controlSymbol{ "MAIN.stRobotControl" };
             std::string statusSymbol{ "MAIN.stRobotStatus" };
+            std::string gripperSensorSymbol{ "MAIN.bGripperPartDetected" };
         };
 
         explicit RobotSimulator(std::shared_ptr<link::ILink> link);
@@ -105,6 +106,8 @@ namespace core::sim
 
         auto isGripperGripped() const -> bool;
         auto setGripper(bool gripped) -> void;
+        auto isGripperSensorBlocked() const -> bool;
+        auto setGripperSensorBlocked(bool blocked) -> void;
 
         auto setJointAngles(const double* anglesDegrees) -> void;
         auto setTargetPose(const Pose& pose) -> bool;
@@ -146,6 +149,7 @@ namespace core::sim
         uint16_t m_lastTargetJobId{ 0 };
         uint16_t m_lastSuccessfulJobId{ 0 };
         bool m_gripperGripped{ false };
+        bool m_gripperSensorBlocked{ false };
         bool m_internalMode{ false };
         bool m_externalCommandSimulationEnabled{ true };
         bool m_manualTrajectoryActive{ false };

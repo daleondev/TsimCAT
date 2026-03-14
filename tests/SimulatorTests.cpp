@@ -358,7 +358,9 @@ TEST_F(RobotTest, TriggerJobViaAdsLink)
 
 TEST_F(RobotTest, JobCompletionSetsGripperForPick)
 {
-    // Trigger PickEntry job (job 2) - should grip on completion
+    // Simulate part present at pick position (gripper sensor detects part)
+    robot->setGripperSensorBlocked(true);
+    // Trigger PickEntry job (job 2) - should grip on completion when sensor is blocked
     robot->triggerJob(2);
     // Run until motion completes
     tickN(*robot, 2000, 0.016); // ~32 seconds, enough for any trajectory
